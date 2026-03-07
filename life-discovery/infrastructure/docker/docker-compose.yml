@@ -1,0 +1,154 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: life_discovery
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  context-engine:
+    build:
+      context: ../../services/context_engine
+    environment:
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+    ports:
+      - "8005:8005"
+
+  user-profile-engine:
+    build:
+      context: ../../services/user_profile_engine
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+    depends_on:
+      - postgres
+    ports:
+      - "8006:8006"
+
+  recommendation-engine:
+    build:
+      context: ../../services/recommendation_engine
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+
+  onboarding-engine:
+    build:
+      context: ../../services/onboarding_engine
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+    ports:
+      - "8008:8008"
+    depends_on:
+      - postgres
+
+  date-night-ai:
+    build:
+      context: ../../services/date_night_ai
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+    ports:
+      - "8009:8009"
+    depends_on:
+      - postgres
+      - onboarding-engine
+
+  api:
+    build:
+      context: ../../services/api
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+      JWT_SECRET: super-secret
+      CONTEXT_ENGINE_URL: http://context-engine:8005
+      USER_PROFILE_ENGINE_URL: http://user-profile-engine:8006
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - context-engine
+      - user-profile-engine
+      - recommendation-engine
+      - onboarding-engine
+      - date-night-ai
+
+  ai-concierge:
+    build:
+      context: ../../services/ai_concierge
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+      CONTEXT_ENGINE_URL: http://context-engine:8005
+      USER_PROFILE_ENGINE_URL: http://user-profile-engine:8006
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+    ports:
+      - "8007:8007"
+    depends_on:
+      - postgres
+      - context-engine
+      - user-profile-engine
+
+  crawler:
+    build:
+      context: ../../
+      dockerfile: workers/event_crawler/Dockerfile
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+      INTERVAL_SECONDS: 21600
+    depends_on:
+      - postgres
+      - api
+
+  user-learning-engine:
+    build:
+      context: ../../services/user_learning_engine
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+      INTERVAL_SECONDS: 3600
+      LAMBDA_DECAY: 0.05
+    depends_on:
+      - postgres
+      - api
+
+volumes:
+  pg_data:

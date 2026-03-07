@@ -1,0 +1,23 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  @apply bg-bg text-white;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #6C5CE7 #111218;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.09);
+  backdrop-filter: blur(10px);
+}
+

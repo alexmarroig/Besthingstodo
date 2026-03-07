@@ -1,0 +1,9 @@
+{
+  "name": "life-discovery",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @life/web dev",
+    "build:web": "pnpm --filter @life/web build"
+  }
+}

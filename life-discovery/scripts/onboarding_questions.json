@@ -1,0 +1,10 @@
+[
+  {"question_key":"preferred_experiences","question_text":"Which experiences do you prefer? (events, exhibitions, restaurants, movies, travel)","category":"preferred_experiences","weight":1.0},
+  {"question_key":"favorite_movie_genres","question_text":"What type of movies do you enjoy?","category":"favorite_movie_genres","weight":1.0},
+  {"question_key":"preferred_restaurants","question_text":"What restaurant styles do you prefer?","category":"preferred_restaurants","weight":1.0},
+  {"question_key":"budget_range","question_text":"What is your budget range?","category":"budget_range","weight":1.0},
+  {"question_key":"distance_willing","question_text":"How far are you willing to travel for an event?","category":"distance_willing","weight":1.0},
+  {"question_key":"quiet_social","question_text":"Do you prefer quiet or lively places?","category":"quiet_social","weight":1.0},
+  {"question_key":"indoor_outdoor","question_text":"Do you prefer indoor or outdoor activities?","category":"indoor_outdoor","weight":1.0},
+  {"question_key":"romantic_group","question_text":"Do you prefer romantic or group experiences?","category":"romantic_group","weight":1.0}
+]
