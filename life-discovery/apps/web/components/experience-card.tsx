@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { sendFeedback } from "../lib/api";
 
 export default function ExperienceCard({ userId, exp }: { userId: string; exp: any }) {
   const [status, setStatus] = useState("");
 
   async function send(action: "like" | "dislike" | "save") {
-    await fetch(`${API}/feedback`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId, experience_id: exp.id, action })
+    await sendFeedback(userId, exp.id, action, {
+      reason_tags: action === "dislike" ? ["not_for_us"] : ["good_match"]
     });
     setStatus(action);
   }
@@ -31,4 +29,3 @@ export default function ExperienceCard({ userId, exp }: { userId: string; exp: a
     </article>
   );
 }
-

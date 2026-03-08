@@ -3,6 +3,7 @@
 import { DEFAULT_USER_ID } from "./types";
 
 const KEY = "life_user_id";
+const TOKEN_KEY = "life_access_token";
 
 export function getUserId() {
   if (typeof window === "undefined") return DEFAULT_USER_ID;
@@ -12,6 +13,22 @@ export function getUserId() {
 export function setUserId(userId: string) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, userId);
+}
+
+export function getAccessToken() {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(TOKEN_KEY) || "";
+}
+
+export function setAccessToken(token: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAuth() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(TOKEN_KEY);
+  window.localStorage.removeItem(KEY);
 }
 
 export function getSavedItems(): any[] {
@@ -57,4 +74,3 @@ export function upsertAgendaItem(item: any) {
       : new Date().toISOString().slice(0, 10);
   setAgendaItems([{ ...item, date }, ...current]);
 }
-

@@ -11,8 +11,12 @@ import { Recommendation } from "../../lib/types";
 export default function HomePage() {
   const userId = getUserId();
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const [weather, setWeather] = useState("clear");
 
-  const { data, isLoading } = useQuery({ queryKey: ["home-recos", userId], queryFn: () => fetchRecommendations(userId) });
+  const { data, isLoading } = useQuery({
+    queryKey: ["home-recos", userId, weather],
+    queryFn: () => fetchRecommendations(userId, "Sao Paulo", undefined, weather)
+  });
 
   const items = useMemo(() => {
     const rows = data || [];
@@ -23,9 +27,10 @@ export default function HomePage() {
     return Array.from(byId.values()).filter((x) => !hiddenIds.includes(x.id));
   }, [data, hiddenIds]);
 
-  const filmsAndSeries = items.filter((x) => ["movie", "series", "cinema"].includes((x.category || "").toLowerCase()));
-  const culture = items.filter((x) => ["event", "exhibition"].includes((x.category || "").toLowerCase()));
-  const food = items.filter((x) => ["restaurant", "cafe"].includes((x.category || "").toLowerCase()));
+  const filmsAndSeries = items.filter((x) => (x.domain || "") === "movies_series");
+  const culture = items.filter((x) => (x.domain || "") === "events_exhibitions");
+  const food = items.filter((x) => (x.domain || "") === "dining_out");
+  const delivery = items.filter((x) => (x.domain || "") === "delivery");
 
   const topIds = new Set<string>();
   const topForTonight = items.slice(0, 4);
@@ -40,18 +45,24 @@ export default function HomePage() {
   return (
     <section className="space-y-4">
       <h2 className="text-2xl font-semibold">Discovery Feed</h2>
-      <p className="text-sm text-white/60">Somente dados reais de fontes externas (sem mock).</p>
+      <p className="text-sm text-white/60">Recomendacoes por dominio com aprendizado por feedback.</p>
 
-      {isLoading ? <p className="text-sm text-white/60">Carregando eventos reais...</p> : null}
+      <div className="glass flex items-center gap-2 rounded-2xl p-3 text-xs">
+        <span>Clima:</span>
+        <button onClick={() => setWeather("clear")} className="rounded-full bg-white/10 px-3 py-1">Sem chuva</button>
+        <button onClick={() => setWeather("rain")} className="rounded-full bg-white/10 px-3 py-1">Chuva</button>
+      </div>
+
+      {isLoading ? <p className="text-sm text-white/60">Carregando recomendacoes...</p> : null}
 
       {!isLoading && items.length === 0 ? (
         <div className="glass rounded-2xl p-4 text-sm text-white/80">
-          Nenhuma recomendação real disponível agora. Inicie o crawler e rode o backend para popular com eventos reais.
+          Nenhuma recomendacao disponivel agora. Rode onboarding, seed de dados e backend.
         </div>
       ) : null}
 
       <div className="space-y-2">
-        <h3 className="text-lg font-medium text-accent">Para vocês hoje</h3>
+        <h3 className="text-lg font-medium text-accent">Para voces hoje</h3>
         <div className="grid gap-4 md:grid-cols-2">
           {topForTonight.map((item) => (
             <DiscoveryCard key={item.id} item={item} userId={userId} onAction={onCardAction} />
@@ -60,9 +71,27 @@ export default function HomePage() {
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-lg font-medium text-accent">Filmes & séries</h3>
+        <h3 className="text-lg font-medium text-accent">Filmes e series</h3>
         <div className="grid gap-4 md:grid-cols-2">
           {filmsAndSeries.map((item) => (
+            <DiscoveryCard key={item.id} item={item} userId={userId} onAction={onCardAction} />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium text-accent">Gastronomia no local</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {food.map((item) => (
+            <DiscoveryCard key={item.id} item={item} userId={userId} onAction={onCardAction} />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium text-accent">Delivery</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {delivery.map((item) => (
             <DiscoveryCard key={item.id} item={item} userId={userId} onAction={onCardAction} />
           ))}
         </div>
@@ -72,15 +101,6 @@ export default function HomePage() {
         <h3 className="text-lg font-medium text-accent">Cultura</h3>
         <div className="grid gap-4 md:grid-cols-2">
           {culture.map((item) => (
-            <DiscoveryCard key={item.id} item={item} userId={userId} onAction={onCardAction} />
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <h3 className="text-lg font-medium text-accent">Gastronomia</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {food.map((item) => (
             <DiscoveryCard key={item.id} item={item} userId={userId} onAction={onCardAction} />
           ))}
         </div>
