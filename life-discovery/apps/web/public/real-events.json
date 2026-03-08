@@ -1,7 +1,368 @@
 [
   {
-    "id": "masp-3200680332683269809",
-    "title": "Abel Rodríguez, Árbol natural [Árvore natural], 2018. Coleção Oliveros, Medellín, Colômbia. Cortesia do artista e Instituto de Visión",
+    "id": "eventbrite-6249031755617506831",
+    "title": "7th St Pauls Education Conference Embracing New Horizons",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com/e/7th-st-pauls-education-conference-embracing-new-horizons-tickets-1738477395689",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-2874245946535166370",
+    "title": "Alegria De Viver Nivel 2 Com George Hughes No Brasil",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/alegria-de-viver-nivel-2-com-george-hughes-no-brasil-tickets-1977629704683",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-1010746956620549119",
+    "title": "Brazil Tech Summit",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com/e/brazil-tech-summit-tickets-65499469677",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-8849781873901457848",
+    "title": "Cadaver Lab Sao Paulo From Dissection To Injection",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com/e/cadaver-lab-sao-paulo-from-dissection-to-injection-tickets-1981702071241",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-5406226833111181091",
+    "title": "Comverso Era Da Distracao",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/comverso-era-da-distracao-tickets-1980739768969",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-8444654249144497325",
+    "title": "Conferencia Amigas De Deus",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/conferencia-amigas-de-deus-tickets-1975602068970",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-2724080291768423586",
+    "title": "Curso Completo De Carro Eletrico Em Sao Paulo Nos Dias 3103 E 01042026",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/curso-completo-de-carro-eletrico-em-sao-paulo-nos-dias-3103-e-01042026-tickets-1795129433459",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-6363613649061567803",
+    "title": "Curso De Energia Solar Em Sao Paulo Sp Nos Dias 161718 E 19032026",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/curso-de-energia-solar-em-sao-paulo-sp-nos-dias-161718-e-19032026-tickets-1794956024789",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-8136832224300640427",
+    "title": "Events Rio De Janeiro Trip And Lamc Merchandise After Gods Own Heart",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com/e/events-rio-de-janeiro-trip-and-lamc-merchandise-after-gods-own-heart-tickets-1966135664700",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-2388128006338092955",
+    "title": "Iam Tech Day 2026 Sp Brasil",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com/e/iam-tech-day-2026-sp-brasil-tickets-1486244048959",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-5379585625784210236",
+    "title": "Imersao Em Constelacao Familiar E Meditacao Registration 1967153963459",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/imersao-em-constelacao-familiar-e-meditacao-registration-1967153963459",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-6784528008003602889",
+    "title": "Jantar As Cegas Sabores Sensacoes E Sentidos",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/jantar-as-cegas-sabores-sensacoes-e-sentidos-tickets-1872061549489",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-8318186196309998061",
+    "title": "Literacy Wellness And Connection An Ekc Global Retreat In Sao Paulo",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com/e/literacy-wellness-and-connection-an-ekc-global-retreat-in-sao-paulo-tickets-1432208567379",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-1139439628390918876",
+    "title": "Santo Andre Curso De Gestao E Marketing De Relacionamento Pre Lancamento",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/santo-andre-curso-de-gestao-e-marketing-de-relacionamento-pre-lancamento-tickets-1948543288429",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-8727781623077168740",
+    "title": "Sp Curso De Marketing De Servicos E Gestao De Atendimento 106a Turma",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/sp-curso-de-marketing-de-servicos-e-gestao-de-atendimento-106a-turma-tickets-1392690517829",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-7451496189536986699",
+    "title": "Sp Curso De Marketing Promocional E Live Marketing 2026 Pre Lancamento",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/sp-curso-de-marketing-promocional-e-live-marketing-2026-pre-lancamento-tickets-1980092577201",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-7991001994145486034",
+    "title": "Sp Curso De Networking E Marketing Pessoal 119a Turma",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/sp-curso-de-networking-e-marketing-pessoal-119a-turma-tickets-1371835008439",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-688054248534164666",
+    "title": "Sp Curso Marketing De Preco E Taticas De Precificacao 14 Pre Lancamento",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com.br/e/sp-curso-marketing-de-preco-e-taticas-de-precificacao-14-pre-lancamento-tickets-1017659646397",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "eventbrite-4375165128082179319",
+    "title": "Women In Tech Sao Paulo Outgeekwomen",
+    "description": "Evento encontrado no Eventbrite Sao Paulo",
+    "category": "event",
+    "city": "Sao Paulo",
+    "location": "Sao Paulo",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "eventbrite",
+      "event",
+      "cultural"
+    ],
+    "source": "eventbrite",
+    "url": "https://www.eventbrite.com/e/women-in-tech-sao-paulo-outgeekwomen-tickets-1049887390447",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824
+  },
+  {
+    "id": "masp-1433912960172753715",
+    "title": "Abel Rodriguez Mogaje Guihu A Arvore Da Vida E Da Abundancia",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -20,7 +381,7 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-4923681425913145839",
+    "id": "masp-3281665993972559588",
     "title": "Acervo Em Transformacao 2020",
     "description": "Exposição no MASP",
     "category": "exhibition",
@@ -40,8 +401,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-632033633135480027",
-    "title": "André Taniki Yanomami, Sem título, 1978 - Coleção Bruce Albert, Montevidéu Foto: Filipe Berndt",
+    "id": "masp-6479212707536903149",
+    "title": "Andre Taniki Yanomami Ser Imagem",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -60,28 +421,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-7617182206832495079",
-    "title": "Autoria desconhecida (Alto Peru, Bolívia), Virgem de Copacabana, 1730-50. Acervo MASP, doação Lais Zogbi Porto e Telmo Porto, 2008. Foto Joã",
-    "description": "Exposição no MASP",
-    "category": "exhibition",
-    "city": "Sao Paulo",
-    "location": "MASP",
-    "start_time": null,
-    "price": null,
-    "tags": [
-      "masp",
-      "museum",
-      "exhibition",
-      "cultural"
-    ],
-    "source": "masp",
-    "url": "https://masp.org.br/exposicoes/historias-latino-americanas",
-    "latitude": -23.561399,
-    "longitude": -46.655881
-  },
-  {
-    "id": "masp-4239590329477545431",
-    "title": "Carolina Caycedo, série Genealogia da luta, 2018-2020. Acervo MASP, doação Rose e Alfredo Setubal, 2020. Foto Eduardo Ortega Carolina Cayced",
+    "id": "masp-439817539669719764",
+    "title": "Carolina Caycedo Confluencias",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -100,8 +441,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-4861944811706183397",
-    "title": "Claudia Alarcón & Silät, Kyelhkyup — El otoño [Outono], 2023. Acervo MASP, doação anônima no contexto da Biennale di Venezia, 2024-25",
+    "id": "masp-4238559719854870552",
+    "title": "Claudia Alarcon Silaet Viver Tecendo",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -120,8 +461,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-8410048194231734516",
-    "title": "Colectivo Acciones de Arte, NO+ [Não+], 1983. Museo de la Memoria y los Derechos Humanos, Santiago do Chile. Foto Jorge Brantmayer © Arquivo",
+    "id": "masp-4012166074334609194",
+    "title": "Colectivo Acciones De Arte Democracia Radical",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -140,8 +481,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-2716563846648229565",
-    "title": "Damián Ortega, Controlador do universo, 2007. Vista da instalação, White Cube Gallery, Londres. Cortesia do artista",
+    "id": "masp-6259052888595977929",
+    "title": "Damian Ortega Materia E Energia",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -160,8 +501,28 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-8783998831817064326",
-    "title": "Jesús Soto, Metal negro y metal [Metal negro e metal], 1969. Institute for Studies on Latin American Art - ISLAA, Nova York",
+    "id": "masp-7533916969412043479",
+    "title": "Historias Latino Americanas",
+    "description": "Exposição no MASP",
+    "category": "exhibition",
+    "city": "Sao Paulo",
+    "location": "MASP",
+    "start_time": null,
+    "price": null,
+    "tags": [
+      "masp",
+      "museum",
+      "exhibition",
+      "cultural"
+    ],
+    "source": "masp",
+    "url": "https://masp.org.br/exposicoes/historias-latino-americanas",
+    "latitude": -23.561399,
+    "longitude": -46.655881
+  },
+  {
+    "id": "masp-3977948693614045708",
+    "title": "Jesus Soto",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -180,8 +541,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-5054025336452723341",
-    "title": "La Chola Poblete, Il Martirio di Chola [O martírio de Chola], 2014. Coleção da artista. Foto Lista Registra Studio",
+    "id": "masp-6683778630305793162",
+    "title": "La Chola Poblete Pop Andino",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -200,8 +561,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-2754786229334900909",
-    "title": "Manuel Herreros e Mateo Manaure, cartaz do filme Trans, 1982",
+    "id": "masp-7966500709928594506",
+    "title": "Manuel Herreros E Mateo Manaure",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -220,8 +581,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-1028971627221573953",
-    "title": "Minerva Cuevas, Understorm, 2022. Acervo MASP",
+    "id": "masp-6003772536848447472",
+    "title": "Minerva Cuevas Ecologia Social",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -240,8 +601,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-1865880313393148740",
-    "title": "Pablo Delano, vista da instalação Museu da Antiga Colônia, 2024. Foto Pablo Delano",
+    "id": "masp-2046741720133326689",
+    "title": "Pablo Delano Museu Da Antiga Colonia",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -260,8 +621,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-339900629915848350",
-    "title": "Rosa Elena Curruchich, Rosa Elena van a tejer río Chiperen [Rosa Elena vai tecer no rio Chiperen], circa 1980. Acervo MASP, doação anônima n",
+    "id": "masp-6005651236552383468",
+    "title": "Rosa Elena Curruchich Cronicas De Comalapa",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -280,7 +641,7 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-8598084925041874162",
+    "id": "masp-7800191180543104737",
     "title": "Sala De Video Clara Ianni",
     "description": "Exposição no MASP",
     "category": "exhibition",
@@ -300,8 +661,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-353370520054598369",
-    "title": "Sandra Gamarra, Doble [Duplo], 2023. Acervo MASP, doação da artista no contexto da exposição Histórias indígenas, 2023. Foto Eduardo Ortega",
+    "id": "masp-6481836577875542350",
+    "title": "Sandra Gamarra Heshiki Replica",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -320,8 +681,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-7212141027316227610",
-    "title": "Santiago Yahuarcani, Ni vergüenza ya tienen los pucachos [Os Pucachos nem têm mais vergonha], 2020. Acervo MASP, doação Geyze Diniz, 2024. F",
+    "id": "masp-775840900071821039",
+    "title": "Santiago Yahuarcani O Principio Do Conhecimento",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -340,8 +701,8 @@
     "longitude": -46.655881
   },
   {
-    "id": "masp-2105741622625448944",
-    "title": "Sol Calero, Pabellón criollo [Pavilhão criolo], 2024. 60ª Biennale di Venezia. Foto Andrea Rossetti",
+    "id": "masp-6936712537351532205",
+    "title": "Sol Calero",
     "description": "Exposição no MASP",
     "category": "exhibition",
     "city": "Sao Paulo",
@@ -360,7 +721,7 @@
     "longitude": -46.655881
   },
   {
-    "id": "sympla-3707201584191973167",
+    "id": "sympla-6878656821069654982",
     "title": "Kit Digital Turma da Monica Scrapbook Local a definir - São Paulo, SP 07 de Jul a 09 de Jul",
     "description": "Evento encontrado no Sympla Sao Paulo",
     "category": "event",

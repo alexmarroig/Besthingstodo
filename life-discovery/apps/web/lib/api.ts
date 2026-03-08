@@ -7,14 +7,40 @@ const ONBOARDING = process.env.NEXT_PUBLIC_ONBOARDING_URL || "http://localhost:8
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export async function fetchRecommendations(userId: string, city = "Sao Paulo"): Promise<Recommendation[]> {
+  const fromSnapshot = async (): Promise<Recommendation[]> => {
+    try {
+      const snapshot = await fetch("/real-events.json", { cache: "no-store" });
+      if (!snapshot.ok) return [];
+      const rows = await snapshot.json();
+      return rows.map((r: any) => ({
+        id: String(r.id),
+        title: r.title || "Sem título",
+        description: r.description || "",
+        category: r.category || "event",
+        city: r.city || city,
+        location: r.location || city,
+        start_time: r.start_time || null,
+        price: r.price ?? null,
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        source: r.source || "snapshot",
+        url: r.url || null,
+        score: r.score,
+        reason: r.reason,
+        latitude: r.latitude ?? null,
+        longitude: r.longitude ?? null
+      }));
+    } catch {
+      return [];
+    }
+  };
+
   try {
     const res = await fetch(`${RECO}/recommendations?user_id=${userId}&city=${encodeURIComponent(city)}&limit=24`, {
       cache: "no-store"
     });
-    if (!res.ok) return [];
+    if (!res.ok) return fromSnapshot();
     const rows = await res.json();
-
-    return rows
+    const mapped = rows
       .map((r: any, i: number) => ({
         id: String(r.id || `${r.title || "item"}-${i}`),
         title: r.title || "Sem título",
@@ -33,8 +59,9 @@ export async function fetchRecommendations(userId: string, city = "Sao Paulo"): 
         longitude: r.longitude ?? null
       }))
       .filter((x: Recommendation) => !!x.title && !!x.source && x.source !== "mock");
+    return mapped.length > 0 ? mapped : fromSnapshot();
   } catch {
-    return [];
+    return fromSnapshot();
   }
 }
 
