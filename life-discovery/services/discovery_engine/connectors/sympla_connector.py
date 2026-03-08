@@ -14,22 +14,33 @@ def fetch_events() -> list[dict]:
         return []
 
     soup = BeautifulSoup(resp.text, "html.parser")
-    links = soup.select("a")
+    links = soup.select('a[href*="/evento/"]')
     events: list[dict] = []
+    seen: set[str] = set()
 
     for link in links:
         href = link.get("href", "")
-        text = link.get_text(" ", strip=True)
-        if "sympla.com.br/evento" not in href:
+        text = " ".join(link.get_text(" ", strip=True).split())
+        if "/evento/" not in href:
             continue
-        if len(text) < 12:
+        if href in seen:
             continue
+        seen.add(href)
+
+        if len(text) < 8:
+            continue
+
+        if "Local a definir" in text:
+            venue = "Sao Paulo"
+        else:
+            venue = "Sao Paulo"
+
         events.append(
             normalize_event(
                 {
                     "title": text[:140],
                     "description": "Evento encontrado no Sympla Sao Paulo",
-                    "venue": "Sao Paulo",
+                    "venue": venue,
                     "city": "Sao Paulo",
                     "date": None,
                     "price": None,
@@ -40,7 +51,7 @@ def fetch_events() -> list[dict]:
                 source="sympla",
             )
         )
-        if len(events) >= 30:
+        if len(events) >= 40:
             break
 
     return events

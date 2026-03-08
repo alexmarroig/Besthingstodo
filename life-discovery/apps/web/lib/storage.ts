@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { DEFAULT_USER_ID } from "./types";
 
@@ -28,6 +28,12 @@ export function setSavedItems(items: any[]) {
   window.localStorage.setItem("saved_items", JSON.stringify(items));
 }
 
+export function upsertSavedItem(item: any) {
+  const current = getSavedItems();
+  if (current.find((x: any) => x.id === item.id)) return;
+  setSavedItems([item, ...current]);
+}
+
 export function getAgendaItems(): any[] {
   if (typeof window === "undefined") return [];
   try {
@@ -40,5 +46,15 @@ export function getAgendaItems(): any[] {
 export function setAgendaItems(items: any[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("agenda_items", JSON.stringify(items));
+}
+
+export function upsertAgendaItem(item: any) {
+  const current = getAgendaItems();
+  if (current.find((x: any) => x.id === item.id)) return;
+  const date =
+    item?.start_time && typeof item.start_time === "string"
+      ? item.start_time.slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+  setAgendaItems([{ ...item, date }, ...current]);
 }
 

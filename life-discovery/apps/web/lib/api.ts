@@ -11,65 +11,30 @@ export async function fetchRecommendations(userId: string, city = "Sao Paulo"): 
     const res = await fetch(`${RECO}/recommendations?user_id=${userId}&city=${encodeURIComponent(city)}&limit=24`, {
       cache: "no-store"
     });
-    if (!res.ok) throw new Error("recommendation api unavailable");
+    if (!res.ok) return [];
     const rows = await res.json();
-    return rows.map((r: any, i: number) => ({
-      id: `${r.title}-${i}`,
-      title: r.title,
-      description: r.reason || "",
-      category: r.category || "event",
-      city,
-      location: city,
-      tags: [r.category || "experience"],
-      source: "ranking-engine",
-      score: r.score,
-      reason: r.reason
-    }));
+
+    return rows
+      .map((r: any, i: number) => ({
+        id: String(r.id || `${r.title || "item"}-${i}`),
+        title: r.title || "Sem título",
+        description: r.description || r.reason || "",
+        category: r.category || "event",
+        city: r.city || city,
+        location: r.location || r.venue || city,
+        start_time: r.start_time || r.date || null,
+        price: r.price ?? null,
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        source: r.source || "unknown",
+        url: r.url || r.source_url || null,
+        score: r.score,
+        reason: r.reason,
+        latitude: r.latitude ?? null,
+        longitude: r.longitude ?? null
+      }))
+      .filter((x: Recommendation) => !!x.title && !!x.source && x.source !== "mock");
   } catch {
-    return [
-      {
-        id: "mock-1",
-        title: "Exposição imersiva no MIS",
-        description: "Combina com interesse por arte simbólica e ambiente contemplativo.",
-        category: "exhibition",
-        city: "Sao Paulo",
-        location: "MIS - Jardim Europa",
-        tags: ["museum", "exhibition", "quiet", "cultural"],
-        source: "mock",
-        reason: "matches your interest in exhibitions",
-        score: 0.91,
-        latitude: -23.5723,
-        longitude: -46.6693
-      },
-      {
-        id: "mock-2",
-        title: "Sessão de suspense no Reserva Cultural",
-        description: "Alinhado ao gosto por narrativas complexas e suspense psicológico.",
-        category: "movie",
-        city: "Sao Paulo",
-        location: "Reserva Cultural - Paulista",
-        tags: ["movie", "thriller", "quiet", "cinema"],
-        source: "mock",
-        reason: "recommended because it aligns with your interest in psychology and symbolic depth",
-        score: 0.89,
-        latitude: -23.5572,
-        longitude: -46.6621
-      },
-      {
-        id: "mock-3",
-        title: "Jantar italiano intimista em Moema",
-        description: "Restaurante silencioso e romântico.",
-        category: "restaurant",
-        city: "Sao Paulo",
-        location: "Moema",
-        tags: ["restaurant", "romantic", "quiet", "italian"],
-        source: "mock",
-        reason: "recommended because it fits your preference for quiet, meaningful and romantic environments",
-        score: 0.87,
-        latitude: -23.6035,
-        longitude: -46.6635
-      }
-    ];
+    return [];
   }
 }
 
@@ -91,24 +56,7 @@ export async function generateDateNightPlan(userId: string, location = "Sao Paul
     if (!res.ok) throw new Error("date night api unavailable");
     return res.json();
   } catch {
-    return {
-      activity_1: {
-        title: "Filme de suspense psicológico no Reserva Cultural",
-        type: "movie",
-        reason: "combina com preferência por narrativas complexas e ambiente tranquilo"
-      },
-      activity_2: {
-        title: "Jantar italiano silencioso em Moema",
-        type: "restaurant",
-        reason: "alinhado com preferência por lugares tranquilos e românticos"
-      },
-      activity_3: {
-        title: "Café e caminhada em rua tranquila próxima",
-        type: "after-dinner",
-        reason: "atividade complementar leve e íntima"
-      },
-      reasoning: "Plano gerado com base no perfil do casal e no contexto da noite."
-    };
+    return null;
   }
 }
 
@@ -122,22 +70,7 @@ export async function askConcierge(userId: string, message: string) {
     if (!res.ok) throw new Error("concierge api unavailable");
     return res.json();
   } catch {
-    return {
-      suggestions: [
-        {
-          title: "Exposição imersiva no MIS",
-          reason: "combina com interesse por arte simbólica e ambiente contemplativo"
-        },
-        {
-          title: "Sessão de suspense psicológico",
-          reason: "alinhado ao gosto por mistério e filmes intelectuais"
-        },
-        {
-          title: "Jantar japonês intimista",
-          reason: "compatível com preferência por restaurantes silenciosos e românticos"
-        }
-      ]
-    };
+    return { suggestions: [] };
   }
 }
 
@@ -147,21 +80,6 @@ export async function fetchCulturalDNA(userId: string) {
     if (!res.ok) throw new Error("dna api unavailable");
     return res.json();
   } catch {
-    return {
-      user_id: userId,
-      cultural_dna: {
-        intellectual_depth: 0.92,
-        symbolic_interest: 0.88,
-        psychological_curiosity: 0.9,
-        quiet_environment_preference: 0.93,
-        romantic_experience_preference: 0.85,
-        crowd_tolerance: 0.2,
-        museum_interest: 0.87,
-        cinema_interest: 0.82,
-        exhibition_interest: 0.88,
-        restaurant_style_score: 0.86,
-        travel_style_score: 0.88
-      }
-    };
+    return null;
   }
 }

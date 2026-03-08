@@ -1,10 +1,13 @@
 from datetime import date
 
 from .connectors.eventbrite_connector import fetch_events as fetch_eventbrite
-from .connectors.fever_connector import fetch_events as fetch_fever
 from .connectors.ims_connector import fetch_events as fetch_ims
 from .connectors.masp_connector import fetch_events as fetch_masp
 from .connectors.sympla_connector import fetch_events as fetch_sympla
+try:
+    from .connectors.fever_connector import fetch_events as fetch_fever
+except Exception:  # optional dependency (playwright)
+    fetch_fever = None
 
 
 def _norm(value: str) -> str:
@@ -42,7 +45,11 @@ def deduplicate_events(events: list[dict]) -> list[dict]:
 
 def fetch_all_events() -> list[dict]:
     events = []
-    for fn in [fetch_masp, fetch_ims, fetch_sympla, fetch_eventbrite, fetch_fever]:
+    sources = [fetch_masp, fetch_ims, fetch_sympla, fetch_eventbrite]
+    if fetch_fever is not None:
+        sources.append(fetch_fever)
+
+    for fn in sources:
         try:
             events.extend(fn())
         except Exception:

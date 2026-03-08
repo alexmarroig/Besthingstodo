@@ -1,4 +1,4 @@
-﻿export type Recommendation = {
+export type Recommendation = {
   id: string;
   title: string;
   description: string;
@@ -9,6 +9,7 @@
   price?: number | null;
   tags: string[];
   source: string;
+  url?: string | null;
   score?: number;
   reason?: string;
   latitude?: number | null;
@@ -23,4 +24,3 @@ export type DateNightPlan = {
 };
 
 export const DEFAULT_USER_ID = "7d713693-e677-518a-a2a7-47cafb70c3f3";
-

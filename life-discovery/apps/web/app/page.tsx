@@ -1,6 +1,6 @@
-﻿import { redirect } from "next/navigation";
+import HomePage from "./home/page";
 
 export default function IndexPage() {
-  redirect("/home");
+  return <HomePage />;
 }
 

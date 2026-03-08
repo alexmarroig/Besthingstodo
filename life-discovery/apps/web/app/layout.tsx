@@ -1,4 +1,4 @@
-﻿import "./globals.css";
+import "./globals.css";
 
 import AppShell from "../components/layout/app-shell";
 import Providers from "../components/providers";

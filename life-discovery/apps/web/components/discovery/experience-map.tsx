@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Map, { Marker, Popup } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -8,7 +8,7 @@ import { Recommendation } from "../../lib/types";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
-export default function ExperienceMap({ items }: { items: Recommendation[] }) {
+export default function ExperienceMap({ items, focusTitle }: { items: Recommendation[]; focusTitle?: string }) {
   const [selected, setSelected] = useState<Recommendation | null>(null);
   const [filters, setFilters] = useState<string[]>([]);
 
@@ -20,6 +20,12 @@ export default function ExperienceMap({ items }: { items: Recommendation[] }) {
       return true;
     });
   }, [items, filters]);
+
+  useEffect(() => {
+    if (!focusTitle) return;
+    const target = items.find((x) => x.title.toLowerCase() === focusTitle.toLowerCase());
+    if (target) setSelected(target);
+  }, [focusTitle, items]);
 
   const toggle = (f: string) => setFilters((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
 
@@ -41,11 +47,11 @@ export default function ExperienceMap({ items }: { items: Recommendation[] }) {
           ))}
         </div>
         <div className="space-y-2">
-          {filtered.map((item, i) => (
+          {filtered.map((item) => (
             <button
-              key={`${item.id}-${i}`}
+              key={item.id}
               onClick={() => setSelected(item)}
-              className="glass flex w-full items-center justify-between rounded-xl p-3 text-left"
+              className={`glass flex w-full items-center justify-between rounded-xl p-3 text-left ${selected?.id === item.id ? "ring-1 ring-accent" : ""}`}
             >
               <div>
                 <p className="text-sm font-medium">{item.title}</p>
@@ -118,4 +124,3 @@ export default function ExperienceMap({ items }: { items: Recommendation[] }) {
     </div>
   );
 }
-
