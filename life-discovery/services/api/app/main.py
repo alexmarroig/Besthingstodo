@@ -18,15 +18,39 @@ app = FastAPI(title="Life Discovery API", version="2.2.0")
 
 @app.on_event("startup")
 def startup() -> None:
+    Base.metadata.create_all(bind=engine)
+
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
-        conn.execute(text("ALTER TABLE experiences ADD COLUMN IF NOT EXISTS domain TEXT DEFAULT 'events_exhibitions'"))
+        conn.execute(
+            text(
+                """
+                DO $$
+                BEGIN
+                    IF to_regclass('public.experiences') IS NOT NULL THEN
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS domain TEXT DEFAULT 'events_exhibitions';
+                    END IF;
+                END$$;
+                """
+            )
+        )
 
-        conn.execute(text("ALTER TABLE interactions ADD COLUMN IF NOT EXISTS decision TEXT"))
-        conn.execute(text("ALTER TABLE interactions ADD COLUMN IF NOT EXISTS post_experience_rating INTEGER"))
-        conn.execute(text("ALTER TABLE interactions ADD COLUMN IF NOT EXISTS reason_tags JSONB NOT NULL DEFAULT '[]'::jsonb"))
-        conn.execute(text("ALTER TABLE interactions ADD COLUMN IF NOT EXISTS context_json JSONB NOT NULL DEFAULT '{}'::jsonb"))
+        conn.execute(
+            text(
+                """
+                DO $$
+                BEGIN
+                    IF to_regclass('public.interactions') IS NOT NULL THEN
+                        ALTER TABLE interactions ADD COLUMN IF NOT EXISTS decision TEXT;
+                        ALTER TABLE interactions ADD COLUMN IF NOT EXISTS post_experience_rating INTEGER;
+                        ALTER TABLE interactions ADD COLUMN IF NOT EXISTS reason_tags JSONB NOT NULL DEFAULT '[]'::jsonb;
+                        ALTER TABLE interactions ADD COLUMN IF NOT EXISTS context_json JSONB NOT NULL DEFAULT '{}'::jsonb;
+                    END IF;
+                END$$;
+                """
+            )
+        )
 
         conn.execute(
             text(
@@ -87,9 +111,6 @@ def startup() -> None:
                 """
             )
         )
-
-    Base.metadata.create_all(bind=engine)
-
 
 @app.get("/health")
 def health():
