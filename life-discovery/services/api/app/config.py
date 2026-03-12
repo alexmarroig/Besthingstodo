@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+﻿from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     context_engine_url: str = "http://context-engine:8005"
     user_profile_engine_url: str = "http://user-profile-engine:8006"
+    ai_concierge_url: str = "http://ai-concierge:8007"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

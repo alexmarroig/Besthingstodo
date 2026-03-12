@@ -1,4 +1,4 @@
-import httpx
+﻿import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -18,8 +18,8 @@ router = APIRouter(prefix="", tags=["concierge"])
 async def concierge(payload: ConciergeIn):
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(
-            f"{settings.concierge_agent_url}/concierge/respond",
-            json=payload.model_dump(),
+            f"{settings.ai_concierge_url}/concierge/chat",
+            json={"user_id": payload.user_id, "message": payload.message},
         )
     if response.status_code >= 400:
         raise HTTPException(status_code=502, detail="Concierge unavailable")

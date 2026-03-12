@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Map, { Marker, Popup } from "react-map-gl";
@@ -32,15 +32,15 @@ export default function ExperienceMap({ items, focusTitle }: { items: Recommenda
   if (!MAPBOX_TOKEN) {
     return (
       <div className="space-y-3">
-        <div className="glass rounded-2xl p-4 text-sm text-white/70">
-          Mapbox token not set. Showing nearby list mode.
+        <div className="glass rounded-[1.75rem] p-4 text-sm text-white/70">
+          Token do Mapbox não configurado. Entrando em modo lista com foco em decisão rápida.
         </div>
         <div className="flex flex-wrap gap-2">
           {["today", "nearby", "free", "quiet", "romantic"].map((f) => (
             <button
               key={f}
               onClick={() => toggle(f)}
-              className={`rounded-full px-3 py-1 text-xs ${filters.includes(f) ? "bg-primary" : "bg-white/10"}`}
+              className={`rounded-full px-3 py-2 text-xs ${filters.includes(f) ? "bg-primary text-white" : "bg-white/10"}`}
             >
               {f}
             </button>
@@ -51,7 +51,7 @@ export default function ExperienceMap({ items, focusTitle }: { items: Recommenda
             <button
               key={item.id}
               onClick={() => setSelected(item)}
-              className={`glass flex w-full items-center justify-between rounded-xl p-3 text-left ${selected?.id === item.id ? "ring-1 ring-accent" : ""}`}
+              className={`glass flex w-full items-center justify-between rounded-2xl p-3 text-left ${selected?.id === item.id ? "ring-1 ring-accent" : ""}`}
             >
               <div>
                 <p className="text-sm font-medium">{item.title}</p>
@@ -61,7 +61,7 @@ export default function ExperienceMap({ items, focusTitle }: { items: Recommenda
             </button>
           ))}
           {selected ? (
-            <div className="glass rounded-xl p-4">
+            <div className="glass rounded-2xl p-4">
               <p className="font-semibold">{selected.title}</p>
               <p className="text-sm text-white/70">{selected.description || selected.reason}</p>
             </div>
@@ -78,14 +78,14 @@ export default function ExperienceMap({ items, focusTitle }: { items: Recommenda
           <button
             key={f}
             onClick={() => toggle(f)}
-            className={`rounded-full px-3 py-1 text-xs ${filters.includes(f) ? "bg-primary" : "bg-white/10"}`}
+            className={`rounded-full px-3 py-2 text-xs ${filters.includes(f) ? "bg-primary text-white" : "bg-white/10"}`}
           >
             {f}
           </button>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/10">
+      <div className="overflow-hidden rounded-[1.75rem] border border-white/10">
         <Map
           initialViewState={{ longitude: -46.668, latitude: -23.625, zoom: 11 }}
           style={{ width: "100%", height: 500 }}

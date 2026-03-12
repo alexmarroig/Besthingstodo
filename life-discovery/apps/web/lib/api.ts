@@ -1,5 +1,11 @@
-import { DateNightPlan, Recommendation } from "./types";
+﻿import { DateNightPlan, Recommendation } from "./types";
 import { getAccessToken, setAccessToken, setUserId } from "./storage";
+import {
+  fallbackConciergeSuggestions,
+  fallbackCulturalDNA,
+  fallbackDateNightPlan,
+  mockRecommendations
+} from "./mock-data";
 
 const CONCIERGE = process.env.NEXT_PUBLIC_CONCIERGE_URL || "http://localhost:8007";
 const DATE_NIGHT = process.env.NEXT_PUBLIC_DATE_NIGHT_URL || "http://localhost:8009";
@@ -11,6 +17,27 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function withMockRecommendations(
+  city = "Sao Paulo",
+  domain?: "dining_out" | "delivery" | "movies_series" | "events_exhibitions",
+  weather?: string
+) {
+  let rows = [...mockRecommendations];
+
+  if (domain) {
+    rows = rows.filter((item) => item.domain === domain);
+  }
+
+  if (weather === "rain") {
+    rows = rows.filter((item) => {
+      const tags = (item.tags || []).join(" ").toLowerCase();
+      return item.location === "MASP" || tags.includes("museum") || tags.includes("cinema") || tags.includes("indoor");
+    });
+  }
+
+  return rows.slice(0, 24).map((item) => ({ ...item, city: item.city || city }));
+}
+
 export async function registerCoupleDefault(email: string, password: string) {
   const res = await fetch(`${API}/auth/register-couple`, {
     method: "POST",
@@ -18,7 +45,7 @@ export async function registerCoupleDefault(email: string, password: string) {
     body: JSON.stringify({ email, password })
   });
   if (!res.ok) {
-    throw new Error("Nao foi possivel registrar conta de casal");
+    throw new Error("Não foi possível registrar a conta do casal");
   }
   const tokenData = await res.json();
   setAccessToken(tokenData.access_token);
@@ -39,7 +66,7 @@ export async function login(email: string, password: string) {
     body: JSON.stringify({ email, password })
   });
   if (!res.ok) {
-    throw new Error("Email ou senha invalidos");
+    throw new Error("Email ou senha inválidos");
   }
   const tokenData = await res.json();
   setAccessToken(tokenData.access_token);
@@ -57,8 +84,8 @@ export async function fetchCoupleMe() {
   const res = await fetch(`${API}/couple/me`, {
     cache: "no-store",
     headers: { ...authHeaders() }
-  });
-  if (!res.ok) return null;
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
   return res.json();
 }
 
@@ -68,7 +95,7 @@ export async function patchCoupleStep(stepKey: string, data: Record<string, any>
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ step_key: stepKey, data })
   });
-  if (!res.ok) throw new Error("Nao foi possivel salvar etapa");
+  if (!res.ok) throw new Error("Não foi possível salvar a etapa");
   return res.json();
 }
 
@@ -85,13 +112,15 @@ export async function fetchRecommendations(
   try {
     const res = await fetch(`${API}/recommendations?${params.toString()}`, {
       cache: "no-store",
-      headers: { ...authHeaders() }
+      headers: { ...authHeaders(), "x-life-user-id": userId }
     });
-    if (!res.ok) return [];
+    if (!res.ok) return withMockRecommendations(city, domain, weather);
     const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return withMockRecommendations(city, domain, weather);
+
     return rows.map((r: any, i: number) => ({
       id: String(r.id || `${r.title || "item"}-${i}`),
-      title: r.title || "Sem titulo",
+      title: r.title || "Sem título",
       description: r.description || r.reason || "",
       category: r.category || "event",
       domain: r.domain || "events_exhibitions",
@@ -108,7 +137,7 @@ export async function fetchRecommendations(
       longitude: r.longitude ?? null
     }));
   } catch {
-    return [];
+    return withMockRecommendations(city, domain, weather);
   }
 }
 
@@ -149,7 +178,7 @@ export async function generateDateNightPlan(userId: string, location = "Sao Paul
     if (!res.ok) throw new Error("date night api unavailable");
     return res.json();
   } catch {
-    return null;
+    return fallbackDateNightPlan;
   }
 }
 
@@ -163,7 +192,7 @@ export async function askConcierge(userId: string, message: string) {
     if (!res.ok) throw new Error("concierge api unavailable");
     return res.json();
   } catch {
-    return { suggestions: [] };
+    return { suggestions: fallbackConciergeSuggestions(message) };
   }
 }
 
@@ -173,7 +202,6 @@ export async function fetchCulturalDNA(userId: string) {
     if (!res.ok) throw new Error("dna api unavailable");
     return res.json();
   } catch {
-    return null;
+    return fallbackCulturalDNA;
   }
 }
-

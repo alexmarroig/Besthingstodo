@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMutation } from "@tanstack/react-query";
 
@@ -12,15 +12,17 @@ export default function DateNightPage() {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Date Night AI</h2>
-      <p className="text-sm text-white/60">
-        Plano personalizado para Alex e Camila com foco em cinema psicológico, ambiente tranquilo e jantar romântico.
-      </p>
-      <button onClick={() => mutation.mutate()} className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium shadow-glow">
-        Generate date night plan
-      </button>
+      <div className="glass rounded-[2rem] p-6">
+        <h2 className="text-3xl font-semibold">Date Night AI</h2>
+        <p className="mt-2 max-w-2xl text-sm text-white/68">
+          Gere um roteiro equilibrado para o casal com começo leve, momento cultural e fechamento confortável.
+        </p>
+        <button onClick={() => mutation.mutate()} className="mt-5 rounded-2xl bg-[#ff7a59] px-4 py-3 text-sm font-medium text-white shadow-glow">
+          Gerar plano da noite
+        </button>
+      </div>
+
       {mutation.data ? <DateNightPlanCard plan={mutation.data} /> : null}
     </section>
   );
 }
-

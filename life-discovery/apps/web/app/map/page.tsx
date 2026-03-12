@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +22,12 @@ export default function MapPage() {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Map</h2>
+      <div className="glass rounded-[2rem] p-6">
+        <h2 className="text-3xl font-semibold">Mapa de experiências</h2>
+        <p className="mt-2 max-w-2xl text-sm text-white/68">
+          Use o mapa para encontrar rapidamente opções com contexto local, mesmo se o token do Mapbox ainda não estiver configurado.
+        </p>
+      </div>
       <ExperienceMap items={data || []} focusTitle={focus} />
     </section>
   );

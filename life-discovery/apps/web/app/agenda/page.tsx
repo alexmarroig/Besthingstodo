@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 
@@ -9,7 +9,7 @@ export default function AgendaPage() {
 
   const byDate = useMemo(() => {
     return items.reduce((acc: Record<string, any[]>, item) => {
-      const key = item.date || "No date";
+      const key = item.date || "Sem data";
       acc[key] = acc[key] || [];
       acc[key].push(item);
       return acc;
@@ -24,20 +24,24 @@ export default function AgendaPage() {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Agenda</h2>
+      <div className="glass rounded-[2rem] p-6">
+        <h2 className="text-3xl font-semibold">Agenda do casal</h2>
+        <p className="mt-2 text-sm text-white/68">Tudo o que foi salvo para depois vira uma agenda rápida de consulta e limpeza.</p>
+      </div>
+
       <div className="space-y-3">
-        {Object.keys(byDate).length === 0 ? <p className="text-sm text-white/60">No scheduled experiences yet.</p> : null}
+        {Object.keys(byDate).length === 0 ? <p className="text-sm text-white/60">Nenhuma experiência agendada ainda.</p> : null}
         {Object.entries(byDate).map(([date, list]) => (
-          <div key={date} className="glass rounded-2xl p-4">
-            <h3 className="font-medium text-accent">{date}</h3>
+          <div key={date} className="glass rounded-[1.75rem] p-4">
+            <h3 className="font-medium text-[#ffd166]">{date}</h3>
             <div className="mt-3 space-y-2">
               {list.map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3">
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white/5 p-3">
                   <div>
                     <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-white/60">{item.location || "Sao Paulo"}</p>
+                    <p className="text-xs text-white/60">{item.location || "São Paulo"}</p>
                   </div>
-                  <button onClick={() => removeItem(item.id)} className="rounded-lg bg-white/10 px-3 py-1 text-xs">Remove</button>
+                  <button onClick={() => removeItem(item.id)} className="rounded-xl bg-white/10 px-3 py-2 text-xs">Remover</button>
                 </div>
               ))}
             </div>
@@ -47,4 +51,3 @@ export default function AgendaPage() {
     </section>
   );
 }
-

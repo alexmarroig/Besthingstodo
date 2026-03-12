@@ -1,10 +1,11 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from sqlalchemy import text
 
 from .db import engine
 from .models import Base
 from .routers import (
     auth_router,
+    concierge,
     context_router,
     couple_router,
     experience_router,
@@ -112,6 +113,7 @@ def startup() -> None:
             )
         )
 
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -124,3 +126,4 @@ app.include_router(context_router.router)
 app.include_router(feedback_router.router)
 app.include_router(experience_router.router)
 app.include_router(life_graph_router.router)
+app.include_router(concierge.router)

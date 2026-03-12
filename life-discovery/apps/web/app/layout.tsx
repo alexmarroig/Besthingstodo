@@ -1,11 +1,11 @@
-import "./globals.css";
+﻿import "./globals.css";
 
 import AppShell from "../components/layout/app-shell";
 import Providers from "../components/providers";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body>
         <Providers>
           <AppShell>{children}</AppShell>
@@ -14,4 +14,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

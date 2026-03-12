@@ -1,40 +1,24 @@
-# Monorepo commands
+﻿# Monorepo commands
 
 ## Start stack
 
 ```bash
 cd life-discovery
-docker compose -f infrastructure/docker/docker-compose.yml up --build
+docker compose -f infrastructure/docker/docker-compose.yml up --build -d
 ```
 
-## Seed
+## Seed deterministic smoke data
 
-```bash
-python scripts/seed_data.py
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/seed_smoke_data.ps1
 ```
 
-## Try recommendations
+## Validate the full stack
 
-```bash
-curl -X POST http://localhost:8000/recommendations \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"<USER_ID>","city":"Sao Paulo","context":{"daypart":"evening"},"limit":5}'
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/validate_full_stack.ps1
 ```
 
-## Seed Couple Profile (Alex & Camila)
+## Legacy scripts
 
-```bash
-python scripts/seed_couple_profile.py
-```
-
-This script upserts:
-- users / couple_members / couple_profiles
-- user_preferences / domain_preferences
-- user_profiles with embedding_vector (384)
-- sample experiences for recommendation smoke tests
-
-Then it runs an authenticated recommendation test against:
-- GET /recommendations?domain=dining_out
-- GET /recommendations?domain=delivery
-- GET /recommendations?domain=movies_series
-- GET /recommendations?domain=events_exhibitions
+The Python scripts in this folder are preserved for historical reference, but the supported local validation path is now the PowerShell seed + validation flow above so the repo does not depend on a host Python installation.

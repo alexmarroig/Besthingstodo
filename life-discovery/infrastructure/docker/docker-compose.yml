@@ -1,6 +1,4 @@
-version: "3.9"
-
-services:
+﻿services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
@@ -57,10 +55,12 @@ services:
       POSTGRES_USER: life
       POSTGRES_PASSWORD: life
       POSTGRES_DB: life_discovery
+      USER_PROFILE_ENGINE_URL: http://user-profile-engine:8006
     ports:
       - "8008:8008"
     depends_on:
       - postgres
+      - user-profile-engine
 
   date-night-ai:
     build:
@@ -76,28 +76,6 @@ services:
     depends_on:
       - postgres
       - onboarding-engine
-
-  api:
-    build:
-      context: ../../services/api
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: life
-      POSTGRES_PASSWORD: life
-      POSTGRES_DB: life_discovery
-      JWT_SECRET: super-secret
-      CONTEXT_ENGINE_URL: http://context-engine:8005
-      USER_PROFILE_ENGINE_URL: http://user-profile-engine:8006
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
-      - context-engine
-      - user-profile-engine
-      - recommendation-engine
-      - onboarding-engine
-      - date-night-ai
 
   ai-concierge:
     build:
@@ -119,6 +97,30 @@ services:
       - postgres
       - context-engine
       - user-profile-engine
+
+  api:
+    build:
+      context: ../../services/api
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: life
+      POSTGRES_PASSWORD: life
+      POSTGRES_DB: life_discovery
+      JWT_SECRET: ${JWT_SECRET:-super-secret}
+      CONTEXT_ENGINE_URL: http://context-engine:8005
+      USER_PROFILE_ENGINE_URL: http://user-profile-engine:8006
+      AI_CONCIERGE_URL: http://ai-concierge:8007
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - context-engine
+      - user-profile-engine
+      - recommendation-engine
+      - onboarding-engine
+      - date-night-ai
+      - ai-concierge
 
   crawler:
     build:
