@@ -12,6 +12,14 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+
   context-engine:
     build:
       context: ../../services/context_engine
@@ -89,10 +97,12 @@ services:
       JWT_SECRET: super-secret
       CONTEXT_ENGINE_URL: http://context-engine:8005
       USER_PROFILE_ENGINE_URL: http://user-profile-engine:8006
+      REDIS_URL: redis://redis:6379
     ports:
       - "8000:8000"
     depends_on:
       - postgres
+      - redis
       - context-engine
       - user-profile-engine
       - recommendation-engine
@@ -131,6 +141,7 @@ services:
       POSTGRES_PASSWORD: life
       POSTGRES_DB: life_discovery
       INTERVAL_SECONDS: 21600
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
     depends_on:
       - postgres
       - api
@@ -152,3 +163,4 @@ services:
 
 volumes:
   pg_data:
+  redis_data:
