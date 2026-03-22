@@ -62,14 +62,35 @@ def get_recent_interactions(engine: Engine, hours: int = 168) -> list[dict[str, 
     return [dict(r) for r in rows]
 
 
+def _adaptive_lambda(interaction_count: int, base_lambda: float = 0.05) -> float:
+    """
+    Compute a personalized decay rate based on how much history the user has.
+
+    - New users (few interactions): faster decay (0.08) → recent signals dominate,
+      profile pivots quickly with new feedback.
+    - Experienced users (many interactions): slower decay (0.03) → historical taste
+      is preserved, preventing single interactions from overriding long-term profile.
+    """
+    # Each 10 additional interactions reduces lambda by 0.005, capped at [0.03, 0.08]
+    reduction = 0.005 * min(10, interaction_count // 10)
+    return max(0.03, min(0.08, base_lambda + 0.03 - reduction))
+
+
 def update_tag_weights(engine: Engine, interactions: list[dict[str, Any]], lambda_decay: float = 0.05) -> None:
     agg: dict[tuple[str, str], float] = defaultdict(float)
+
+    # Count interactions per user to compute adaptive lambda
+    user_interaction_counts: dict[str, int] = defaultdict(int)
+    for row in interactions:
+        user_interaction_counts[row["user_id"]] += 1
 
     for row in interactions:
         user_id = row["user_id"]
         event_time = row["created_at"]
         signal = convert_interaction_to_signal(row.get("interaction_type", ""))
-        decayed = apply_time_decay(signal, event_time, lambda_decay=lambda_decay)
+        # Use adaptive lambda based on this user's interaction history
+        effective_lambda = _adaptive_lambda(user_interaction_counts[user_id], base_lambda=lambda_decay)
+        decayed = apply_time_decay(signal, event_time, lambda_decay=effective_lambda)
         tags = row.get("tags") or []
         for tag in tags:
             t = str(tag).strip().lower()
@@ -110,6 +131,11 @@ def _to_float_array(value: Any) -> np.ndarray | None:
 def update_user_embeddings(engine: Engine, interactions: list[dict[str, Any]], lambda_decay: float = 0.05) -> None:
     by_user: dict[str, list[tuple[float, np.ndarray]]] = defaultdict(list)
 
+    # Count interactions per user for adaptive lambda
+    user_interaction_counts: dict[str, int] = defaultdict(int)
+    for row in interactions:
+        user_interaction_counts[row["user_id"]] += 1
+
     for row in interactions:
         interaction_type = (row.get("interaction_type") or "").lower().strip()
         if interaction_type not in {"like", "save", "click", "view", "dislike"}:
@@ -123,7 +149,8 @@ def update_user_embeddings(engine: Engine, interactions: list[dict[str, Any]], l
         if vec is None:
             continue
 
-        decayed = apply_time_decay(signal, row["created_at"], lambda_decay=lambda_decay)
+        effective_lambda = _adaptive_lambda(user_interaction_counts[row["user_id"]], base_lambda=lambda_decay)
+        decayed = apply_time_decay(signal, row["created_at"], lambda_decay=effective_lambda)
         by_user[row["user_id"]].append((decayed, vec))
 
     if not by_user:

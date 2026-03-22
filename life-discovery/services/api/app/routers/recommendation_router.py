@@ -1,10 +1,16 @@
-from datetime import datetime
+import random
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..life_graph import find_related_experiences
 from ..models import CoupleProfile, Experience, UserPreference
+
+# Epsilon-greedy exploration: probability of showing a "discovery" item
+# (new event with < 48h of age) regardless of its score.
+_EXPLORATION_EPSILON = 0.10  # 10% of slots reserved for new/unseen items
+_EXPLORATION_MAX_AGE_HOURS = 72  # events younger than this are "new"
 
 DOMAIN_CATEGORIES = {
     "dining_out": {"restaurant", "cafe"},
@@ -136,4 +142,33 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
         ranked.append((round(score, 4), reason, exp_domain, exp))
 
     ranked.sort(key=lambda x: x[0], reverse=True)
-    return ranked[:limit]
+
+    # --- Epsilon-greedy exploration ---
+    # Reserve ~10% of slots for "new" events (< 72h old) that might have low
+    # scores simply because no one has interacted with them yet.  This prevents
+    # the feed from becoming a perpetual loop of the same popular items.
+    exploration_slots = max(1, int(limit * _EXPLORATION_EPSILON))
+    main_slots = limit - exploration_slots
+
+    now_utc = datetime.now(timezone.utc)
+    main_results = []
+    exploration_candidates = []
+
+    for item in ranked:
+        score, reason, exp_domain, exp = item
+        exp_age_hours = (
+            (now_utc - exp.created_at.replace(tzinfo=timezone.utc)).total_seconds() / 3600
+            if getattr(exp, "created_at", None) else 9999
+        )
+        if exp_age_hours <= _EXPLORATION_MAX_AGE_HOURS:
+            exploration_candidates.append(item)
+        else:
+            main_results.append(item)
+
+    # Shuffle exploration candidates so discovery isn't always the same new item
+    random.shuffle(exploration_candidates)
+    final = main_results[:main_slots] + exploration_candidates[:exploration_slots]
+
+    # Re-sort the merged list so UI still shows roughly best-first within each group
+    final.sort(key=lambda x: x[0], reverse=True)
+    return final[:limit]
