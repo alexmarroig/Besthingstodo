@@ -1,18 +1,41 @@
 import os
 from datetime import date
 
+# ── Core sources (always active) ───────────────────────────────────────────
 from .connectors.eventbrite_connector import fetch_events as fetch_eventbrite
 from .connectors.ims_connector import fetch_events as fetch_ims
 from .connectors.masp_connector import fetch_events as fetch_masp
 from .connectors.sympla_connector import fetch_events as fetch_sympla
+
+# ── Cinema & Series ─────────────────────────────────────────────────────────
 from .connectors.adorocinema_connector import fetch_events as fetch_adorocinema
 from .connectors.mubi_connector import fetch_events as fetch_mubi
+from .connectors.filmow_connector import fetch_events as fetch_filmow
+from .connectors.imdb_rss_connector import fetch_events as fetch_imdb
+from .connectors.rottentomatoes_connector import fetch_events as fetch_rottentomatoes
 
+# ── Cultural venues ──────────────────────────────────────────────────────────
+from .connectors.pinacoteca_connector import fetch_events as fetch_pinacoteca
+from .connectors.mam_connector import fetch_events as fetch_mam
+from .connectors.ccbb_connector import fetch_events as fetch_ccbb
+from .connectors.sesc_connector import fetch_events as fetch_sesc
+
+# ── City guides & community ──────────────────────────────────────────────────
+from .connectors.catraca_livre_connector import fetch_events as fetch_catraca
+from .connectors.guia_da_semana_connector import fetch_events as fetch_guia
+from .connectors.timeout_sp_connector import fetch_events as fetch_timeout
+from .connectors.reddit_connector import fetch_events as fetch_reddit
+
+# ── Delivery & Restaurants ───────────────────────────────────────────────────
+from .connectors.ifood_connector import fetch_events as fetch_ifood
+
+# ── Optional: requires Playwright ───────────────────────────────────────────
 try:
     from .connectors.fever_connector import fetch_events as fetch_fever
-except Exception:  # optional dependency (playwright)
+except Exception:
     fetch_fever = None
 
+# ── Optional: requires TMDB_API_KEY env var ──────────────────────────────────
 try:
     from .connectors.tmdb_connector import fetch_events as _fetch_tmdb
     def fetch_tmdb() -> list[dict]:
@@ -89,23 +112,49 @@ def deduplicate_events(events: list[dict]) -> list[dict]:
 
 
 def fetch_all_events() -> list[dict]:
+    """
+    Fetch events from all registered sources.
+    Sources are grouped by category for clarity.
+    Each source is wrapped in try/except so one failure doesn't kill the crawl.
+    """
     events: list[dict] = []
-    sources = [
-        fetch_masp,
-        fetch_ims,
-        fetch_sympla,
-        fetch_eventbrite,
-        fetch_adorocinema,
-        fetch_mubi,
-    ]
-    if fetch_fever is not None:
-        sources.append(fetch_fever)
-    if fetch_tmdb is not None:
-        sources.append(fetch_tmdb)
 
-    for fn in sources:
+    # Ordered by reliability and data quality
+    always_on = [
+        # ── Events & exhibitions ────────────────────────────────────────
+        fetch_masp,          # MASP museum
+        fetch_ims,           # IMS Paulista
+        fetch_ccbb,          # CCBB SP (free cultural events)
+        fetch_pinacoteca,    # Pinacoteca do Estado SP
+        fetch_mam,           # MAM SP (Ibirapuera)
+        fetch_sesc,          # SESC SP (20+ units, huge calendar)
+        fetch_sympla,        # Sympla SP
+        fetch_eventbrite,    # Eventbrite BR
+        fetch_catraca,       # Catraca Livre (free events)
+        fetch_guia,          # Guia da Semana SP
+        fetch_timeout,       # Time Out SP
+        fetch_reddit,        # Reddit r/saopaulo community tips
+        # ── Cinema & Series ─────────────────────────────────────────────
+        fetch_adorocinema,   # AdoroCinema (movies in theaters)
+        fetch_mubi,          # MUBI art-house
+        fetch_filmow,        # Filmow (Brazilian movie community)
+        fetch_imdb,          # IMDb RSS (movie meter + top 250)
+        fetch_rottentomatoes,# Rotten Tomatoes (critic scores)
+        # ── Delivery & Restaurants ──────────────────────────────────────
+        fetch_ifood,         # iFood restaurant rankings
+    ]
+
+    optional = []
+    if fetch_fever is not None:
+        optional.append(fetch_fever)    # Fever SP (Playwright)
+    if fetch_tmdb is not None:
+        optional.append(fetch_tmdb)     # TMDB API (needs key)
+
+    for fn in always_on + optional:
         try:
-            events.extend(fn())
+            result = fn()
+            if result:
+                events.extend(result)
         except Exception:
             continue
 
