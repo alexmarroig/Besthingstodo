@@ -13,6 +13,8 @@ from .connectors.mubi_connector import fetch_events as fetch_mubi
 from .connectors.filmow_connector import fetch_events as fetch_filmow
 from .connectors.imdb_rss_connector import fetch_events as fetch_imdb
 from .connectors.rottentomatoes_connector import fetch_events as fetch_rottentomatoes
+from .connectors.pipocando_connector import fetch_events as fetch_pipocando
+from .connectors.justwatch_connector import fetch_events as fetch_justwatch
 
 # ── Cultural venues ──────────────────────────────────────────────────────────
 from .connectors.pinacoteca_connector import fetch_events as fetch_pinacoteca
@@ -25,9 +27,16 @@ from .connectors.catraca_livre_connector import fetch_events as fetch_catraca
 from .connectors.guia_da_semana_connector import fetch_events as fetch_guia
 from .connectors.timeout_sp_connector import fetch_events as fetch_timeout
 from .connectors.reddit_connector import fetch_events as fetch_reddit
+from .connectors.veja_sp_connector import fetch_events as fetch_veja_sp
 
 # ── Delivery & Restaurants ───────────────────────────────────────────────────
 from .connectors.ifood_connector import fetch_events as fetch_ifood
+
+# ── Optional: requires OMDB_API_KEY ──────────────────────────────────────────
+try:
+    from .connectors.omdb_connector import fetch_events as fetch_omdb
+except Exception:
+    fetch_omdb = None  # type: ignore[assignment]
 
 # ── Optional: requires Playwright ───────────────────────────────────────────
 try:
@@ -134,12 +143,15 @@ def fetch_all_events() -> list[dict]:
         fetch_guia,          # Guia da Semana SP
         fetch_timeout,       # Time Out SP
         fetch_reddit,        # Reddit r/saopaulo community tips
+        fetch_veja_sp,       # Veja SP (restaurants + cinema + exhibitions)
         # ── Cinema & Series ─────────────────────────────────────────────
         fetch_adorocinema,   # AdoroCinema (movies in theaters)
         fetch_mubi,          # MUBI art-house
         fetch_filmow,        # Filmow (Brazilian movie community)
         fetch_imdb,          # IMDb RSS (movie meter + top 250)
         fetch_rottentomatoes,# Rotten Tomatoes (critic scores)
+        fetch_pipocando,     # Pipocando (BR cinema news + reviews)
+        fetch_justwatch,     # JustWatch (streaming availability BR)
         # ── Delivery & Restaurants ──────────────────────────────────────
         fetch_ifood,         # iFood restaurant rankings
     ]
@@ -149,6 +161,8 @@ def fetch_all_events() -> list[dict]:
         optional.append(fetch_fever)    # Fever SP (Playwright)
     if fetch_tmdb is not None:
         optional.append(fetch_tmdb)     # TMDB API (needs key)
+    if fetch_omdb is not None:
+        optional.append(fetch_omdb)     # OMDb API (needs key)
 
     for fn in always_on + optional:
         try:
