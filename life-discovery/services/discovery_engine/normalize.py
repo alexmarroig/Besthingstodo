@@ -5,6 +5,114 @@ from typing import Any
 import requests
 from dateutil import parser
 
+# ---------------------------------------------------------------------------
+# Title-based tag enrichment — maps keywords in event titles to semantic tags
+# ---------------------------------------------------------------------------
+_TITLE_TAG_MAP: dict[str, list[str]] = {
+    "jazz": ["jazz", "music", "live music"],
+    "rock": ["rock", "music", "concert"],
+    "samba": ["samba", "music", "cultural", "brazilian"],
+    "mpb": ["mpb", "music", "cultural", "brazilian"],
+    "bossa nova": ["bossa nova", "music", "cultural", "romantic"],
+    "teatro": ["theater", "performance", "art"],
+    "peça": ["theater", "performance", "art"],
+    "espetáculo": ["performance", "art", "show"],
+    "espetaculo": ["performance", "art", "show"],
+    "exposição": ["exhibition", "art", "museum", "cultural"],
+    "exposicao": ["exhibition", "art", "museum", "cultural"],
+    "galeria": ["gallery", "art", "cultural"],
+    "cinema": ["cinema", "movie", "film"],
+    "filme": ["cinema", "movie", "film"],
+    "ballet": ["ballet", "dance", "performance", "art"],
+    "balé": ["ballet", "dance", "performance", "art"],
+    "bale": ["ballet", "dance", "performance", "art"],
+    "dança": ["dance", "performance", "art"],
+    "danca": ["dance", "performance", "art"],
+    "workshop": ["workshop", "education", "interactive"],
+    "curso": ["course", "education", "learning"],
+    "aula": ["course", "education", "learning"],
+    "show": ["show", "concert", "live music"],
+    "festival": ["festival", "cultural", "outdoor"],
+    "feira": ["fair", "market", "outdoor"],
+    "mercado": ["market", "outdoor", "food"],
+    "palestra": ["talk", "lecture", "intellectual"],
+    "debate": ["debate", "intellectual", "talk"],
+    "gastronomia": ["gastronomy", "food", "dining"],
+    "culinária": ["food", "cooking", "gastronomy"],
+    "culinaria": ["food", "cooking", "gastronomy"],
+    "arte": ["art", "cultural", "creative"],
+    "música": ["music", "concert"],
+    "musica": ["music", "concert"],
+    "museu": ["museum", "cultural", "educational"],
+    "clássico": ["classical", "music", "cultural", "intellectual"],
+    "classico": ["classical", "music", "cultural", "intellectual"],
+    "orquestra": ["orchestra", "classical", "music", "cultural", "intellectual"],
+    "ópera": ["opera", "classical", "music", "cultural"],
+    "opera": ["opera", "classical", "music", "cultural"],
+    "yoga": ["yoga", "wellness", "health", "quiet"],
+    "meditação": ["meditation", "wellness", "quiet"],
+    "meditacao": ["meditation", "wellness", "quiet"],
+    "stand-up": ["comedy", "stand-up", "fun", "humor"],
+    "comédia": ["comedy", "fun", "humor"],
+    "comedia": ["comedy", "fun", "humor"],
+    "humor": ["comedy", "fun", "humor"],
+    "infantil": ["kids", "family", "children"],
+    "família": ["family", "kids"],
+    "familia": ["family", "kids"],
+    "fotografia": ["photography", "art", "cultural"],
+    "literatura": ["literature", "intellectual", "cultural"],
+    "poesia": ["poetry", "literature", "intellectual"],
+    "livraria": ["bookstore", "literature", "quiet"],
+    "noite": ["night", "evening"],
+    "gratuito": ["free", "gratis"],
+    "gratuita": ["free", "gratis"],
+    "grátis": ["free", "gratis"],
+    "gratis": ["free", "gratis"],
+    "romântico": ["romantic"],
+    "romantico": ["romantic"],
+    "íntimo": ["intimate", "quiet", "small"],
+    "intimo": ["intimate", "quiet", "small"],
+    "ao ar livre": ["outdoor", "nature"],
+    "parque": ["park", "outdoor", "nature"],
+    "thriller": ["thriller", "suspense", "intellectual"],
+    "terror": ["horror", "thriller"],
+    "ficção": ["sci-fi", "fiction", "intellectual"],
+    "ficcao": ["sci-fi", "fiction", "intellectual"],
+    "ciência": ["science", "intellectual", "educational"],
+    "ciencia": ["science", "intellectual", "educational"],
+    "tecnologia": ["technology", "science", "intellectual"],
+    "psicologia": ["psychology", "intellectual"],
+    "filosofia": ["philosophy", "intellectual"],
+    "astronomia": ["astronomy", "science", "intellectual"],
+    "vinho": ["wine", "gastronomy", "romantic"],
+    "cerveja": ["beer", "casual"],
+    "jantar": ["dinner", "dining", "romantic"],
+    "almoço": ["lunch", "dining"],
+    "almoco": ["lunch", "dining"],
+    "café": ["cafe", "cozy", "quiet"],
+    "cafe": ["cafe", "cozy", "quiet"],
+    "degustação": ["tasting", "food", "gastronomy"],
+    "degustacao": ["tasting", "food", "gastronomy"],
+    "imersivo": ["immersive", "experience", "interactive"],
+    "imersão": ["immersive", "experience", "interactive"],
+    "imersao": ["immersive", "experience", "interactive"],
+    "experiência": ["experience", "interactive"],
+    "experiencia": ["experience", "interactive"],
+}
+
+
+def enrich_tags_from_title(title: str, base_tags: list[str]) -> list[str]:
+    """Enrich tags by detecting keywords in the event title."""
+    tags: set[str] = {t.lower() for t in base_tags}
+    title_lower = title.lower()
+    for keyword, new_tags in _TITLE_TAG_MAP.items():
+        if keyword in title_lower:
+            tags.update(new_tags)
+    return sorted(tags)
+
+
+# ---------------------------------------------------------------------------
+
 VENUE_COORDS: dict[str, tuple[float, float]] = {
     "masp": (-23.561399, -46.655881),
     "ims paulista": (-23.561700, -46.656600),

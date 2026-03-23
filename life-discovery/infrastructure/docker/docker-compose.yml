@@ -1,4 +1,6 @@
-﻿services:
+version: "3.9"
+
+services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
@@ -9,6 +11,14 @@
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
 
   context-engine:
     build:
@@ -139,6 +149,7 @@
       POSTGRES_PASSWORD: life
       POSTGRES_DB: life_discovery
       INTERVAL_SECONDS: 21600
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
     depends_on:
       - postgres
       - api
@@ -160,3 +171,4 @@
 
 volumes:
   pg_data:
+  redis_data:

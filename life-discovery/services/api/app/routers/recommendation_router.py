@@ -1,4 +1,5 @@
-from datetime import datetime
+import random
+from datetime import datetime, timezone
 import re
 
 from sqlalchemy import select
@@ -6,6 +7,11 @@ from sqlalchemy.orm import Session
 
 from ..life_graph import find_related_experiences
 from ..models import CoupleProfile, Experience, UserPreference
+
+# Epsilon-greedy exploration: probability of showing a "discovery" item
+# (new event with < 48h of age) regardless of its score.
+_EXPLORATION_EPSILON = 0.10  # 10% of slots reserved for new/unseen items
+_EXPLORATION_MAX_AGE_HOURS = 72  # events younger than this are "new"
 
 DOMAIN_CATEGORIES = {
     "dining_out": {"restaurant", "cafe"},
@@ -296,9 +302,34 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
         ranked.append((round(score, 4), reason, exp_domain, exp))
 
     ranked.sort(key=lambda x: x[0], reverse=True)
+
+    # Reserve a small slice of the feed for recent discoveries so the app
+    # does not become a loop of the exact same popular items.
+    exploration_slots = max(1, int(limit * _EXPLORATION_EPSILON))
+    main_slots = max(0, limit - exploration_slots)
+
+    now_utc = datetime.now(timezone.utc)
+    main_results = []
+    exploration_candidates = []
+
+    for item in ranked:
+        _, _, _, exp = item
+        exp_age_hours = (
+            (now_utc - exp.created_at.replace(tzinfo=timezone.utc)).total_seconds() / 3600
+            if getattr(exp, "created_at", None)
+            else 9999
+        )
+        if exp_age_hours <= _EXPLORATION_MAX_AGE_HOURS:
+            exploration_candidates.append(item)
+        else:
+            main_results.append(item)
+
+    random.shuffle(exploration_candidates)
+    merged = main_results[:main_slots] + exploration_candidates[:exploration_slots]
+
     deduped = []
     seen_keys: set[str] = set()
-    for item in ranked:
+    for item in merged:
         _, _, _, exp = item
         dedupe_key = _normalize_text(f"{exp.title or ''} {exp.location or ''}")
         if not dedupe_key or dedupe_key in seen_keys:
@@ -308,4 +339,16 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
         if len(deduped) >= limit:
             break
 
-    return deduped
+    if len(deduped) < limit:
+        for item in ranked:
+            _, _, _, exp = item
+            dedupe_key = _normalize_text(f"{exp.title or ''} {exp.location or ''}")
+            if not dedupe_key or dedupe_key in seen_keys:
+                continue
+            seen_keys.add(dedupe_key)
+            deduped.append(item)
+            if len(deduped) >= limit:
+                break
+
+    deduped.sort(key=lambda x: x[0], reverse=True)
+    return deduped[:limit]
