@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -13,9 +14,54 @@ DOMAIN_CATEGORIES = {
     "events_exhibitions": {"event", "exhibition", "museum"},
 }
 
+NEGATIVE_KEYWORDS = {
+    "conference",
+    "conferência",
+    "summit",
+    "curso",
+    "workshop",
+    "imersão",
+    "bootcamp",
+    "certification",
+    "training",
+    "cadaver",
+    "lab",
+}
+
+QUIET_POSITIVE = {"cozy", "quiet", "calm", "intimista", "romantic", "romântico", "café", "cafe", "livraria", "museum", "museu", "cinema"}
+BAR_WORDS = {"bar", "wine", "vinho", "drinks", "beer", "cerveja", "cocktail"}
+QUALITY_KEYWORDS = {
+    "michelin",
+    "art house",
+    "cultural icon",
+    "special occasion",
+    "favorite",
+    "film lovers",
+    "museum",
+    "theatre",
+    "planetarium",
+}
+
 
 def _norm_tokens(values: list[str] | None) -> set[str]:
     return {str(v).strip().lower() for v in (values or []) if str(v).strip()}
+
+
+def _normalize_text(value: str | None) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", (value or "").lower())).strip()
+
+
+def _tokenize_experience(exp: Experience) -> set[str]:
+    joined = " ".join(
+        [
+            exp.title or "",
+            exp.description or "",
+            exp.category or "",
+            exp.location or "",
+            " ".join(str(t) for t in (exp.tags or [])),
+        ]
+    )
+    return set(_normalize_text(joined).split())
 
 
 def _get_domain(exp: Experience) -> str:
@@ -39,6 +85,55 @@ def _safe_list(data: dict, path: list[str]) -> list[str]:
     return [str(x).lower() for x in node]
 
 
+def _safe_strings(value) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(x).strip().lower() for x in value if str(x).strip()]
+
+
+def _extract_profile_signals(profile_json: dict) -> set[str]:
+    if not isinstance(profile_json, dict):
+        return set()
+
+    dining = profile_json.get("dining", {}) if isinstance(profile_json.get("dining"), dict) else {}
+    interests = profile_json.get("interests", {}) if isinstance(profile_json.get("interests"), dict) else {}
+    culture = profile_json.get("culture", {}) if isinstance(profile_json.get("culture"), dict) else {}
+    lifestyle = profile_json.get("lifestyle", {}) if isinstance(profile_json.get("lifestyle"), dict) else {}
+
+    dining_out = dining.get("dining_out", []) if isinstance(dining.get("dining_out"), list) else []
+    dining_names = [str(item.get("name", "")).strip().lower() for item in dining_out if isinstance(item, dict)]
+    dining_dishes = [str(dish).strip().lower() for item in dining_out if isinstance(item, dict) for dish in (item.get("dishes") or [])]
+
+    cinema = interests.get("cinema", {}) if isinstance(interests.get("cinema"), dict) else {}
+    cinema_titles = _safe_strings(cinema.get("favorite_titles"))
+    cinema_style = _safe_strings(cinema.get("favorite_style"))
+    series = _safe_strings(interests.get("series"))
+    topics = _safe_strings(interests.get("topics"))
+    likes = _safe_strings(dining.get("likes"))
+    delivery = _safe_strings(dining.get("delivery"))
+    wishlist = _safe_strings(culture.get("wishlist"))
+    liked_exhibitions = _safe_strings(culture.get("liked_exhibitions"))
+    lifestyle_prefs = _safe_strings(lifestyle.get("preferences"))
+    bookstore = str(dining.get("favorite_bookstore", "")).strip().lower()
+
+    combined = set(
+        dining_names
+        + dining_dishes
+        + cinema_titles
+        + cinema_style
+        + series
+        + topics
+        + likes
+        + delivery
+        + wishlist
+        + liked_exhibitions
+        + lifestyle_prefs
+    )
+    if bookstore:
+        combined.add(bookstore)
+    return combined
+
+
 def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain: str | None = None, context: dict | None = None):
     context = context or {}
 
@@ -58,9 +153,11 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
     avoid_bar = bool(lifestyle.get("avoid_bar", True))
     avoid_nightclub = bool(lifestyle.get("avoid_nightclub", True))
     avoid_rain = bool(location.get("avoid_going_out_when_rain", True))
+    max_drive_minutes = int(location.get("max_drive_minutes", 40) or 40)
 
     allergies = _norm_tokens(_safe_list(profile_json, ["health", "allergies", "camila"]))
     style_prefs = _norm_tokens(lifestyle.get("preferences", []))
+    profile_signals = _extract_profile_signals(profile_json)
 
     rows = db.execute(select(Experience).where(Experience.city == city)).scalars().all()
     graph_boost_map = find_related_experiences(db, user_id, rows)
@@ -74,9 +171,24 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
     for exp in rows:
         exp_domain = _get_domain(exp)
         exp_tags = [str(t).lower() for t in (exp.tags or [])]
-        tag_set = set(exp_tags)
+        token_set = _tokenize_experience(exp)
+        tag_set = set(exp_tags).union(token_set)
 
         if domain and exp_domain != domain:
+            continue
+
+        if NEGATIVE_KEYWORDS.intersection(tag_set):
+            continue
+
+        category = (exp.category or "").lower()
+
+        if avoid_bar and (category == "bar" or BAR_WORDS.intersection(tag_set)):
+            continue
+
+        if avoid_nightclub and category in {"club", "nightlife"}:
+            continue
+
+        if avoid_crowded and ({"crowded", "loud", "busy", "lotado"}.intersection(tag_set) or category in {"club", "nightlife"}):
             continue
 
         total = sum(weights.values()) or 1.0
@@ -100,10 +212,46 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
         if "instagrammable" in style_prefs and "instagrammable" in tag_set:
             score += 0.04
 
-        if avoid_crowded and ({"crowded", "loud", "busy"}.intersection(tag_set) or (exp.category or "").lower() in {"club", "nightlife"}):
+        matched_signals = {signal for signal in profile_signals if signal and _normalize_text(signal) in " ".join(sorted(tag_set))}
+        if matched_signals:
+            score += min(0.32, 0.08 + len(matched_signals) * 0.04)
+
+        if (exp.source or "").startswith("curated_"):
+            score += 0.18
+
+        if exp.content_tier == "signature":
+            score += 0.12
+        elif exp.content_tier == "curated":
+            score += 0.08
+
+        if exp.quality_score:
+            score += min(0.18, max(0.0, float(exp.quality_score) / 500.0))
+
+        if QUALITY_KEYWORDS.intersection(tag_set):
+            score += 0.08
+
+        if QUIET_POSITIVE.intersection(tag_set):
+            score += 0.08
+
+        if exp_domain == "dining_out" and {"restaurant", "jantar", "massa", "pizza", "japanese", "japonês"}.intersection(tag_set):
+            score += 0.08
+
+        if exp_domain == "movies_series" and {"cinema", "series", "filme", "movie", "plot", "twist", "suspense"}.intersection(tag_set):
+            score += 0.1
+
+        if exp_domain == "events_exhibitions" and {"museum", "museu", "exposição", "ims", "masp", "theatro", "planetario", "planetário"}.intersection(tag_set):
+            score += 0.1
+
+        if avoid_crowded and ({"crowded", "loud", "busy"}.intersection(tag_set) or category in {"club", "nightlife"}):
             score -= 0.45
 
-        if (avoid_bar and (exp.category or "").lower() == "bar") or (avoid_nightclub and (exp.category or "").lower() in {"club", "nightlife"}):
+        if avoid_bar and category == "bar":
+            score -= 0.6
+
+        if avoid_bar and BAR_WORDS.intersection(tag_set):
+            score -= 0.35
+
+        if avoid_nightclub and category in {"club", "nightlife"}:
             score -= 0.6
 
         if allergies and allergies.intersection(tag_set):
@@ -115,8 +263,17 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
             if exp_domain in {"delivery", "movies_series"}:
                 score += 0.2
 
+        if weather == "rain" and (exp.indoor_outdoor or "") == "indoor":
+            score += 0.08
+
+        if exp_domain == "delivery" and exp.availability_kind == "delivery":
+            score += 0.05
+
         if exp_domain == "delivery":
             score += 0.05
+
+        if max_drive_minutes <= 30 and {"centro", "luz"}.intersection(tag_set):
+            score -= 0.08
 
         # Life Graph boost from connected interests.
         graph_boost = float(graph_boost_map.get(exp.id, 0.0))
@@ -124,7 +281,10 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
             score += min(0.45, graph_boost * 0.08)
 
         reason = "Matches your couple preferences"
-        if graph_boost > 0:
+        if matched_signals:
+            sample = sorted(matched_signals)[0]
+            reason = f"Matches a real couple preference signal like {sample}"
+        elif graph_boost > 0:
             reason = "Boosted by Life Graph connected interests"
         if allergies and allergies.intersection(tag_set):
             reason = "Penalized due to allergy risk"
@@ -136,4 +296,16 @@ def recommend_for_user(user_id: str, city: str, limit: int, db: Session, domain:
         ranked.append((round(score, 4), reason, exp_domain, exp))
 
     ranked.sort(key=lambda x: x[0], reverse=True)
-    return ranked[:limit]
+    deduped = []
+    seen_keys: set[str] = set()
+    for item in ranked:
+        _, _, _, exp = item
+        dedupe_key = _normalize_text(f"{exp.title or ''} {exp.location or ''}")
+        if not dedupe_key or dedupe_key in seen_keys:
+            continue
+        seen_keys.add(dedupe_key)
+        deduped.append(item)
+        if len(deduped) >= limit:
+            break
+
+    return deduped

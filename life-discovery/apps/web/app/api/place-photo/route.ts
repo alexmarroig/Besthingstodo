@@ -30,6 +30,8 @@ const STOPWORDS = new Set([
   "o"
 ]);
 
+const ALLOWED_HOSTS = new Set(["pt.wikipedia.org", "commons.wikimedia.org"]);
+
 function normalizeText(value: string) {
   return value
     .toLowerCase()
@@ -62,6 +64,10 @@ function scoreMatch(target: string, queryTokens: string[]) {
 }
 
 async function fetchJson(url: string) {
+  const parsed = new URL(url);
+  if (!ALLOWED_HOSTS.has(parsed.hostname)) {
+    return null;
+  }
   const res = await fetch(url, {
     headers: { "User-Agent": "LifeDiscovery/1.0 (image-discovery)" },
     next: { revalidate: 21600 }

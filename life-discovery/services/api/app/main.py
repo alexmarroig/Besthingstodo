@@ -1,5 +1,8 @@
 ﻿from fastapi import FastAPI
+import os
+
 from sqlalchemy import text
+from fastapi.middleware.cors import CORSMiddleware
 
 from .db import engine
 from .models import Base
@@ -17,6 +20,20 @@ from .routers import (
 app = FastAPI(title="Life Discovery API", version="2.2.0")
 
 
+def get_allowed_origins() -> list[str]:
+    raw = os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_allowed_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.on_event("startup")
 def startup() -> None:
     Base.metadata.create_all(bind=engine)
@@ -31,6 +48,15 @@ def startup() -> None:
                 BEGIN
                     IF to_regclass('public.experiences') IS NOT NULL THEN
                         ALTER TABLE experiences ADD COLUMN IF NOT EXISTS domain TEXT DEFAULT 'events_exhibitions';
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS slug TEXT;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS neighborhood TEXT;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS booking_url TEXT;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS editorial_source TEXT;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS content_tier TEXT;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS quality_score DOUBLE PRECISION;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS availability_kind TEXT;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS price_band TEXT;
+                        ALTER TABLE experiences ADD COLUMN IF NOT EXISTS indoor_outdoor TEXT;
                     END IF;
                 END$$;
                 """

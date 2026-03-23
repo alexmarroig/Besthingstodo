@@ -1,176 +1,141 @@
-# LIFE DISCOVERY ENGINE - Architecture
+# LIFE DISCOVERY - Current Architecture
 
-## 1. Full System Architecture
+## 1. Runtime overview
 
-LIFE DISCOVERY ENGINE is designed as a modular platform with specialized services:
+The supported local runtime is the Docker Compose stack in [infrastructure/docker/docker-compose.yml](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/infrastructure/docker/docker-compose.yml).
 
-1. `api` (BFF/API Gateway)
-- Single external REST entrypoint.
-- Auth/session integration point.
-- Orchestrates recommendation, profile updates, discovery runs, and concierge calls.
+Current runtime services:
 
-2. `user-profile-engine`
-- Owns identity profile evolution from behavioral and explicit feedback signals.
-- Maintains preference weights, restrictions, and profile snapshots.
+1. `api`
+- main external REST surface
+- auth, couple profile, onboarding, feedback, context orchestration, and concierge proxy
 
-3. `discovery-engine`
-- Crawls cultural/event sources.
-- Normalizes heterogeneous records into canonical `experiences`.
-- Adds category and cultural-profile metadata.
+2. `context-engine`
+- local context lookup
+- weather and city context enrichment
+
+3. `user-profile-engine`
+- profile generation and profile-serving logic
 
 4. `recommendation-engine`
-- Retrieves candidates from normalized experiences.
-- Computes relevance score using identity + context + temporal constraints.
-- Returns explainable ranked list.
+- recommendation scoring and ranking
 
-5. `concierge-agent`
-- Natural language interface.
-- Interprets user intent (example: "what to do tonight") and transforms to recommendation query.
-- Produces structured suggestions + rationale.
+5. `onboarding-engine`
+- onboarding flows and profile step ingestion
 
-Cross-cutting infrastructure:
-- PostgreSQL + pgvector for relational + vector storage.
-- Redis for queues/caching.
-- Meilisearch for text and faceted search.
-- Docker Compose for local orchestration.
+6. `date-night-ai`
+- date-night plan generation
 
-## 2. Service Boundaries
+7. `ai-concierge`
+- LLM-backed concierge orchestration
 
-### API Gateway (`services/api`)
-Owns:
-- Route surface (`/users`, `/profile`, `/preferences`, `/experiences`, `/recommendations`, `/feedback`, `/discovery`, `/concierge`)
-- Persistence for base entities (`users`, `profiles`, `feedback`, `experiences`)
-- Inter-service orchestration
+8. `postgres`
+- primary relational store
 
-Does not own:
-- Ranking logic internals
-- Crawler internals
-- Profile learning internals
+9. `crawler`
+- event ingestion worker
 
-### User Profile Engine (`services/user-profile-engine`)
-Owns:
-- Profile adaptation policy
-- Preference weights and confidence evolution
-- Profile snapshot serving for ranker
+10. `user-learning-engine`
+- background learning loop
 
-Does not own:
-- Experience ingestion
-- UI contracts
+Important naming note:
+- code directories are canonical in `snake_case`
+- Docker service names remain in `kebab-case`
 
-### Discovery Engine (`services/discovery-engine`)
-Owns:
-- Connectors (Sympla, Eventbrite, Fever starter)
-- Extraction/normalization/classification
-- Canonical upsert of discovered experiences
-
-Does not own:
-- User-specific ranking
-
-### Recommendation Engine (`services/recommendation-engine`)
-Owns:
-- Candidate scoring
-- Context-aware ranking
-- Explainability payload fields (`why`)
-
-Does not own:
-- Natural language dialogue
-
-### Concierge Agent (`services/concierge-agent`)
-Owns:
-- Query interpretation and response composition
-- Human-friendly explanation layer
-
-Does not own:
-- Raw model retraining pipelines
-
-## 3. Database Design
-
-Core tables:
-
-1. `users`
-- identity and location baseline
-
-2. `profiles`
-- lifestyle/values/cultural preferences and restrictions JSON
-
-3. `experiences`
-- canonical normalized entity:
-  - `id`, `title`, `description`, `category`, `tags`
-  - location (`city`, `neighborhood`)
-  - time (`start_at`)
-  - price (`price_min`, `price_max`)
-  - `source`, `metadata_json`
-
-4. `feedback`
-- explicit interaction signals: like/dislike + reason
-
-5. `user_preference_weights`
-- long-term evolving weights per domain/topic with confidence
-
-Scalability notes:
-- Partition `feedback` by month and hash(user_id) at scale.
-- Add pgvector columns for user/item embeddings in v2.
-- Add materialized feature snapshots for low-latency ranking.
-
-## 4. ML / Recommendation Strategy
-
-Current MVP strategy:
-1. Build user signal tokens from profile weights.
-2. Candidate set from city-filtered experiences.
-3. Score with hybrid function:
-- semantic token overlap (proxy embedding similarity)
-- context boosts (daypart/weather)
-- temporal relevance
-- hard penalties for avoided categories (bar/club/nightlife)
-
-Target production strategy:
-1. Replace token overlap with real embedding cosine (`user_embedding` x `experience_embedding`).
-2. Add learning-to-rank model (LightGBM/XGBoost).
-3. Add exploration policy (contextual bandit).
-4. Continual updates from explicit and implicit feedback stream.
-
-## 5. API Design
-
-External REST routes via gateway:
-- `POST /users`
-- `GET /users/{user_id}`
-- `POST /profile`
-- `GET /profile/{user_id}`
-- `GET /preferences/{user_id}`
-- `GET /experiences`
-- `POST /recommendations`
-- `POST /feedback`
-- `POST /discovery/run`
-- `POST /concierge`
-
-Internal service routes:
-- `user-profile-engine`: `POST /feedback`, `GET /profiles/{user_id}`
-- `recommendation-engine`: `POST /recommendations`
-- `discovery-engine`: `POST /crawl/run`
-- `concierge-agent`: `POST /concierge/respond`
-
-## 6. Repository Structure
+## 2. Canonical repository structure
 
 ```text
 /life-discovery
   /apps
     /web
-    /mobile
+    /mobile                # placeholder only
   /services
     /api
-    /recommendation-engine
-    /discovery-engine
-    /user-profile-engine
-    /concierge-agent
+    /context_engine
+    /user_profile_engine
+    /recommendation_engine
+    /onboarding_engine
+    /date_night_ai
+    /ai_concierge
+    /user_learning_engine
+    /discovery_engine      # ingestion library/shared crawler logic
+  /workers
+    /event_crawler
   /packages
-    /ui-components
-    /shared-types
-    /utils
   /infrastructure
     /docker
-    /terraform
   /scripts
   /docs
 ```
 
-This structure enforces clear bounded contexts while keeping shared frontend artifacts in dedicated packages.
+See [docs/source-of-truth.md](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/docs/source-of-truth.md) for the canonical-vs-legacy policy.
+
+## 3. Frontend architecture
+
+The main product UI lives in [apps/web](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web).
+
+Key areas:
+- [apps/web/app/home/page.tsx](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/app/home/page.tsx): curated day brief
+- [apps/web/app/watch/page.tsx](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/app/watch/page.tsx): films and series flow
+- [apps/web/app/map/page.tsx](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/app/map/page.tsx): neighborhoods and movement
+- [apps/web/app/concierge/page.tsx](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/app/concierge/page.tsx): structured concierge UI
+- [apps/web/app/date-night/page.tsx](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/app/date-night/page.tsx): date-night plan
+- [apps/web/app/profile/page.tsx](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/app/profile/page.tsx): couple adjustments
+- [apps/web/app/onboarding/page.tsx](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/app/onboarding/page.tsx): guided setup
+
+Core frontend data flow:
+- [apps/web/lib/api.ts](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/lib/api.ts)
+- [apps/web/lib/curation.ts](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/lib/curation.ts)
+- [apps/web/lib/mock-data.ts](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/lib/mock-data.ts)
+- [apps/web/lib/storage.ts](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/apps/web/lib/storage.ts)
+
+Important implementation detail:
+- the frontend has a strong fallback mode and can render curated local data even when backend services are unavailable
+
+## 4. Backend architecture
+
+### API gateway
+
+[services/api](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api) is the main integration point.
+
+Important files:
+- [services/api/app/main.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/main.py)
+- [services/api/app/config.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/config.py)
+- [services/api/app/routers/auth_router.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/routers/auth_router.py)
+- [services/api/app/routers/couple_router.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/routers/couple_router.py)
+- [services/api/app/routers/context_router.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/routers/context_router.py)
+- [services/api/app/routers/experience_router.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/routers/experience_router.py)
+- [services/api/app/routers/concierge.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/routers/concierge.py)
+
+### Supporting services
+
+- [services/context_engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/context_engine)
+- [services/user_profile_engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/user_profile_engine)
+- [services/recommendation_engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/recommendation_engine)
+- [services/onboarding_engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/onboarding_engine)
+- [services/date_night_ai](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/date_night_ai)
+- [services/ai_concierge](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/ai_concierge)
+- [services/user_learning_engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/user_learning_engine)
+
+### Ingestion
+
+[workers/event_crawler](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/workers/event_crawler) is the active worker path.
+
+[services/discovery_engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/discovery_engine) remains relevant as ingestion support code, but it is not the canonical standalone runtime service.
+
+## 5. Legacy and duplicate paths
+
+These directories exist, but should not be used as the default edit targets for new work:
+
+- [services/recommendation-engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/recommendation-engine)
+- [services/user-profile-engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/user-profile-engine)
+- [services/discovery-engine](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/discovery-engine)
+- [services/concierge-agent](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/concierge-agent)
+
+These legacy directories are the main source of repository ambiguity today.
+
+## 6. Current limitations
+
+- The repository still contains duplicate legacy services next to canonical ones.
+- [docs/api.md](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/docs/api.md) is thinner than the actual API surface.
+- The old discovery router path in [services/api/app/routers/discovery.py](/C:/Users/gaming/Desktop/Projetos/Besthingstodo/life-discovery/services/api/app/routers/discovery.py) appears orphaned and is not part of the active API wiring.

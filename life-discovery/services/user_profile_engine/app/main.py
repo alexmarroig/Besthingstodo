@@ -1,8 +1,10 @@
 from collections import defaultdict
 from datetime import datetime
+import os
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import delete, desc, select
 from sqlalchemy.orm import Session
 
@@ -12,6 +14,20 @@ from .models import Interaction, UserPreference, UserProfile
 from .schemas import ProfileGenerateIn
 
 app = FastAPI(title="User Profile Engine", version="1.0.0")
+
+
+def get_allowed_origins() -> list[str]:
+    raw = os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_allowed_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")

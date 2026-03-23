@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 
+def _item_key(item: dict[str, Any]) -> str:
+    return str(item.get("title") or item.get("id") or "").strip().lower()
+
+
 def score_item(item: dict[str, Any], profile: dict, weather: str, time_pref: str, kind: str) -> float:
     tags = [str(t).lower() for t in (item.get("tags") or [])]
     cat = str(item.get("category") or "").lower()
@@ -38,9 +42,19 @@ def score_item(item: dict[str, Any], profile: dict, weather: str, time_pref: str
     return score
 
 
-def pick_best(items: list[dict], profile: dict, weather: str, time_pref: str, kind: str) -> dict | None:
+def pick_best(
+    items: list[dict],
+    profile: dict,
+    weather: str,
+    time_pref: str,
+    kind: str,
+    exclude_keys: set[str] | None = None,
+) -> dict | None:
     if not items:
         return None
-    scored = [(score_item(i, profile, weather, time_pref, kind), i) for i in items]
+    exclude_keys = exclude_keys or set()
+    scored = [(score_item(i, profile, weather, time_pref, kind), i) for i in items if _item_key(i) not in exclude_keys]
+    if not scored:
+        return None
     scored.sort(key=lambda x: x[0], reverse=True)
     return scored[0][1]

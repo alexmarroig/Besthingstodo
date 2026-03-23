@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..application.catalog_queries import build_experience_out, build_recommendation_out, fetch_city_experiences
 from ..db import get_db
 from ..deps import get_current_user
-from ..models import Experience, User
+from ..models import User
 from ..schemas import ExperienceOut, RecommendationOut
 from .recommendation_router import recommend_for_user
 
@@ -18,27 +18,13 @@ def experiences(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    rows = db.execute(select(Experience).where(Experience.city == city)).scalars().all()
+    rows = fetch_city_experiences(db, city)
     result = []
     for x in rows:
         exp_domain = x.domain or "events_exhibitions"
         if domain and exp_domain != domain:
             continue
-        result.append(
-            ExperienceOut(
-                id=x.id,
-                title=x.title,
-                description=x.description,
-                category=x.category,
-                domain=exp_domain,
-                city=x.city,
-                location=x.location,
-                start_time=x.start_time,
-                price=x.price,
-                tags=x.tags or [],
-                source=x.source,
-            )
-        )
+        result.append(build_experience_out(x, exp_domain))
     return result
 
 
@@ -64,21 +50,4 @@ def recommendations(
         context["hour"] = hour
 
     ranked = recommend_for_user(user.id, city, limit, db, domain=domain, context=context)
-    return [
-        RecommendationOut(
-            id=exp.id,
-            title=exp.title,
-            description=exp.description,
-            category=exp.category,
-            domain=exp_domain,
-            city=exp.city,
-            location=exp.location,
-            start_time=exp.start_time,
-            price=exp.price,
-            tags=exp.tags or [],
-            source=exp.source,
-            score=score,
-            reason=reason,
-        )
-        for score, reason, exp_domain, exp in ranked
-    ]
+    return [build_recommendation_out(exp, exp_domain, score, reason) for score, reason, exp_domain, exp in ranked]

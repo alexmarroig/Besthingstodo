@@ -96,12 +96,24 @@ class ExperienceOut(BaseModel):
     description: str
     category: str
     domain: str = "events_exhibitions"
+    slug: str | None = None
     city: str
     location: str
+    neighborhood: str | None = None
     start_time: datetime | None = None
     price: float | None = None
+    price_band: str | None = None
     tags: list[str] = Field(default_factory=list)
     source: str
+    url: str | None = None
+    booking_url: str | None = None
+    editorial_source: str | None = None
+    content_tier: str | None = None
+    quality_score: float | None = None
+    availability_kind: str | None = None
+    indoor_outdoor: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class RecommendationOut(ExperienceOut):

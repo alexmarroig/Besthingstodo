@@ -9,6 +9,12 @@ class Base(DeclarativeBase):
     pass
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+
+
 class UserPreference(Base):
     __tablename__ = "user_preferences"
 

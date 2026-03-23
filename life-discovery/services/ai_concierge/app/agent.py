@@ -80,6 +80,8 @@ def run_agent(user_id: str, message: str, db: Session) -> dict:
     exclude_titles = extract_recent_titles(recent)
 
     candidates = get_recommendations(message, context.get("city", city), db, profile=profile, exclude_titles=exclude_titles)
+    if not candidates and exclude_titles:
+        candidates = get_recommendations(message, context.get("city", city), db, profile=profile, exclude_titles=set())
 
     llm_response = _call_llm(message, profile, context, candidates)
     if llm_response and isinstance(llm_response, dict) and isinstance(llm_response.get("suggestions"), list):

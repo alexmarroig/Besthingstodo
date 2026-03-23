@@ -1,4 +1,7 @@
+import os
+
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -8,6 +11,20 @@ from .planner import pick_best
 from .schemas import DateNightIn, DateNightPlan
 
 app = FastAPI(title="Date Night AI", version="1.0.0")
+
+
+def get_allowed_origins() -> list[str]:
+    raw = os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_allowed_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
@@ -45,9 +62,17 @@ def date_night_plan(payload: DateNightIn, db: Session = Depends(get_db)):
     weather = payload.weather or "unknown"
     time_pref = payload.time or "evening"
 
-    a1 = pick_best(cultural_pool or items, profile, weather, time_pref, "cultural")
-    a2 = pick_best(restaurant_pool or items, profile, weather, time_pref, "restaurant")
-    a3 = pick_best(after_pool or items, profile, weather, time_pref, "after")
+    used_keys: set[str] = set()
+
+    a1 = pick_best(cultural_pool or items, profile, weather, time_pref, "cultural", exclude_keys=used_keys)
+    if a1:
+        used_keys.add(str(a1.get("title") or a1.get("id") or "").strip().lower())
+
+    a2 = pick_best(restaurant_pool or items, profile, weather, time_pref, "restaurant", exclude_keys=used_keys)
+    if a2:
+        used_keys.add(str(a2.get("title") or a2.get("id") or "").strip().lower())
+
+    a3 = pick_best(after_pool or items, profile, weather, time_pref, "after", exclude_keys=used_keys)
 
     if not a1 or not a2 or not a3:
         raise HTTPException(status_code=404, detail="insufficient experiences for planning")

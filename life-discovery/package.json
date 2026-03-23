@@ -3,7 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "catalog:seed": "python scripts/seed_couple_profile.py",
+    "catalog:refresh": "python scripts/catalog_pipeline.py refresh",
+    "catalog:validate": "python scripts/catalog_pipeline.py validate",
+    "dev:validate": "pnpm build:web && python scripts/catalog_pipeline.py validate",
     "dev:web": "pnpm --filter @life/web dev",
-    "build:web": "pnpm --filter @life/web build"
+    "build:web": "pnpm --filter @life/web build",
+    "test:e2e": "python scripts/seed_couple_profile.py && python scripts/smoke_couple_flow.py",
+    "test:smoke:couple": "python scripts/seed_couple_profile.py && python scripts/smoke_couple_flow.py",
+    "validate": "pnpm dev:validate && pnpm test:smoke:couple"
   }
 }

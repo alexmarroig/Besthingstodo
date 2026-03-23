@@ -7,6 +7,8 @@ import requests
 from passlib.context import CryptContext
 from sqlalchemy import create_engine, text
 
+from catalog_pipeline import dedupe_catalog, load_curated_catalog as load_canonical_catalog
+
 try:
     from sentence_transformers import SentenceTransformer
 except Exception:  # pragma: no cover
@@ -87,6 +89,27 @@ def ensure_schema(conn) -> None:
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
                 PRIMARY KEY (user_id, domain)
             )
+            """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
+            DO $$
+            BEGIN
+                IF to_regclass('public.experiences') IS NOT NULL THEN
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS slug TEXT;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS neighborhood TEXT;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS booking_url TEXT;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS editorial_source TEXT;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS content_tier TEXT;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS quality_score DOUBLE PRECISION;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS availability_kind TEXT;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS price_band TEXT;
+                    ALTER TABLE experiences ADD COLUMN IF NOT EXISTS indoor_outdoor TEXT;
+                END IF;
+            END$$;
             """
         )
     )
@@ -613,87 +636,78 @@ def upsert_life_graph_initial(conn, user_id: str) -> None:
     add_edge(couple, park, "likes", 0.95)
 
 
+def load_curated_catalog() -> list[dict]:
+    return dedupe_catalog(load_canonical_catalog())
+
+
 def seed_experiences_for_recommendation_test(conn) -> None:
-    conn.execute(text("DELETE FROM experiences WHERE source = 'seed_real_couple'"))
+    conn.execute(
+        text(
+            """
+            DELETE FROM interactions
+            WHERE experience_id IN (
+                SELECT id
+                FROM experiences
+                WHERE source IN ('seed_real_couple', 'curated_sao_paulo', 'smoke_validation')
+            )
+            """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
+            DELETE FROM experiences
+            WHERE source IN ('seed_real_couple', 'curated_sao_paulo', 'smoke_validation')
+            """
+        )
+    )
 
     now = datetime.utcnow()
-    test_experiences = [
-        {
-            "title": "Lellis Trattoria - jantar romantico",
-            "description": "Mesa tranquila para casal e pratos italianos.",
-            "category": "restaurant",
-            "domain": "dining_out",
-            "location": "Bela Vista",
-            "tags": ["romantic", "cozy", "italian", "quiet"],
-            "price": 220.0,
-        },
-        {
-            "title": "Patties Delivery Night",
-            "description": "Cheeseburger e batatas para noite de chuva.",
-            "category": "delivery",
-            "domain": "delivery",
-            "location": "Campo Belo",
-            "tags": ["delivery", "burger", "rain_friendly", "cozy"],
-            "price": 85.0,
-        },
-        {
-            "title": "Movie Night - Plot Twist Collection",
-            "description": "Selecao de filmes com misterio e plot twist.",
-            "category": "movie",
-            "domain": "movies_series",
-            "location": "Home streaming",
-            "tags": ["mystery", "psychological thriller", "plot twist", "indoor"],
-            "price": 0.0,
-        },
-        {
-            "title": "Exposicao de Psicologia Contemporanea",
-            "description": "Instalacao artistica inspirada em psicologia.",
-            "category": "exhibition",
-            "domain": "events_exhibitions",
-            "location": "Pinheiros",
-            "tags": ["psychology exhibitions", "art installations", "museum events", "indoor"],
-            "price": 70.0,
-        },
-        {
-            "title": "Bar lotado com musica alta",
-            "description": "Evento noturno lotado.",
-            "category": "bar",
-            "domain": "events_exhibitions",
-            "location": "Vila Madalena",
-            "tags": ["crowded", "loud", "nightlife"],
-            "price": 50.0,
-        },
-    ]
+    curated_rows = load_curated_catalog()
 
     conn.execute(
         text(
             """
             INSERT INTO experiences (
-                id, title, description, category, domain, city, location,
-                start_time, price, tags, source, url, created_at
+                id, title, description, category, domain, slug, city, location, neighborhood, latitude, longitude,
+                start_time, price, price_band, tags, source, url, booking_url, editorial_source,
+                content_tier, quality_score, availability_kind, indoor_outdoor, created_at
             ) VALUES (
-                :id, :title, :description, :category, :domain, :city, :location,
-                :start_time, :price, CAST(:tags AS jsonb), :source, :url, :created_at
+                :id, :title, :description, :category, :domain, :slug, :city, :location, :neighborhood, :latitude, :longitude,
+                :start_time, :price, :price_band, CAST(:tags AS jsonb), :source, :url, :booking_url, :editorial_source,
+                :content_tier, :quality_score, :availability_kind, :indoor_outdoor, :created_at
             )
             """
         ),
         [
             {
                 "id": str(uuid.uuid4()),
-                "title": item["title"],
-                "description": item["description"],
-                "category": item["category"],
-                "domain": item["domain"],
+                "title": item.get("title", ""),
+                "description": item.get("description", ""),
+                "category": item.get("category", "event"),
+                "domain": item.get("domain", "events_exhibitions"),
+                "slug": item.get("slug"),
                 "city": "Sao Paulo",
-                "location": item["location"],
+                "location": item.get("location", ""),
+                "neighborhood": item.get("neighborhood"),
+                "latitude": item.get("latitude"),
+                "longitude": item.get("longitude"),
                 "start_time": now,
-                "price": item["price"],
-                "tags": json.dumps(item["tags"]),
-                "source": "seed_real_couple",
-                "url": "",
+                "price": item.get("price", 0.0),
+                "price_band": item.get("price_band"),
+                "tags": json.dumps(item.get("tags", [])),
+                "source": "curated_sao_paulo",
+                "url": item.get("url", ""),
+                "booking_url": item.get("booking_url"),
+                "editorial_source": item.get("editorial_source"),
+                "content_tier": item.get("content_tier"),
+                "quality_score": item.get("quality_score"),
+                "availability_kind": item.get("availability_kind"),
+                "indoor_outdoor": item.get("indoor_outdoor"),
                 "created_at": now,
             }
-            for item in test_experiences
+            for item in curated_rows
         ],
     )
 

@@ -17,7 +17,17 @@
     "noEmit": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@life/catalog": ["../../packages/catalog/src"],
+      "@life/shared-types": ["../../packages/shared-types/src"],
+      "@life/ui-components": ["../../packages/ui-components/src"],
+      "@life/utils": ["../../packages/utils/src"],
+      "@/components/*": ["./components/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/shared/*": ["./src/shared/*"]
+    }
   },
   "include": [
     "**/*.ts",

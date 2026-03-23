@@ -93,15 +93,30 @@ def _score(exp: dict, query_text: str, profile: dict) -> float:
 def get_recommendations(query: str, city: str, db: Session, profile: dict | None = None, exclude_titles: set[str] | None = None) -> list[dict]:
     profile = profile or {}
     exclude_titles = exclude_titles or set()
+    q = (query or "").lower()
+    avoid_alcohol = any(token in q for token in ["sem alcool", "sem álcool", "nao bebo", "não bebo", "no alcohol"])
+    avoid_crowded = any(token in q for token in ["sem lotacao", "sem lotação", "quiet", "silenc", "calmo", "sem muvuca"])
 
     from .app_api_models import Experience
 
     rows = db.execute(select(Experience).where(Experience.city == city).limit(500)).scalars().all()
     scored = []
+    seen_titles: set[str] = set()
     for r in rows:
         title_low = (r.title or "").strip().lower()
-        if title_low in exclude_titles:
+        if title_low in exclude_titles or title_low in seen_titles:
             continue
+
+        tags = [str(x).lower() for x in (r.tags or [])]
+        category = (r.category or "").lower()
+        haystack = " ".join([title_low, (r.description or "").lower(), " ".join(tags)])
+
+        if avoid_alcohol and (category == "bar" or any(token in haystack for token in ["bar", "wine", "vinho", "beer", "cerveja", "cocktail", "drinks"])):
+            continue
+
+        if avoid_crowded and any(token in haystack for token in ["crowded", "loud", "busy", "lotado", "fila", "muvuca"]):
+            continue
+
         item = {
             "id": r.id,
             "title": r.title,
@@ -114,7 +129,11 @@ def get_recommendations(query: str, city: str, db: Session, profile: dict | None
             "tags": r.tags or [],
             "source": r.source,
         }
-        scored.append((_score(item, query, profile), item))
+        score = _score(item, query, profile)
+        if score <= 0:
+            continue
+        scored.append((score, item))
+        seen_titles.add(title_low)
 
     scored.sort(key=lambda x: x[0], reverse=True)
     return [x[1] for x in scored[:10]]

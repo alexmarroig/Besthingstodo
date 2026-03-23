@@ -1,7 +1,11 @@
+from urllib.parse import urlparse
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    app_env: str = "development"
     postgres_host: str = "postgres"
     postgres_port: int = 5432
     postgres_user: str = "life"
@@ -16,6 +20,14 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @field_validator("context_engine_url", "user_profile_engine_url", "openai_base_url")
+    @classmethod
+    def validate_service_url(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("configured URLs must be absolute http/https URLs")
+        return value
 
     @property
     def database_url(self) -> str:

@@ -1,0 +1,93 @@
+[
+  {
+    "name": "MASP",
+    "kind": "museum",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://masp.org.br/en"
+  },
+  {
+    "name": "IMS Paulista",
+    "kind": "museum",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://ims.com.br/en/unidade/ims-paulista/"
+  },
+  {
+    "name": "REAG Belas Artes",
+    "kind": "cinema",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://www.asas.br.com/reag-belas-artes"
+  },
+  {
+    "name": "Reserva Cultural",
+    "kind": "cinema",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://www.reservacultural.com.br/sao-paulo/"
+  },
+  {
+    "name": "Theatro Municipal de Sao Paulo",
+    "kind": "venue",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://theatromunicipal.org.br/"
+  },
+  {
+    "name": "Planetario Ibirapuera",
+    "kind": "venue",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://prefeitura.sp.gov.br/web/meio_ambiente/umapaz/planetario_ibirapuera/"
+  },
+  {
+    "name": "Pinacoteca de Sao Paulo",
+    "kind": "museum",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://pinacoteca.org.br/"
+  },
+  {
+    "name": "Cinemateca Brasileira",
+    "kind": "cinema",
+    "city": "Sao Paulo",
+    "editorial_source": "official",
+    "source_url": "https://cinemateca.org.br/"
+  },
+  {
+    "name": "michelin",
+    "kind": "editorial",
+    "city": "Sao Paulo",
+    "editorial_source": "editorial",
+    "source_url": "https://guide.michelin.com/"
+  },
+  {
+    "name": "mubi",
+    "kind": "streaming",
+    "city": "Sao Paulo",
+    "editorial_source": "editorial",
+    "source_url": "https://mubi.com/"
+  },
+  {
+    "name": "telecine",
+    "kind": "streaming",
+    "city": "Sao Paulo",
+    "editorial_source": "editorial",
+    "source_url": "https://www.telecine.com.br/"
+  },
+  {
+    "name": "favorite",
+    "kind": "editorial",
+    "city": "Sao Paulo",
+    "editorial_source": "favorite",
+    "source_url": "https://example.com/favorite-editorial-source"
+  },
+  {
+    "name": "editorial",
+    "kind": "editorial",
+    "city": "Sao Paulo",
+    "editorial_source": "editorial",
+    "source_url": "https://example.com/editorial-curation"
+  }
+]

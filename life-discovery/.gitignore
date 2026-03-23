@@ -3,3 +3,6 @@ node_modules
 __pycache__
 *.pyc
 .env
+.codex-runtime
+.playwright-cli
+playwright-report
