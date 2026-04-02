@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
+import { getRecommendationSourceMeta } from "@/shared/source";
 import { sendFeedback } from "../../lib/api";
 import { upsertAgendaItem, upsertSavedItem } from "../../lib/storage";
 import { Recommendation } from "../../lib/types";
@@ -20,7 +21,7 @@ function Icon({ path }: { path: string }) {
 }
 
 function formatMoment(value?: string | null) {
-  if (!value) return "Quando quiserem";
+  if (!value) return "Quando fizer sentido";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -60,18 +61,23 @@ export default function DiscoveryCard({
   const router = useRouter();
   const [status, setStatus] = useState<string>("");
   const [activeAction, setActiveAction] = useState<ActionType | null>(null);
+  const sourceMeta = getRecommendationSourceMeta(item);
 
   const openSource = () => {
     if (typeof window === "undefined") return;
-    if (item.url) {
-      window.open(item.url, "_blank", "noopener,noreferrer");
+    const targetUrl = item.booking_url || item.url;
+
+    if (targetUrl) {
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
       return;
     }
+
     if (item.domain === "movies_series" && (item.category === "streaming" || item.location?.toLowerCase() === "em casa")) {
       const query = encodeURIComponent(`${item.title} filme serie`);
       window.open(`https://www.google.com/search?q=${query}`, "_blank", "noopener,noreferrer");
       return;
     }
+
     const query = encodeURIComponent(`${item.location || item.title}, ${item.city}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
   };
@@ -82,9 +88,9 @@ export default function DiscoveryCard({
       action === "save"
         ? "Salvo para revisar depois"
         : action === "like"
-          ? "Entrou como boa aposta da noite"
+          ? "Entrou nas melhores apostas"
           : action === "dislike"
-            ? "Saiu da seleção principal"
+            ? "Saiu da selecao principal"
             : ""
     );
 
@@ -113,7 +119,7 @@ export default function DiscoveryCard({
       transition={{ duration: 0.22, ease: "easeOut" }}
       className="group editorial-card overflow-hidden rounded-[2rem]"
     >
-      <button onClick={openSource} className="block w-full text-left" title="Abrir fonte oficial ou mapa">
+      <button onClick={openSource} className="block w-full text-left" title="Abrir fonte oficial ou pagina do lugar">
         <ExperienceImage item={item} />
       </button>
 
@@ -146,7 +152,7 @@ export default function DiscoveryCard({
         </div>
 
         <div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-4 transition duration-300 group-hover:border-white/16 group-hover:bg-white/[0.08]">
-          <p className="text-[11px] uppercase tracking-[0.26em] text-[#ffd27a]">Por que combina com vocês</p>
+          <p className="text-[11px] uppercase tracking-[0.26em] text-[#ffd27a]">Por que combina com voces</p>
           <p className="mt-2 text-sm text-white/82">{item.couple_fit_reason || item.reason || item.description}</p>
           <p className="mt-3 text-sm text-white/58">{item.weather_fit}</p>
         </div>
@@ -160,11 +166,14 @@ export default function DiscoveryCard({
         </div>
 
         <div className="flex items-center justify-between gap-3 text-sm text-white/58">
-          <p>{item.source || "curadoria local"}</p>
-          <p>{item.price != null ? (item.price === 0 ? "Grátis" : `R$ ${item.price}`) : "Faixa a confirmar"}</p>
+          <div className="space-y-1">
+            <p className="text-white/72">{sourceMeta.label}</p>
+            <p className="text-xs text-white/46">{sourceMeta.badge}</p>
+          </div>
+          <p>{item.price != null ? (item.price === 0 ? "Gratis" : `R$ ${item.price}`) : "Faixa a confirmar"}</p>
         </div>
 
-        {item.avoid_reason ? <p className="text-xs text-white/45">Fica mais fraco quando: {item.avoid_reason}</p> : null}
+        {item.avoid_reason ? <p className="text-xs text-white/45">Perde forca quando: {item.avoid_reason}</p> : null}
         {status ? <p className="text-xs text-[#ffd27a]">{status}</p> : null}
 
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -182,7 +191,7 @@ export default function DiscoveryCard({
           </motion.button>
           <motion.button whileTap={{ scale: 0.96 }} onClick={() => submit("dislike")} className={actionClass("dislike", activeAction)}>
             <Icon path="M18 6L6 18M6 6l12 12" />
-            <span>Não agora</span>
+            <span>Nao agora</span>
           </motion.button>
         </div>
       </div>

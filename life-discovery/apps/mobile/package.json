@@ -1,0 +1,37 @@
+{
+  "name": "@life/mobile",
+  "private": true,
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "start:clear": "expo start -c",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "prebuild": "expo prebuild",
+    "build:android:apk": "pnpm dlx eas-cli build -p android --profile preview",
+    "build:android:aab": "pnpm dlx eas-cli build -p android --profile production",
+    "submit:android": "pnpm dlx eas-cli submit -p android --profile production"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.1.0",
+    "@life/catalog": "workspace:*",
+    "@life/shared-types": "workspace:*",
+    "@react-native-async-storage/async-storage": "^2.1.0",
+    "@tanstack/react-query": "^5.62.7",
+    "expo": "~53.0.0",
+    "expo-linear-gradient": "~14.1.0",
+    "expo-linking": "~7.1.0",
+    "expo-router": "~4.0.17",
+    "expo-status-bar": "~2.0.1",
+    "react": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-safe-area-context": "5.1.0",
+    "react-native-screens": "~4.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.2",
+    "typescript": "5.7.2"
+  }
+}

@@ -29,7 +29,7 @@ const tabs = [
   { href: "/agenda", label: "Agenda", icon: "M7 3v4M17 3v4M4 9h16M5 6h14a1 1 0 0 1 1 1v12H4V7a1 1 0 0 1 1-1z" },
   { href: "/saved", label: "Salvos", icon: "M6 4h12v16l-6-4-6 4z" },
   { href: "/date-night", label: "Noite a Dois", icon: "M12 20s-7-4.35-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.65-7 10-7 10z" },
-  { href: "/concierge", label: "Guia IA", icon: "M12 3c4.97 0 9 3.58 9 8 0 2.13-.95 4.07-2.5 5.5V21l-4.1-2.2A11.2 11.2 0 0 1 12 19c-4.97 0-9-3.58-9-8s4.03-8 9-8z" }
+  { href: "/concierge", label: "Colecoes", icon: "M4 6h16M4 12h16M4 18h10" }
 ] as const;
 
 function navClass(active: boolean) {

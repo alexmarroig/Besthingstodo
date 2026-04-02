@@ -38,6 +38,8 @@ function mapRecommendation(row: any, city: string): Recommendation {
     tags: Array.isArray(row.tags) ? row.tags : [],
     source: row.source || "api",
     url: row.url || null,
+    booking_url: row.booking_url || null,
+    editorial_source: row.editorial_source || null,
     score: row.score,
     reason: row.reason,
     latitude: row.latitude ?? null,

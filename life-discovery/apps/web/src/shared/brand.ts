@@ -1,8 +1,8 @@
 export const BRAND = {
   name: "Roteiro a Dois",
-  eyebrow: "Curadoria em português",
+  eyebrow: "Curadoria em portugues",
   title: "Descobertas pensadas para o casal",
-  subtitle: "Sugestões reais para sair, pedir, assistir e viver melhor a noite em São Paulo."
+  subtitle: "Sugestoes reais para sair, pedir, assistir e viver melhor a noite em Sao Paulo."
 } as const;
 
 export const DEMO_SESSION = {

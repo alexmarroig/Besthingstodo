@@ -81,13 +81,13 @@
     "kind": "editorial",
     "city": "Sao Paulo",
     "editorial_source": "favorite",
-    "source_url": "https://example.com/favorite-editorial-source"
+    "source_url": "https://www.lellistrattoria.com.br/"
   },
   {
     "name": "editorial",
     "kind": "editorial",
     "city": "Sao Paulo",
     "editorial_source": "editorial",
-    "source_url": "https://example.com/editorial-curation"
+    "source_url": "https://guide.michelin.com/"
   }
 ]

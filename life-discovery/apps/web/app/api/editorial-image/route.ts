@@ -33,7 +33,9 @@ function extractImageUrl(html: string, pageUrl: URL) {
     /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+name=["']og:image["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
-    /<meta[^>]+property=["']twitter:image["'][^>]+content=["']([^"']+)["']/i
+    /<meta[^>]+property=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+    /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
+    /<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i
   ];
 
   for (const pattern of candidates) {
@@ -82,15 +84,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ url: null, source: null }, { status: 200 });
   }
 
-  try {
-    const fallbackUrl = new URL("/api/place-photo", request.nextUrl.origin);
-    fallbackUrl.searchParams.set("title", title);
-    fallbackUrl.searchParams.set("location", location);
-    fallbackUrl.searchParams.set("city", city);
-
-    const fallback = await fetch(fallbackUrl.toString(), { next: { revalidate: 21600 } }).then((res) => (res.ok ? res.json() : { url: null, source: null }));
-    return NextResponse.json({ url: fallback?.url || null, source: fallback?.source || null }, { status: 200 });
-  } catch {
-    return NextResponse.json({ url: null, source: null }, { status: 200 });
-  }
+  return NextResponse.json({ url: null, source: null }, { status: 200 });
 }

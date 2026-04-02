@@ -1,155 +1,191 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { ConciergeResponse } from "@life/shared-types";
-import { askConcierge, fetchCoupleMe, fetchRecommendations, fetchUserContext } from "@/shared/api/client";
-import { getConciergeMemory, getUserId, setConciergeMemory } from "@/shared/storage";
+import DiscoveryCard from "@/components/discovery/discovery-card";
+import { fetchCoupleMe, fetchRecommendations, fetchUserContext } from "@/shared/api/client";
+import { getRecommendationSourceMeta } from "@/shared/source";
+import { getUserId } from "@/shared/storage";
+
+function groupBySource(items: any[]) {
+  const map = new Map<string, { label: string; badge: string; items: any[] }>();
+
+  for (const item of items) {
+    const meta = getRecommendationSourceMeta(item);
+    const key = `${meta.label}::${meta.badge}`;
+    const current = map.get(key);
+    if (current) {
+      current.items.push(item);
+      continue;
+    }
+    map.set(key, { label: meta.label, badge: meta.badge, items: [item] });
+  }
+
+  return Array.from(map.values())
+    .map((group) => ({ ...group, items: group.items.slice(0, 3) }))
+    .filter((group) => group.items.length > 0)
+    .slice(0, 4);
+}
 
 export default function ConciergeScreen() {
   const userId = getUserId();
-  const [message, setMessage] = useState("Quero algo para hoje à noite que pareça date de verdade.");
-  const [history, setHistory] = useState<Array<{ role: "user" | "assistant"; text: string }>>([]);
-  const [memory, setMemory] = useState<string[]>([]);
-
-  useEffect(() => {
-    setMemory(getConciergeMemory());
-  }, []);
-
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const { data: context } = useQuery({ queryKey: ["context", couple?.city || "Sao Paulo"], queryFn: () => fetchUserContext(couple?.city || "Sao Paulo") });
-  const { data: recommendations } = useQuery({
-    queryKey: ["concierge-recos", userId, couple?.city || "Sao Paulo", context?.weather || "unknown"],
+  const { data: recommendations, isLoading } = useQuery({
+    queryKey: ["collections-recos", userId, couple?.city || "Sao Paulo", context?.weather || "unknown"],
     queryFn: () => fetchRecommendations(userId, couple?.city || "Sao Paulo", undefined, context?.weather || undefined, couple || undefined, context || undefined)
   });
 
-  const mutation = useMutation<ConciergeResponse, Error, string>({
-    mutationFn: (msg) =>
-      askConcierge(userId, msg, {
-        recommendations: recommendations || [],
-        context: context!,
-        couple: couple || undefined,
-        memory
-      }),
-    onSuccess: (data, msg) => {
-      setHistory((prev) => [...prev, { role: "user", text: msg }, { role: "assistant", text: data.intro }]);
-      setMemory(data.memory);
-      setConciergeMemory(data.memory);
-    }
-  });
-
-  const response = mutation.data;
-  const hasLiveRecommendations = (recommendations || []).length > 0;
+  const items = recommendations || [];
+  const topPicks = items.slice(0, 4);
+  const diningAndDelivery = items.filter((item) => item.domain === "dining_out" || item.domain === "delivery").slice(0, 4);
+  const cinemaAndCulture = items.filter((item) => item.domain === "movies_series" || item.domain === "events_exhibitions").slice(0, 4);
+  const personalized = items.filter((item) => item.personalization_label || item.related_favorite).slice(0, 4);
+  const bySource = useMemo(() => groupBySource(items), [items]);
+  const hasLiveItems = items.length > 0;
 
   return (
-    <section className="space-y-5">
-      <div className="glass rounded-[2.2rem] p-6">
-        <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Curadoria guiada</p>
-        <h2 className="mt-2 text-4xl font-semibold">Guia IA do casal</h2>
-        <p className="mt-3 max-w-3xl text-sm text-white/68">
-          Aqui a conversa serve para refinar, não para despejar texto. O foco é devolver opções estruturadas, lembrando restrições e o clima da noite.
-        </p>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[0.78fr_1.22fr]">
-        <aside className="editorial-card rounded-[2rem] p-5">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-[#f4d06f]">Memória curta</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(memory.length ? memory : ["sem álcool", "sem lotação", "evitar curso"]).map((item) => (
-              <span key={item} className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-sm text-white/74">
-                {item}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-6 space-y-3 text-sm text-white/62">
-            <p>Use frases como “quero algo coberto”, “não bebo”, “algo perto” ou “mais romântico”.</p>
-            <p>Eu reaplico isso nas próximas sugestões para o app parecer lembrar de vocês.</p>
-          </div>
-
-          {history.length ? (
-            <div className="mt-6 space-y-3 rounded-[1.4rem] border border-white/10 bg-white/4 p-4">
-              {history.slice(-4).map((entry, index) => (
-                <div key={`${entry.role}-${index}`} className="space-y-1">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/46">{entry.role === "user" ? "Vocês pediram" : "Leitura do concierge"}</p>
-                  <p className="text-sm text-white/74">{entry.text}</p>
-                </div>
-              ))}
+    <section className="space-y-6">
+      <div className="hero-mesh overflow-hidden rounded-[2.5rem] border border-white/8 p-6 md:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.34em] text-[#f4d06f]">Plataforma de recomendacoes</p>
+              <h2 className="mt-2 max-w-3xl text-4xl font-semibold leading-[1.04] text-white md:text-5xl">
+                Colecoes prontas para decidir sem depender de chat.
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm text-white/72">
+                Esta area deixou de ser conversa com IA. Agora ela funciona como uma vitrine editorial de recomendacoes reais,
+                organizadas por fonte, contexto e aderencia ao casal.
+              </p>
             </div>
-          ) : null}
-        </aside>
 
-        <div className="space-y-4">
-          <div className="editorial-card rounded-[2rem] p-5">
-            <div className="flex gap-3">
-              <textarea
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                rows={3}
-                className="min-h-[104px] flex-1 rounded-[1.4rem] border border-white/8 bg-white/6 p-4 text-sm text-white outline-none"
-                placeholder="Ex.: quero algo hoje à noite, mais íntimo, sem álcool e com clima protegido"
-              />
-              <button onClick={() => context && mutation.mutate(message)} className="h-fit rounded-full bg-[#f97352] px-5 py-3 text-sm font-medium text-white">
-                Refinar
-              </button>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/10 bg-white/7 px-4 py-2 text-sm text-white/78">sem chat</span>
+              <span className="rounded-full border border-white/10 bg-white/7 px-4 py-2 text-sm text-white/78">mais fonte oficial</span>
+              <span className="rounded-full border border-white/10 bg-white/7 px-4 py-2 text-sm text-white/78">mais criterio editorial</span>
+              <span className="rounded-full border border-white/10 bg-white/7 px-4 py-2 text-sm text-white/78">{context?.weather_label || "contexto estavel"}</span>
             </div>
           </div>
 
-          {response && response.options.length > 0 ? (
-            <div className="space-y-4">
-              <div className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
-                <p className="text-sm text-white/74">{response.intro}</p>
-              </div>
-
-              {response.options.map((option) => (
-                <article key={option.title} className="editorial-card rounded-[2rem] p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] uppercase tracking-[0.26em] text-[#f4d06f]">Plano sugerido</p>
-                      <h3 className="mt-2 text-2xl font-semibold">{option.title}</h3>
-                      <p className="mt-2 text-sm text-white/64">{option.summary}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {option.constraints_applied.map((item) => (
-                        <span key={item} className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-white/68">
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 md:grid-cols-2">
-                    <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-[#f4d06f]">Por que encaixa</p>
-                      <p className="mt-2 text-sm text-white/74">{option.why_it_fits}</p>
-                    </div>
-                    <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-[#f4d06f]">Leitura do clima</p>
-                      <p className="mt-2 text-sm text-white/74">{option.weather_note}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {option.steps.map((step) => (
-                      <span key={step} className="rounded-full border border-white/10 bg-white/4 px-3 py-2 text-xs text-white/68">
-                        {step}
-                      </span>
-                    ))}
-                  </div>
-                </article>
-              ))}
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Pistas fortes</p>
+              <p className="mt-3 text-4xl font-semibold text-white">{items.length}</p>
+              <p className="mt-2 text-sm text-white/62">recomendacoes ordenadas pela curadoria do casal.</p>
             </div>
-          ) : (
-            <div className="editorial-card rounded-[2rem] p-5 text-sm text-white/70">
-              {hasLiveRecommendations
-                ? "O concierge vai devolver 2 ou 3 rotas claras, com motivo, restrições respeitadas e próximo passo em vez de texto corrido."
-                : "Sem recomendações reais suficientes, o concierge não inventa respostas prontas. Assim que a base live estiver melhor, ele passa a responder só com conteúdo real."}
+            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Fontes em destaque</p>
+              <p className="mt-3 text-4xl font-semibold text-white">{bySource.length}</p>
+              <p className="mt-2 text-sm text-white/62">origens fortes na tela, sem misturar tudo como feed opaco.</p>
             </div>
-          )}
+            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Mais pessoais</p>
+              <p className="mt-3 text-4xl font-semibold text-white">{personalized.length}</p>
+              <p className="mt-2 text-sm text-white/62">ligadas diretamente a favoritos, wishlist ou sinais reais do casal.</p>
+            </div>
+          </div>
         </div>
       </div>
+
+      {isLoading ? <p className="text-sm text-white/60">Organizando as colecoes recomendadas...</p> : null}
+
+      {!hasLiveItems ? (
+        <div className="editorial-card rounded-[2rem] p-5 text-sm text-white/70">
+          Sem recomendacoes reais suficientes para montar as colecoes agora. Esta tela nao inventa respostas de chat nem sugestoes sintéticas.
+        </div>
+      ) : null}
+
+      {topPicks.length ? (
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Mais confiaveis agora</p>
+            <h3 className="mt-2 text-3xl font-semibold">As melhores apostas do momento</h3>
+            <p className="mt-2 text-sm text-white/66">O ponto de partida mais forte quando voces so querem abrir a plataforma e decidir.</p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {topPicks.map((item) => (
+              <DiscoveryCard key={item.id} item={item} userId={userId} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {bySource.length ? (
+        <div className="space-y-5">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Por fonte</p>
+            <h3 className="mt-2 text-3xl font-semibold">Colecoes que mostram de onde vem a recomendacao</h3>
+            <p className="mt-2 text-sm text-white/66">Fonte forte ajuda a confiar. Aqui cada bloco mostra uma origem clara em vez de esconder tudo num ranking opaco.</p>
+          </div>
+
+          {bySource.map((group) => (
+            <div key={group.label} className="space-y-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h4 className="text-2xl font-semibold text-white">{group.label}</h4>
+                  <p className="mt-1 text-sm text-white/62">{group.badge}</p>
+                </div>
+              </div>
+              <div className="grid gap-4 xl:grid-cols-3">
+                {group.items.map((item) => (
+                  <DiscoveryCard key={item.id} item={item} userId={userId} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {personalized.length ? (
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Mais pessoais</p>
+            <h3 className="mt-2 text-3xl font-semibold">Favoritos, parecidos e sinais reais do casal</h3>
+            <p className="mt-2 text-sm text-white/66">Aqui entram favoritos diretos e lugares que se parecem com o repertorio de voces.</p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {personalized.map((item) => (
+              <DiscoveryCard key={item.id} item={item} userId={userId} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {(diningAndDelivery.length || cinemaAndCulture.length) ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {diningAndDelivery.length ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Comer bem</p>
+                <h3 className="mt-2 text-3xl font-semibold">Jantar e delivery com mais aderencia</h3>
+                <p className="mt-2 text-sm text-white/66">Restaurante e pedido em casa no mesmo lugar, mas sem perder o criterio da noite a dois.</p>
+              </div>
+              <div className="grid gap-4">
+                {diningAndDelivery.map((item) => (
+                  <DiscoveryCard key={item.id} item={item} userId={userId} />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {cinemaAndCulture.length ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Ver e sair</p>
+                <h3 className="mt-2 text-3xl font-semibold">Cinema, series e cultura numa leitura so</h3>
+                <p className="mt-2 text-sm text-white/66">Para quando a decisao real e entre sair para um programa cultural ou puxar algo bom para assistir juntos.</p>
+              </div>
+              <div className="grid gap-4">
+                {cinemaAndCulture.map((item) => (
+                  <DiscoveryCard key={item.id} item={item} userId={userId} />
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }
-
