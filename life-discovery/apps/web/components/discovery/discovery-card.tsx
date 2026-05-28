@@ -1,200 +1,182 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
-import { getRecommendationSourceMeta } from "@/shared/source";
-import { sendFeedback } from "../../lib/api";
-import { upsertAgendaItem, upsertSavedItem } from "../../lib/storage";
-import { Recommendation } from "../../lib/types";
 import ExperienceImage from "./experience-image";
+import { getRecommendationSourceMeta } from "@/shared/source";
+import { sendFeedback } from "@/shared/api/client";
+import { upsertSavedItem, upsertAgendaItem } from "@/shared/storage";
+import { Recommendation } from "@life/shared-types";
 
-type ActionType = "like" | "dislike" | "save" | "skip";
-
-function Icon({ path }: { path: string }) {
+function ActionButton({ icon, label, onClick, variant }: { icon: string; label: string; onClick: () => void; variant?: string }) {
+  const base = "flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition duration-200";
+  const styles: Record<string, string> = {
+    like: `${base} bg-[#f97352]/15 text-[#f97352] hover:bg-[#f97352]/25`,
+    save: `${base} bg-[#f4d06f]/15 text-[#f4d06f] hover:bg-[#f4d06f]/25`,
+    map: `${base} bg-[#38bdf8]/15 text-[#38bdf8] hover:bg-[#38bdf8]/25`,
+    skip: `${base} bg-white/8 text-white/50 hover:bg-white/15 hover:text-white/70`,
+  };
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d={path} />
-    </svg>
+    <button onClick={onClick} className={styles[variant || "skip"]}>
+      <span>{icon}</span>
+      <span>{label}</span>
+    </button>
   );
-}
-
-function formatMoment(value?: string | null) {
-  if (!value) return "Quando fizer sentido";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
-}
-
-function actionClass(action: ActionType, activeAction: ActionType | null) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-full px-3 py-3 text-sm transition duration-200";
-  if (activeAction === action) {
-    return `${base} ring-2 ring-[#ffd27a]/40`;
-  }
-
-  if (action === "like") {
-    return `${base} bg-[#f97352] text-white hover:-translate-y-[1px] hover:shadow-[0_16px_30px_rgba(249,115,82,0.22)]`;
-  }
-  if (action === "save") {
-    return `${base} bg-[#f4d06f] text-[#08111f] hover:-translate-y-[1px] hover:shadow-[0_16px_30px_rgba(244,208,111,0.22)]`;
-  }
-  return `${base} border border-white/12 bg-white/5 text-white/74 hover:-translate-y-[1px] hover:border-white/20 hover:bg-white/9`;
 }
 
 export default function DiscoveryCard({
   item,
   userId,
-  onAction
+  onAction,
 }: {
   item: Recommendation;
   userId: string;
-  onAction?: (item: Recommendation, action: ActionType) => void;
+  onAction?: (id: string, action: "like" | "dislike" | "save" | "skip") => void;
 }) {
-  const router = useRouter();
-  const [status, setStatus] = useState<string>("");
-  const [activeAction, setActiveAction] = useState<ActionType | null>(null);
-  const sourceMeta = getRecommendationSourceMeta(item);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const source = getRecommendationSourceMeta(item);
+  const hasImage = Boolean(item.image_url);
 
-  const openSource = () => {
-    if (typeof window === "undefined") return;
-    const targetUrl = item.booking_url || item.url;
-
-    if (targetUrl) {
-      window.open(targetUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    if (item.domain === "movies_series" && (item.category === "streaming" || item.location?.toLowerCase() === "em casa")) {
-      const query = encodeURIComponent(`${item.title} filme serie`);
-      window.open(`https://www.google.com/search?q=${query}`, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    const query = encodeURIComponent(`${item.location || item.title}, ${item.city}`);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
+  const handleAction = (action: "like" | "dislike" | "save" | "skip") => {
+    sendFeedback(userId, item.id, action);
+    if (action === "save") upsertSavedItem(item);
+    if (action === "like") upsertAgendaItem(item);
+    onAction?.(item.id, action);
   };
 
-  const submit = async (action: ActionType) => {
-    setActiveAction(action);
-    setStatus(
-      action === "save"
-        ? "Salvo para revisar depois"
-        : action === "like"
-          ? "Entrou nas melhores apostas"
-          : action === "dislike"
-            ? "Saiu da selecao principal"
-            : ""
-    );
-
-    await sendFeedback(userId, item.id, action === "skip" ? "skip" : action, {
-      reason_tags: [action === "dislike" ? "not_for_us" : "good_match"],
-      context: {
-        distance_label: item.distance_label,
-        weather_fit: item.weather_fit,
-        quality_score: item.quality_score
-      }
-    });
-
-    if (action === "save") {
-      upsertSavedItem(item);
-      upsertAgendaItem(item);
-    }
-
-    onAction?.(item, action);
-  };
+  const externalUrl = item.booking_url || item.url;
+  const mapQuery = item.latitude && item.longitude
+    ? `${item.latitude},${item.longitude}`
+    : encodeURIComponent(`${item.title} ${item.city || ""}`);
 
   return (
-    <motion.article
+    <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -6, scale: 1.008 }}
-      transition={{ duration: 0.22, ease: "easeOut" }}
-      className="group editorial-card overflow-hidden rounded-[2rem]"
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="card-hover editorial-card group overflow-hidden rounded-[1.5rem]"
     >
-      <button onClick={openSource} className="block w-full text-left" title="Abrir fonte oficial ou pagina do lugar">
-        <ExperienceImage item={item} />
-      </button>
+      {/* Image Section */}
+      <div className="relative aspect-video w-full overflow-hidden bg-black/20">
+        {!imgLoaded && hasImage && (
+          <div className="skeleton absolute inset-0" />
+        )}
+        {hasImage ? (
+          <img
+            src={item.image_url!}
+            alt={item.title}
+            className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+            onLoad={() => setImgLoaded(true)}
+            loading="lazy"
+          />
+        ) : (
+          <ExperienceImage item={item} className="h-full w-full" />
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-      <div className="space-y-4 p-5">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-white/52">
-          <span>{item.neighborhood || item.location || item.city}</span>
-          <span>•</span>
-          <span>{formatMoment(item.start_time)}</span>
-          {item.distance_label ? (
-            <>
-              <span>•</span>
-              <span>{item.distance_label}</span>
-            </>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          {item.personalization_label ? (
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-[#f4d06f]/30 bg-[#f4d06f]/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#f4d06f]">
-                {item.personalization_label}
-              </span>
-              {item.related_favorite ? <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/62">{item.related_favorite}</span> : null}
-            </div>
-          ) : null}
-          <button onClick={openSource} className="text-left">
-            <h3 className="text-2xl font-semibold leading-tight text-white transition hover:text-[#ffd27a]">{item.title}</h3>
-          </button>
-          <p className="text-sm text-white/70">{item.description || item.reason}</p>
-        </div>
-
-        <div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-4 transition duration-300 group-hover:border-white/16 group-hover:bg-white/[0.08]">
-          <p className="text-[11px] uppercase tracking-[0.26em] text-[#ffd27a]">Por que combina com voces</p>
-          <p className="mt-2 text-sm text-white/82">{item.couple_fit_reason || item.reason || item.description}</p>
-          <p className="mt-3 text-sm text-white/58">{item.weather_fit}</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {(item.tags || []).slice(0, 4).map((tag) => (
-            <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/72 transition group-hover:border-white/16 group-hover:bg-white/[0.08]">
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between gap-3 text-sm text-white/58">
-          <div className="space-y-1">
-            <p className="text-white/72">{sourceMeta.label}</p>
-            <p className="text-xs text-white/46">{sourceMeta.badge}</p>
+        {/* Score badge */}
+        {item.score != null && item.score > 0 && (
+          <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm">
+            <span className="text-sm">⭐</span>
+            <span className="text-xs font-semibold text-white">{Number(item.score).toFixed(1)}</span>
           </div>
-          <p>{item.price != null ? (item.price === 0 ? "Gratis" : `R$ ${item.price}`) : "Faixa a confirmar"}</p>
+        )}
+
+        {/* Category badge */}
+        <div className="absolute left-3 top-3">
+          <span className="rounded-full bg-white/12 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white/90 backdrop-blur-sm">
+            {item.category}
+          </span>
         </div>
 
-        {item.avoid_reason ? <p className="text-xs text-white/45">Perde forca quando: {item.avoid_reason}</p> : null}
-        {status ? <p className="text-xs text-[#ffd27a]">{status}</p> : null}
-
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          <motion.button whileTap={{ scale: 0.96 }} onClick={() => submit("like")} className={actionClass("like", activeAction)}>
-            <Icon path="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.65-7 10-7 10z" />
-            <span>Entrou</span>
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.96 }} onClick={() => submit("save")} className={actionClass("save", activeAction)}>
-            <Icon path="M6 4h12v16l-6-4-6 4z" />
-            <span>Salvar</span>
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.96 }} onClick={() => router.push(`/map?focus=${encodeURIComponent(item.title)}`)} className={actionClass("skip", activeAction)}>
-            <Icon path="M9 18l-5 2V6l5-2 6 2 5-2v14l-5 2-6-2zM9 4v14M15 6v14" />
-            <span>Ver bairro</span>
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.96 }} onClick={() => submit("dislike")} className={actionClass("dislike", activeAction)}>
-            <Icon path="M18 6L6 18M6 6l12 12" />
-            <span>Nao agora</span>
-          </motion.button>
+        {/* Title on image */}
+        <div className="absolute bottom-3 left-4 right-4">
+          <h3 className="text-xl font-semibold leading-tight text-white drop-shadow-lg">{item.title}</h3>
+          {item.location && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-white/70">
+              <span>📍</span> {item.location}
+              {item.distance_label && <span className="text-white/50">· {item.distance_label}</span>}
+            </p>
+          )}
         </div>
       </div>
-    </motion.article>
+
+      {/* Content */}
+      <div className="space-y-3 p-5">
+        {/* Description */}
+        {item.description && (
+          <p className="line-clamp-2 text-sm leading-relaxed text-white/68">{item.description}</p>
+        )}
+
+        {/* Personalization / Fit */}
+        {(item.personalization_label || item.couple_fit_reason) && (
+          <div className="rounded-xl bg-white/5 px-3 py-2">
+            <p className="text-xs text-[#f4d06f]/90">
+              {item.personalization_label || item.couple_fit_reason}
+            </p>
+          </div>
+        )}
+
+        {/* Meta row */}
+        <div className="flex flex-wrap items-center gap-2">
+          {item.price != null && item.price > 0 && (
+            <span className="rounded-full bg-emerald-500/12 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
+              R$ {item.price}
+            </span>
+          )}
+          {item.start_time && (
+            <span className="rounded-full bg-[#38bdf8]/12 px-2.5 py-1 text-[11px] text-[#38bdf8]">
+              {new Date(item.start_time).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
+            </span>
+          )}
+          <span className="rounded-full bg-white/6 px-2.5 py-1 text-[11px] text-white/50">
+            {source.badge}
+          </span>
+        </div>
+
+        {/* Tags */}
+        {item.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {item.tags.slice(0, 4).map((tag) => (
+              <span key={tag} className="rounded-full border border-white/8 px-2.5 py-0.5 text-[10px] text-white/50">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2 border-t border-white/6 pt-3">
+          <ActionButton icon="✓" label="Entrou" onClick={() => handleAction("like")} variant="like" />
+          <ActionButton icon="♡" label="Salvar" onClick={() => handleAction("save")} variant="save" />
+          {(item.latitude || item.city) && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-full bg-[#38bdf8]/15 px-3 py-2 text-xs font-medium text-[#38bdf8] transition hover:bg-[#38bdf8]/25"
+            >
+              <span>📍</span>
+              <span>Ver bairro</span>
+            </a>
+          )}
+          {externalUrl && (
+            <a
+              href={externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-full bg-white/8 px-3 py-2 text-xs font-medium text-white/60 transition hover:bg-white/15 hover:text-white/80"
+            >
+              <span>↗</span>
+              <span>Abrir</span>
+            </a>
+          )}
+          <ActionButton icon="✕" label="Não agora" onClick={() => handleAction("dislike")} variant="skip" />
+        </div>
+      </div>
+    </motion.div>
   );
 }

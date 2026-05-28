@@ -96,6 +96,9 @@ export type ExperienceContext = {
   time_label: string;
   isRainy: boolean;
   isNight: boolean;
+  isHot?: boolean;
+  isCold?: boolean;
+  icon_url?: string | null;
 };
 
 export type ConciergeOption = {

@@ -1,4 +1,6 @@
-﻿@tailwind base;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -27,14 +29,16 @@ body {
   min-height: 100vh;
   color: var(--text);
   background: transparent;
-  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  font-family: "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-family: "Playfair Display", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   letter-spacing: -0.03em;
 }
 
@@ -83,3 +87,92 @@ a {
   text-decoration: none;
 }
 
+/* ===== Animations ===== */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(249, 115, 82, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(249, 115, 82, 0.3); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out both;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+.card-hover {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 30px rgba(249, 115, 82, 0.08);
+}
+
+.weather-badge {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(249, 115, 82, 0.08));
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.recipe-card {
+  background: linear-gradient(180deg, rgba(16, 31, 51, 0.92), rgba(8, 17, 30, 0.96));
+  border: 1px solid rgba(244, 208, 111, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.tmdb-card {
+  background: linear-gradient(180deg, rgba(12, 22, 38, 0.95), rgba(6, 14, 26, 0.98));
+  border: 1px solid rgba(249, 115, 82, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.event-card {
+  background: linear-gradient(180deg, rgba(14, 26, 44, 0.94), rgba(8, 16, 30, 0.97));
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}

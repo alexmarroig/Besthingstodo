@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { sendFeedback } from "@/shared/api/client";
+
 export default function RecommendationCard({
   userId,
   id,
@@ -18,12 +20,8 @@ export default function RecommendationCard({
   const [status, setStatus] = useState("");
 
   async function feedback(action: "like" | "dislike") {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/feedback`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId, experience_id: id, action })
-    });
-    setStatus(action === "like" ? "Liked" : "Disliked");
+    await sendFeedback(userId, id, action);
+    setStatus(action === "like" ? "Curtido" : "Dispensado");
   }
 
   return (

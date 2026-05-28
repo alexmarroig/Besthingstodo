@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm --filter @life/web build",
+  "outputDirectory": "apps/web/.next",
+  "env": {
+    "TMDB_API_KEY": "@tmdb-api-key",
+    "GEOAPIFY_API_KEY": "@geoapify-api-key",
+    "TICKETMASTER_API_KEY": "@ticketmaster-api-key",
+    "OPENWEATHER_API_KEY": "@openweather-api-key"
+  }
+}

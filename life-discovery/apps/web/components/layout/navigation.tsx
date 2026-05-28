@@ -25,11 +25,11 @@ function Icon({ path, active }: { path: string; active: boolean }) {
 const tabs = [
   { href: "/home", label: "Hoje", icon: "M3 12L12 4l9 8M5 10v10h14V10" },
   { href: "/watch", label: "Assistir", icon: "M4 7h16v10H4zM8 7l1-3h6l1 3" },
+  { href: "/food", label: "Comida", icon: "M3 3v18M7 3v8a4 4 0 0 0 8 0V3M21 3v7c0 2-2 4-4 4h-1v7" },
   { href: "/map", label: "Bairros", icon: "M9 18l-5 2V6l5-2 6 2 5-2v14l-5 2-6-2zM9 4v14M15 6v14" },
-  { href: "/agenda", label: "Agenda", icon: "M7 3v4M17 3v4M4 9h16M5 6h14a1 1 0 0 1 1 1v12H4V7a1 1 0 0 1 1-1z" },
   { href: "/saved", label: "Salvos", icon: "M6 4h12v16l-6-4-6 4z" },
   { href: "/date-night", label: "Noite a Dois", icon: "M12 20s-7-4.35-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.65-7 10-7 10z" },
-  { href: "/concierge", label: "Colecoes", icon: "M4 6h16M4 12h16M4 18h10" }
+  { href: "/concierge", label: "Coleções", icon: "M4 6h16M4 12h16M4 18h10" },
 ] as const;
 
 function navClass(active: boolean) {
@@ -45,7 +45,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-white/8 bg-[#08101ae8] backdrop-blur-2xl">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[1.4rem] border border-[#f4d06f]/20 bg-[radial-gradient(circle_at_top_left,rgba(249,115,82,0.35),transparent_45%),linear-gradient(180deg,rgba(249,115,82,0.14),rgba(7,17,29,0.96))] text-[#fff2cf] shadow-[0_20px_50px_rgba(249,115,82,0.12)]">
+          <div className="animate-pulse-glow flex h-12 w-12 items-center justify-center rounded-[1.4rem] border border-[#f4d06f]/20 bg-[radial-gradient(circle_at_top_left,rgba(249,115,82,0.35),transparent_45%),linear-gradient(180deg,rgba(249,115,82,0.14),rgba(7,17,29,0.96))] text-[#fff2cf] shadow-[0_20px_50px_rgba(249,115,82,0.12)]">
             <span className="text-sm font-semibold tracking-[0.22em]">R2</span>
           </div>
           <div>
@@ -79,19 +79,19 @@ export function Navbar() {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const mobileTabs = [tabs[0], tabs[1], tabs[2], tabs[4], tabs[5], tabs[6]];
+  const mobileTabs = [tabs[0], tabs[1], tabs[2], tabs[3], tabs[4], tabs[5]];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#08111df2] p-2 backdrop-blur-xl md:hidden">
-      <div className="mx-auto grid max-w-xl grid-cols-6 gap-2">
+      <div className="mx-auto grid max-w-xl grid-cols-6 gap-1">
         {mobileTabs.map((tab) => {
           const active = pathname === tab.href;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`group flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-center text-[11px] transition ${
-                active ? "bg-[#f97352] text-white" : "bg-white/5 text-white/80"
+              className={`group flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-center text-[10px] transition ${
+                active ? "bg-[#f97352] text-white shadow-[0_8px_20px_rgba(249,115,82,0.3)]" : "bg-white/5 text-white/80"
               }`}
             >
               <Icon path={tab.icon} active={active} />

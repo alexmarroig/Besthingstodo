@@ -1,18 +1,15 @@
 import { buildConciergeResponse, buildDateNightPlan, buildFallbackContext, curateRecommendations, refineContext } from "../../features/catalog/curation";
 import { API_ENDPOINTS } from "./config";
-import { getAccessToken, setAccessToken, setUserId } from "../storage";
+import { getCoupleProfile } from "../storage";
 import { ConciergeResponse, CoupleSnapshot, DateNightPlan, ExperienceContext, Recommendation } from "@life/shared-types";
 
-const { api: API, concierge: CONCIERGE, dateNight: DATE_NIGHT, onboarding: ONBOARDING } = API_ENDPOINTS;
-
 type RecommendationDomain = "dining_out" | "delivery" | "movies_series" | "events_exhibitions";
+type CulturalDNAResponse = {
+  user_id: string;
+  cultural_dna: Record<string, string | number | string[]> | null;
+};
 
-function authHeaders(): Record<string, string> {
-  const token = getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-function mapRecommendation(row: any, city: string): Recommendation {
+function mapToRecommendation(row: any, city: string): Recommendation {
   return {
     id: String(row.id || row.title || crypto.randomUUID()),
     title: row.title || "Sem título",
@@ -44,99 +41,110 @@ function mapRecommendation(row: any, city: string): Recommendation {
     reason: row.reason,
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
-    profile_signals: Array.isArray(row.profile_signals) ? row.profile_signals : []
+    profile_signals: Array.isArray(row.profile_signals) ? row.profile_signals : [],
   };
 }
 
-export async function registerCoupleDefault(email: string, password: string) {
-  const res = await fetch(`${API}/auth/register-couple`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
-  if (!res.ok) {
-    throw new Error("Não foi possível registrar a conta do casal");
-  }
-  const tokenData = await res.json();
-  setAccessToken(tokenData.access_token);
-
-  const me = await fetch(`${API}/auth/me`, { headers: { ...authHeaders() } });
-  if (me.ok) {
-    const user = await me.json();
-    setUserId(user.id);
-  }
-
-  return tokenData;
-}
-
-export async function login(email: string, password: string) {
-  const res = await fetch(`${API}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
-  if (!res.ok) {
-    throw new Error("Email ou senha inválidos");
-  }
-  const tokenData = await res.json();
-  setAccessToken(tokenData.access_token);
-
-  const me = await fetch(`${API}/auth/me`, { headers: { ...authHeaders() } });
-  if (me.ok) {
-    const user = await me.json();
-    setUserId(user.id);
-  }
-
-  return tokenData;
-}
+// --- Couple Profile (localStorage-based) ---
 
 export async function fetchCoupleMe(): Promise<CoupleSnapshot | null> {
-  const token = getAccessToken();
-  if (!token) return null;
-
-  const res = await fetch(`${API}/couple/me`, {
-    cache: "no-store",
-    headers: { ...authHeaders() }
-  }).catch(() => null);
-
-  if (!res || !res.ok) return null;
-  return res.json();
+  try {
+    const profile = getCoupleProfile();
+    return profile || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function patchCoupleProfile(payload: Record<string, any>) {
-  const res = await fetch(`${API}/couple/me`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) throw new Error("Não foi possível salvar os ajustes do casal");
-  return res.json();
+  const current = getCoupleProfile();
+  const updated = { ...current, ...payload };
+  const { setCoupleProfile } = await import("../storage");
+  setCoupleProfile(updated);
+  return updated;
 }
 
 export async function patchCoupleStep(stepKey: string, data: Record<string, any>) {
-  const res = await fetch(`${API}/onboarding/couple/step`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ step_key: stepKey, data })
-  });
-  if (!res.ok) throw new Error("Não foi possível salvar a etapa");
-  return res.json();
+  return patchCoupleProfile({ [stepKey]: data });
 }
 
-export async function fetchUserContext(city = "Sao Paulo"): Promise<ExperienceContext> {
-  const token = getAccessToken();
-  if (!token) return buildFallbackContext(city);
+// --- Weather / Context ---
 
+export async function fetchUserContext(city = "Sao Paulo"): Promise<ExperienceContext> {
   try {
-    const res = await fetch(`${API}/context`, {
-      cache: "no-store",
-      headers: { ...authHeaders() }
-    });
-    if (!res.ok) throw new Error("context unavailable");
+    const res = await fetch(`${API_ENDPOINTS.weather}?city=${encodeURIComponent(city)}`);
+    if (!res.ok) throw new Error("weather unavailable");
     const data = await res.json();
-    return refineContext(data, city);
+    return refineContext({
+      city,
+      weather: data.weather || "clouds",
+      weather_label: data.weather_label || "tempo estável",
+      weather_note: data.weather_note || "",
+      isRainy: data.isRainy || false,
+      isHot: data.isHot || false,
+      isCold: data.isCold || false,
+      temperature: data.temperature,
+      icon_url: data.icon_url,
+    }, city);
   } catch {
     return buildFallbackContext(city);
+  }
+}
+
+// --- Recommendations (from free APIs) ---
+
+export async function fetchTrendingMovies(): Promise<Recommendation[]> {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.tmdb}?type=trending`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data || []).map((row: any) => mapToRecommendation(row, ""));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchMoviesByGenre(genre: string): Promise<Recommendation[]> {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.tmdb}?type=discover&genre=${encodeURIComponent(genre)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data || []).map((row: any) => mapToRecommendation(row, ""));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchPlaces(city = "Sao Paulo", categories = "catering.restaurant"): Promise<Recommendation[]> {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.places}?city=${encodeURIComponent(city)}&categories=${encodeURIComponent(categories)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data || []).map((row: any) => mapToRecommendation(row, city));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchEvents(city = "Sao Paulo"): Promise<Recommendation[]> {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.events}?city=${encodeURIComponent(city)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data || []).map((row: any) => mapToRecommendation(row, city));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchMealSuggestions(type = "random", params?: Record<string, string>): Promise<any[]> {
+  try {
+    const search = new URLSearchParams({ type, ...params });
+    const res = await fetch(`${API_ENDPOINTS.meals}?${search.toString()}`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
   }
 }
 
@@ -148,30 +156,44 @@ export async function fetchRecommendations(
   couple?: CoupleSnapshot | null,
   context?: ExperienceContext
 ): Promise<Recommendation[]> {
-  const params = new URLSearchParams({ city, limit: "24" });
-  if (domain) params.set("domain", domain);
-  if (weather) params.set("weather", weather);
-
   const localContext = context || refineContext({ city, weather: weather || "unknown" }, city);
 
   try {
-    const res = await fetch(`${API}/recommendations?${params.toString()}`, {
-      cache: "no-store",
-      headers: { ...authHeaders(), "x-life-user-id": userId }
-    });
-    if (!res.ok) return [];
-    const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) return [];
+    const fetchers: Promise<Recommendation[]>[] = [];
 
-    return curateRecommendations(rows.map((row: any) => mapRecommendation(row, city)), {
+    if (!domain || domain === "movies_series") {
+      fetchers.push(fetchTrendingMovies());
+    }
+    if (!domain || domain === "dining_out") {
+      fetchers.push(fetchPlaces(city, "catering.restaurant"));
+    }
+    if (!domain || domain === "events_exhibitions") {
+      fetchers.push(fetchEvents(city));
+    }
+    if (domain === "delivery") {
+      fetchers.push(
+        fetchMealSuggestions("random").then((meals) =>
+          meals.map((m: any) => mapToRecommendation({ ...m, domain: "delivery" }, city))
+        )
+      );
+    }
+
+    const allResults = await Promise.all(fetchers);
+    const combined = allResults.flat();
+
+    if (combined.length === 0) return [];
+
+    return curateRecommendations(combined, {
       context: localContext,
       couple: couple || undefined,
-      limit: 24
+      limit: 24,
     });
   } catch {
     return [];
   }
 }
+
+// --- Feedback (localStorage only) ---
 
 export async function sendFeedback(
   userId: string,
@@ -179,53 +201,45 @@ export async function sendFeedback(
   feedbackType: "like" | "dislike" | "save" | "skip",
   extra?: { decision?: string; post_experience_rating?: number; reason_tags?: string[]; context?: Record<string, any> }
 ) {
-  const decisionMap: Record<string, string> = {
-    like: "accepted",
-    dislike: "rejected",
-    save: "saved",
-    skip: "skip"
-  };
-  await fetch(`${API}/feedback`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({
+  // Store feedback locally for future personalization
+  try {
+    const key = "life_feedback";
+    const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    existing.push({
       user_id: userId,
       experience_id: experienceId,
       feedback_type: feedbackType,
-      decision: extra?.decision || decisionMap[feedbackType] || "skip",
-      post_experience_rating: extra?.post_experience_rating,
-      reason_tags: extra?.reason_tags || [],
-      context: extra?.context || {}
-    })
-  }).catch(() => {});
+      timestamp: new Date().toISOString(),
+      ...extra,
+    });
+    localStorage.setItem(key, JSON.stringify(existing.slice(-100)));
+  } catch {
+    // ignore
+  }
 }
+
+// --- Date Night Plan (local curation) ---
 
 export async function generateDateNightPlan(
   userId: string,
   location = "Sao Paulo",
   options?: { recommendations?: Recommendation[]; context?: ExperienceContext; couple?: CoupleSnapshot | null }
 ): Promise<DateNightPlan | null> {
-  if (options?.recommendations?.length) {
+  const recommendations = options?.recommendations || (await fetchRecommendations(userId, location));
+  const context = options?.context || buildFallbackContext(location);
+
+  if (recommendations.length > 0) {
     return buildDateNightPlan({
-      recommendations: options.recommendations,
-      context: options.context || buildFallbackContext(location),
-      couple: options.couple
+      recommendations,
+      context,
+      couple: options?.couple,
     });
   }
 
-  try {
-    const res = await fetch(`${DATE_NIGHT}/date-night-plan`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId, date: new Date().toISOString().slice(0, 10), location, time: "evening" })
-    });
-    if (!res.ok) throw new Error("date night api unavailable");
-    const data = await res.json();
-    return data;
-  } catch {
-    return null;
-  }
+  return null;
 }
+
+// --- Concierge (local curation) ---
 
 export async function askConcierge(
   userId: string,
@@ -237,40 +251,26 @@ export async function askConcierge(
     memory?: string[];
   }
 ): Promise<ConciergeResponse> {
-  try {
-    const res = await fetch(`${CONCIERGE}/concierge/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId, message })
-    });
-    if (!res.ok) throw new Error("concierge api unavailable");
-    const data = await res.json();
-    return buildConciergeResponse({
-      message,
-      recommendations: options.recommendations,
-      context: options.context,
-      couple: options.couple,
-      memory: options.memory,
-      apiSuggestions: data.suggestions || []
-    });
-  } catch {
-    return buildConciergeResponse({
-      message,
-      recommendations: options.recommendations,
-      context: options.context,
-      couple: options.couple,
-      memory: options.memory,
-      apiSuggestions: []
-    });
-  }
+  return buildConciergeResponse({
+    message,
+    recommendations: options.recommendations,
+    context: options.context,
+    couple: options.couple,
+    memory: options.memory,
+    apiSuggestions: [],
+  });
 }
 
-export async function fetchCulturalDNA(userId: string) {
-  try {
-    const res = await fetch(`${ONBOARDING}/onboarding/dna/${userId}`, { cache: "no-store" });
-    if (!res.ok) throw new Error("dna api unavailable");
-    return res.json();
-  } catch {
-    return null;
-  }
+// --- Cultural DNA (local mock) ---
+
+export async function fetchCulturalDNA(userId: string): Promise<CulturalDNAResponse> {
+  return {
+    user_id: userId,
+    cultural_dna: {
+      cultural_style: "eclético-urbano",
+      strengths: "gastronomia, cinema autoral, museus",
+      growth_areas: "música ao vivo, teatro",
+      match_score: 85,
+    },
+  };
 }

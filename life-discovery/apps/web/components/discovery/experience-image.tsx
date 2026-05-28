@@ -15,7 +15,7 @@ const fallbackThemes: Record<string, { gradient: string; eyebrow: string }> = {
   editorial: { gradient: "from-[#1d4ed8] via-[#0f172a] to-[#f97316]", eyebrow: "Curadoria da noite" }
 };
 
-export default function ExperienceImage({ item }: { item: Recommendation }) {
+export default function ExperienceImage({ item, className }: { item: Recommendation; className?: string }) {
   const theme = fallbackThemes[item.image_fallback_key || "editorial"] || fallbackThemes.editorial;
   const sourceMeta = getRecommendationSourceMeta(item);
   const [resolvedImage, setResolvedImage] = useState<string | null>(item.image_url || null);

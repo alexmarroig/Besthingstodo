@@ -1,47 +1,76 @@
 "use client";
 
 import { motion } from "framer-motion";
-
 import { BRAND } from "@/shared/brand";
 
 export default function SplashScreen({ message }: { message: string }) {
   return (
-    <div className="fixed inset-0 z-[100] overflow-hidden bg-[#050b14]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,82,0.28),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(244,208,111,0.18),transparent_22%),linear-gradient(180deg,#040a12_0%,#08111d_100%)]" />
-      <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(120deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_8%,transparent_8%,transparent_20%,rgba(255,255,255,0.03)_20%,rgba(255,255,255,0.03)_28%,transparent_28%,transparent_100%)]" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 animate-gradient bg-gradient-to-br from-[#040b14] via-[#0b1827] to-[#06111d]" />
 
-      <div className="relative mx-auto flex min-h-screen max-w-5xl items-center justify-center px-6">
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="animate-float absolute left-[15%] top-[20%] h-32 w-32 rounded-full bg-[#f97352]/10 blur-3xl" style={{ animationDelay: "0s" }} />
+        <div className="animate-float absolute right-[20%] top-[30%] h-24 w-24 rounded-full bg-[#f4d06f]/8 blur-3xl" style={{ animationDelay: "1.5s" }} />
+        <div className="animate-float absolute bottom-[25%] left-[30%] h-28 w-28 rounded-full bg-[#38bdf8]/8 blur-3xl" style={{ animationDelay: "3s" }} />
+        <div className="animate-float absolute bottom-[15%] right-[15%] h-20 w-20 rounded-full bg-[#f97352]/6 blur-2xl" style={{ animationDelay: "2s" }} />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative z-10 flex flex-col items-center gap-7"
+      >
+        {/* Logo with glow */}
         <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
-          className="w-full max-w-2xl rounded-[2.6rem] border border-white/10 bg-[rgba(12,23,38,0.78)] p-8 text-center shadow-[0_30px_120px_rgba(0,0,0,0.36)] backdrop-blur-2xl"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="animate-pulse-glow flex h-20 w-20 items-center justify-center rounded-[2rem] border border-[#f4d06f]/20 bg-[radial-gradient(circle_at_top_left,rgba(249,115,82,0.4),transparent_50%),linear-gradient(180deg,rgba(249,115,82,0.18),rgba(7,17,29,0.98))]"
         >
-          <motion.div
-            initial={{ opacity: 0.5, scale: 0.9 }}
-            animate={{ opacity: 1, scale: [1, 1.04, 1] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            className="mx-auto flex h-20 w-20 items-center justify-center rounded-[2rem] border border-[#f4d06f]/25 bg-[radial-gradient(circle_at_top_left,rgba(249,115,82,0.42),transparent_40%),linear-gradient(180deg,rgba(249,115,82,0.18),rgba(7,17,29,0.96))] shadow-[0_20px_50px_rgba(249,115,82,0.18)]"
-          >
-            <span className="text-2xl font-semibold tracking-[0.18em] text-[#fff2cf]">R2</span>
-          </motion.div>
+          <span className="text-2xl font-bold tracking-[0.22em] text-[#fff2cf]">R2</span>
+        </motion.div>
 
-          <p className="mt-6 text-[11px] uppercase tracking-[0.42em] text-[#f4d06f]">{BRAND.eyebrow}</p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-[-0.04em] text-white md:text-6xl">{BRAND.name}</h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-white/70 md:text-base">{BRAND.subtitle}</p>
+        {/* Brand name */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="text-center"
+        >
+          <p className="text-[10px] uppercase tracking-[0.42em] text-[#f4d06f]/80">{BRAND.eyebrow}</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-white">{BRAND.name}</h1>
+        </motion.div>
 
-          <div className="mx-auto mt-8 h-[2px] w-full max-w-md overflow-hidden rounded-full bg-white/8">
+        {/* Loading bar */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="w-56"
+        >
+          <div className="h-1 overflow-hidden rounded-full bg-white/8">
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: "100%" }}
               transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-              className="h-full w-1/2 bg-[linear-gradient(90deg,transparent,rgba(249,115,82,0.95),rgba(244,208,111,0.95),transparent)]"
+              className="h-full w-1/2 rounded-full bg-gradient-to-r from-transparent via-[#f97352] to-transparent"
             />
           </div>
-
-          <p className="mt-4 text-sm text-white/56">{message}</p>
         </motion.div>
-      </div>
+
+        {/* Status message */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-xs text-white/50"
+        >
+          {message}
+        </motion.p>
+      </motion.div>
     </div>
   );
 }

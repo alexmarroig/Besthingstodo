@@ -2,6 +2,10 @@
   "name": "life-discovery",
   "private": true,
   "version": "1.0.0",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "catalog:seed": "python scripts/seed_couple_profile.py",
     "catalog:refresh": "python scripts/catalog_pipeline.py refresh",
