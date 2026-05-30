@@ -10,11 +10,15 @@
 
 ## Vercel
 
-Deploy from the repository root with `vercel.json`:
+Configure the project with **Root Directory = `apps/web`** (relative to `life-discovery`).
 
-- Install: `pnpm install --no-frozen-lockfile`
+If the Vercel project is linked to the GitHub repo root (`Besthingstodo`), use **Root Directory = `life-discovery/apps/web`**.
+
+Deploy settings are defined in `apps/web/vercel.json`:
+
+- Install: workspace install from the monorepo root via pnpm/corepack
 - Build: `pnpm --filter @life/web build`
-- Output: `apps/web/.next`
+- Output: `.next` (auto-detected from the Next.js app)
 
 Required Vercel environment variables:
 
