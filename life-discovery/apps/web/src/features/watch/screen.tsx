@@ -124,6 +124,7 @@ export default function WatchScreen() {
           subtitle="Estreias e filmes em exibição no Brasil"
           items={movies}
           onOpen={setSelectedItem}
+          variant="poster"
         />
       )}
 
@@ -133,6 +134,7 @@ export default function WatchScreen() {
           subtitle="Para maratonar a dois"
           items={series}
           onOpen={setSelectedItem}
+          variant="poster"
         />
       )}
 
@@ -170,7 +172,7 @@ export default function WatchScreen() {
             {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="skeleton h-48 rounded-xl" />)}
           </div>
         ) : (
-          <MediaRail title={`Gênero: ${selectedGenre.title}`} items={genreItems} onOpen={setSelectedItem} />
+          <MediaRail title={`Gênero: ${selectedGenre.title}`} items={genreItems} onOpen={setSelectedItem} variant="poster" />
         )}
       </div>
 

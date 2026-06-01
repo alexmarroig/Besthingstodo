@@ -20,7 +20,7 @@ export default function HeroBanner({
         {item.image_url ? (
           <img src={item.image_url} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]" />
         ) : (
-          <ExperienceImage item={item} className="h-full w-full" />
+          <ExperienceImage item={item} mode="hero" className="h-full w-full" />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">

@@ -58,7 +58,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-10">
       <div className="hero-mesh overflow-hidden rounded-[2.5rem] border border-white/8 p-6 md:p-8">
         <div className="grid gap-8 lg:grid-cols-[1.25fr_0.85fr]">
           <div className="space-y-5">
@@ -96,7 +96,7 @@ export default function HomeScreen() {
       <MediaRail title="Para vocês" subtitle="Apostas personalizadas pelo motor de recomendação" items={forYou.length ? forYou : items.slice(0, 10)} onOpen={setSelectedItem} />
       <MediaRail title="Com cara de date" subtitle="Romântico, calmo e com boa conversa" items={romantic} onOpen={setSelectedItem} />
       <MediaRail title="Restaurantes" subtitle="Jantar perto do perfil de vocês" items={restaurants} onOpen={setSelectedItem} />
-      <MediaRail title="Filmes e séries" subtitle="Trending e estreias com match do casal" items={movies} onOpen={setSelectedItem} />
+      <MediaRail title="Filmes e séries" subtitle="Trending e estreias com match do casal" items={movies} onOpen={setSelectedItem} variant="poster" />
       <MediaRail title="Eventos" subtitle="Agenda local e experiências da semana" items={events} onOpen={setSelectedItem} />
       <MediaRail title="Radar SP" subtitle="Críticas, aberturas e matérias editoriais" items={editorial} onOpen={setSelectedItem} />
       <MediaRail title="Perto e fácil" subtitle="Menos logística, mais presença" items={nearby} onOpen={setSelectedItem} />
