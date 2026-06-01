@@ -10,15 +10,12 @@
 
 ## Vercel
 
-Configure the project with **Root Directory = `apps/web`** (relative to `life-discovery`).
+Configure the project with one of these Root Directory options:
 
-If the Vercel project is linked to the GitHub repo root (`Besthingstodo`), use **Root Directory = `life-discovery/apps/web`**.
+- **`life-discovery`** (monorepo root): uses `life-discovery/vercel.json` with custom build (`framework: null`)
+- **`apps/web`** (recommended): uses `apps/web/vercel.json` and native Next.js detection
 
-Deploy settings are defined in `apps/web/vercel.json`:
-
-- Install: workspace install from the monorepo root via pnpm/corepack
-- Build: `pnpm --filter @life/web build`
-- Output: `.next` (auto-detected from the Next.js app)
+If the Vercel project is linked to the GitHub repo root (`Besthingstodo`), use **`life-discovery`** or **`life-discovery/apps/web`** accordingly.
 
 Required Vercel environment variables:
 

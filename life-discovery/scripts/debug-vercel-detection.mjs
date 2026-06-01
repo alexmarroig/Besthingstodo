@@ -81,7 +81,10 @@ const simulatedEffectivePkg =
 
 const effectiveVercel =
   simulatedRootDirectory.endsWith("apps/web") ? webVercel : rootVercel;
-const effectiveFramework = effectiveVercel?.framework ?? "nextjs-auto";
+const effectiveFramework =
+  effectiveVercel?.framework === null
+    ? null
+    : effectiveVercel?.framework ?? "nextjs-auto";
 
 // #region agent log
 log("H5", "debug-vercel-detection.mjs:82", "Simulated Vercel Root Directory detection", {
@@ -96,6 +99,7 @@ log("H5", "debug-vercel-detection.mjs:82", "Simulated Vercel Root Directory dete
   wouldDetectNext: hasNextDependency(simulatedEffectivePkg),
   expectedFailure:
     effectiveFramework === "nextjs" && !hasNextDependency(simulatedEffectivePkg),
+  bypassesNextDetection: effectiveFramework === null,
 });
 // #endregion
 
@@ -107,4 +111,5 @@ console.log(JSON.stringify({
   wouldDetectNext: hasNextDependency(simulatedEffectivePkg),
   expectedFailure:
     effectiveFramework === "nextjs" && !hasNextDependency(simulatedEffectivePkg),
+  bypassesNextDetection: effectiveFramework === null,
 }, null, 2));
