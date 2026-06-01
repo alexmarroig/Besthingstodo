@@ -1,0 +1,17 @@
+[
+  {
+    "run_date": "2026-06-01",
+    "status": "ok",
+    "generated_at": "2026-06-01T03:20:49.276Z",
+    "stats": {
+      "total_items": 23,
+      "dining_out": 15,
+      "events_exhibitions": 7,
+      "delivery": 1
+    },
+    "supabase": {
+      "pushed": false,
+      "reason": "missing_env"
+    }
+  }
+]

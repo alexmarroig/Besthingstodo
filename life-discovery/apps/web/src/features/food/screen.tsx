@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
 import DiscoveryCard from "@/components/discovery/discovery-card";
+import MediaDetailModal from "@/components/discovery/media-detail-modal";
+import MediaRail from "@/components/discovery/media-rail";
 import { fetchMealSuggestions, fetchPlaces, fetchGastroEditorial, fetchDeliveryNearby, fetchEvents } from "@/shared/api/client";
 import { getUserId } from "@/shared/storage";
 
@@ -118,6 +120,7 @@ export default function FoodScreen() {
   const userId = getUserId();
   const [selectedCuisine, setSelectedCuisine] = useState("Italian");
   const [activeTab, setActiveTab] = useState<"editorial" | "restaurants" | "delivery">("editorial");
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   const { data: randomMeal } = useQuery({
     queryKey: ["random-meal"],
@@ -227,11 +230,7 @@ export default function FoodScreen() {
             <h3 className="mt-2 text-3xl font-semibold">Críticas, aberturas e tendências</h3>
             <p className="mt-2 text-sm text-white/66">Matérias de Paladar, Folha, Catraca e radar editorial de São Paulo.</p>
           </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {editorialItems.slice(0, 8).map((item: any) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
+          <MediaRail title="Editorial" items={editorialItems.slice(0, 12)} onOpen={setSelectedItem} />
         </div>
       )}
 
@@ -242,11 +241,7 @@ export default function FoodScreen() {
             <h3 className="mt-2 text-3xl font-semibold">Opções para pedir em casa</h3>
             <p className="mt-2 text-sm text-white/66">Restaurantes com entrega encontrados por localização. iFood/Rappi não possuem API pública de descoberta.</p>
           </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {deliveryItems.slice(0, 6).map((item: any) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
+          <MediaRail title="Delivery perto" items={deliveryItems.slice(0, 12)} onOpen={setSelectedItem} />
         </div>
       )}
 
@@ -317,11 +312,7 @@ export default function FoodScreen() {
               Restaurantes reais encontrados por localização. Sem sugestão inventada.
             </p>
           </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {restaurantItems.slice(0, 6).map((item: any) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
+          <MediaRail title="Restaurantes" items={restaurantItems.slice(0, 12)} onOpen={setSelectedItem} />
         </div>
       )}
 
@@ -353,13 +344,11 @@ export default function FoodScreen() {
               Cafeterias e casas de brunch perto. Bom para o fim de semana ou para mudar o ritmo.
             </p>
           </div>
-          <div className="grid gap-4 xl:grid-cols-3">
-            {cafeItems.slice(0, 6).map((item: any) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
+          <MediaRail title="Cafés e brunch" items={cafeItems.slice(0, 12)} onOpen={setSelectedItem} />
         </div>
       )}
+
+      <MediaDetailModal item={selectedItem} userId={userId} onClose={() => setSelectedItem(null)} />
     </section>
   );
 }

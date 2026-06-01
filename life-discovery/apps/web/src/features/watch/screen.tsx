@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 
-import DiscoveryCard from "@/components/discovery/discovery-card";
+import CoupleWeatherBadge from "@/components/discovery/couple-weather-badge";
+import MediaDetailModal from "@/components/discovery/media-detail-modal";
+import MediaRail from "@/components/discovery/media-rail";
 import { fetchTrendingMovies, fetchMoviesByGenre, fetchCoupleMe, fetchUserContext, fetchCinemaNews, fetchNowPlayingMovies } from "@/shared/api/client";
 import { buildFallbackContext } from "@/features/catalog/curation";
 import { getUserId } from "@/shared/storage";
@@ -22,6 +23,7 @@ const GENRE_SECTIONS = [
 export default function WatchScreen() {
   const userId = getUserId();
   const [selectedGenre, setSelectedGenre] = useState(GENRE_SECTIONS[0]);
+  const [selectedItem, setSelectedItem] = useState<Recommendation | null>(null);
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const { data: context } = useQuery({
@@ -74,7 +76,6 @@ export default function WatchScreen() {
 
   return (
     <section className="space-y-6">
-      {/* Hero */}
       <div className="hero-mesh overflow-hidden rounded-[2.5rem] border border-white/8 p-6 md:p-8">
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-4">
@@ -110,55 +111,29 @@ export default function WatchScreen() {
               <p className="mt-3 text-4xl font-semibold text-white">{series.length}</p>
               <p className="mt-2 text-sm text-white/62">As séries mais assistidas agora.</p>
             </div>
-            <div className="weather-badge rounded-[1.8rem] p-5">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Leitura do momento</p>
-              <div className="mt-3 flex items-center gap-2">
-                {safeContext.icon_url && <img src={safeContext.icon_url} alt="" className="h-8 w-8" />}
-                <p className="text-2xl font-semibold text-white">{safeContext.weather_label}</p>
-              </div>
-              <p className="mt-2 text-sm text-white/62">
-                {safeContext.isRainy
-                  ? "Chuva lá fora — sessão em casa com zero atrito."
-                  : "Dá para escolher entre cinema na rua ou sofá em casa."}
-              </p>
-            </div>
+            <CoupleWeatherBadge context={safeContext} couple={couple || undefined} />
           </div>
         </div>
       </div>
 
-      {/* Loading */}
       {loadingTrending && <p className="text-sm text-white/60">Buscando filmes e séries do TMDB...</p>}
 
-      {/* Trending Movies */}
       {movies.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Filmes em cartaz</p>
-            <h3 className="mt-2 text-3xl font-semibold">Em cartaz no Brasil agora</h3>
-            <p className="mt-2 text-sm text-white/66">Estreias e filmes em exibição via TMDB, com fallback para trending.</p>
-          </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {movies.map((item: Recommendation) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
-        </motion.div>
+        <MediaRail
+          title="Filmes em cartaz"
+          subtitle="Estreias e filmes em exibição no Brasil"
+          items={movies}
+          onOpen={setSelectedItem}
+        />
       )}
 
-      {/* Trending Series */}
       {series.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Séries em alta</p>
-            <h3 className="mt-2 text-3xl font-semibold">Para maratonar a dois</h3>
-            <p className="mt-2 text-sm text-white/66">As séries mais assistidas agora, direto do TMDB.</p>
-          </div>
-          <div className="grid gap-4 xl:grid-cols-3">
-            {series.map((item: Recommendation) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
-        </div>
+        <MediaRail
+          title="Séries em alta"
+          subtitle="Para maratonar a dois"
+          items={series}
+          onOpen={setSelectedItem}
+        />
       )}
 
       {/* Genre Filter */}
@@ -191,32 +166,24 @@ export default function WatchScreen() {
         </div>
 
         {loadingGenre ? (
-          <div className="grid gap-4 md:grid-cols-3">
-            {[1, 2, 3].map((i) => <div key={i} className="skeleton h-72 rounded-[1.5rem]" />)}
+          <div className="grid gap-3 md:grid-cols-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="skeleton h-48 rounded-xl" />)}
           </div>
         ) : (
-          <div className="grid gap-4 xl:grid-cols-3">
-            {genreItems.map((item: Recommendation) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
+          <MediaRail title={`Gênero: ${selectedGenre.title}`} items={genreItems} onOpen={setSelectedItem} />
         )}
       </div>
 
       {(cinemaNews || []).length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Notícias</p>
-            <h3 className="mt-2 text-3xl font-semibold">Cinema e séries no radar</h3>
-            <p className="mt-2 text-sm text-white/66">Feed editorial de Omelete e AdoroCinema.</p>
-          </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {(cinemaNews || []).slice(0, 6).map((item: Recommendation) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
-        </div>
+        <MediaRail
+          title="Notícias de cinema e séries"
+          subtitle="Feed editorial de Omelete e AdoroCinema"
+          items={(cinemaNews || []).slice(0, 12)}
+          onOpen={setSelectedItem}
+        />
       )}
+
+      <MediaDetailModal item={selectedItem} userId={userId} onClose={() => setSelectedItem(null)} />
     </section>
   );
 }

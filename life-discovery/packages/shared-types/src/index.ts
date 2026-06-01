@@ -46,10 +46,23 @@ export type Recommendation = Experience & {
 
 export type FeedbackSignal = "like" | "dislike" | "save" | "not_now";
 
+export type DateNightPlanActivity = {
+  title: string;
+  type: string;
+  reason: string;
+  recommendation_id?: string | null;
+  time_window?: "morning" | "afternoon" | "night";
+  is_indoor?: boolean;
+  is_new_vs_familiar?: "new" | "familiar";
+  image_url?: string | null;
+  cta_url?: string | null;
+  spoiler_hint?: string | null;
+};
+
 export type DateNightPlan = {
-  activity_1: { title: string; type: string; reason: string; recommendation_id?: string | null };
-  activity_2: { title: string; type: string; reason: string; recommendation_id?: string | null };
-  activity_3: { title: string; type: string; reason: string; recommendation_id?: string | null };
+  activity_1: DateNightPlanActivity;
+  activity_2: DateNightPlanActivity;
+  activity_3: DateNightPlanActivity;
   reasoning: string;
   weather_note?: string;
   couple_note?: string;
@@ -66,6 +79,25 @@ export type CoupleMember = {
   occupation?: string | null;
   interests?: string[];
   dislikes?: string[];
+  movie_genres?: string[];
+  series_genres?: string[];
+  music_genres?: string[];
+  prefers_theater?: boolean;
+  likes_party?: boolean;
+  allergies?: string[];
+  intolerances?: string[];
+  food_dislikes?: string[];
+};
+
+export type CouplePreferences = {
+  preferred_cuisines?: string[];
+  avoided_cuisines?: string[];
+  romantic_walk_types?: string[];
+  preferred_dayparts?: Array<"morning" | "afternoon" | "night">;
+  preferred_activities?: string[];
+  budget_range?: "low" | "medium" | "high";
+  alcohol_policy?: "both_drink" | "one_drinks" | "none_drink";
+  avoids_outdoor_when_rain?: boolean;
 };
 
 export type CoupleSnapshot = {
@@ -81,6 +113,7 @@ export type CoupleSnapshot = {
   avoid_going_out_when_rain?: boolean;
   weekend_wake_time?: string;
   members: CoupleMember[];
+  preferences?: CouplePreferences;
   profile?: {
     schema_version?: string;
     couple_profile_json?: Record<string, any>;

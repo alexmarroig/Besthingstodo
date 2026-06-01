@@ -1,4 +1,5 @@
 import { fetchExternalJson, jsonFallback, jsonWithCache } from "../_lib/external-api";
+import { loadDailySource } from "../_lib/data-hub";
 import { searchGooglePlaces } from "../_lib/google-places";
 import { localizeRecommendation } from "../_lib/labels-pt";
 import { loadLocalRestaurants } from "../_lib/local-data";
@@ -91,6 +92,7 @@ export async function GET(request: Request) {
   const googleKey = process.env.GOOGLE_PLACES_API_KEY;
 
   const localRestaurants = filterByCategory(await loadLocalRestaurants(), categories);
+  const snapshotRestaurants = filterByCategory(await loadDailySource("places", city), categories);
   let remoteResults: RecommendationPayload[] = [];
 
   if (googleKey) {
@@ -139,11 +141,13 @@ export async function GET(request: Request) {
     }
   }
 
-  const merged = mergePlaces(localRestaurants, remoteResults, 18);
+  const merged = mergePlaces([...snapshotRestaurants, ...localRestaurants], remoteResults, 18);
   const filtered = filterByNeighborhood(merged, neighborhood).map((item) => localizeRecommendation(item));
 
   if (filtered.length === 0) {
-    const fallback = filterByNeighborhood(localRestaurants, neighborhood).map((item) => localizeRecommendation(item));
+    const fallback = filterByNeighborhood([...snapshotRestaurants, ...localRestaurants], neighborhood).map((item) =>
+      localizeRecommendation(item)
+    );
     return jsonWithCache(fallback, { revalidate: 900, stale: 300 });
   }
 

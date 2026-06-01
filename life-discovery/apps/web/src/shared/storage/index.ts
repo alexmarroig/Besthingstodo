@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_USER_ID } from "@life/shared-types";
+import { CoupleSnapshot, DEFAULT_USER_ID } from "@life/shared-types";
 
 const KEY = "life_user_id";
 const TOKEN_KEY = "life_access_token";
@@ -45,15 +45,56 @@ export function clearAuth() {
 
 // --- Couple Profile (localStorage, no backend) ---
 
-const DEFAULT_COUPLE_PROFILE = {
+const DEFAULT_COUPLE_PROFILE: CoupleSnapshot = {
+  account_name: "Alex & Camila",
   city: "São Paulo",
   neighborhood: "Campo Belo",
-  person_a: { name: "Pessoa A", interests: "", dislikes: "" },
-  person_b: { name: "Pessoa B", interests: "", dislikes: "" },
   transport: "carro",
-  rain_plan: "indoor",
+  avoid_going_out_when_rain: true,
   max_drive_minutes: 30,
   search_radius_km: 15,
+  members: [
+    {
+      full_name: "Alex",
+      drinks_alcohol: false,
+      smokes: false,
+      interests: ["tecnologia", "cinema", "museus"],
+      dislikes: ["lotação", "balada"],
+      movie_genres: ["sci-fi", "drama", "thriller"],
+      series_genres: ["drama", "suspense"],
+      music_genres: ["indie", "jazz"],
+      prefers_theater: true,
+      likes_party: false,
+      allergies: [],
+      intolerances: [],
+      food_dislikes: [],
+    },
+    {
+      full_name: "Camila",
+      drinks_alcohol: false,
+      smokes: false,
+      interests: ["gastronomia", "astrologia", "livros"],
+      dislikes: ["barulho alto", "balada"],
+      movie_genres: ["romance", "drama"],
+      series_genres: ["drama", "comédia"],
+      music_genres: ["mpb", "pop"],
+      prefers_theater: true,
+      likes_party: false,
+      allergies: [],
+      intolerances: [],
+      food_dislikes: [],
+    },
+  ],
+  preferences: {
+    preferred_cuisines: ["italiana", "japonesa", "contemporânea"],
+    avoided_cuisines: [],
+    romantic_walk_types: ["jantar intimista", "cinema", "museu", "livraria + café"],
+    preferred_dayparts: ["night"],
+    preferred_activities: ["cinema", "restaurante", "exposição"],
+    budget_range: "medium",
+    alcohol_policy: "none_drink",
+    avoids_outdoor_when_rain: true,
+  },
   profile: {
     couple_profile_json: {
       interests: {
@@ -65,17 +106,25 @@ const DEFAULT_COUPLE_PROFILE = {
   },
 };
 
-export function getCoupleProfile(): any {
+export function getCoupleProfile(): CoupleSnapshot {
   return safeJsonParse(getStorage("local")?.getItem(COUPLE_PROFILE_KEY) || null, DEFAULT_COUPLE_PROFILE);
 }
 
-export function setCoupleProfile(profile: any) {
+export function setCoupleProfile(profile: CoupleSnapshot) {
   getStorage("local")?.setItem(COUPLE_PROFILE_KEY, JSON.stringify(profile));
 }
 
-export function patchCoupleProfileLocal(patch: Record<string, any>) {
+export function patchCoupleProfileLocal(patch: Partial<CoupleSnapshot>) {
   const current = getCoupleProfile();
-  setCoupleProfile({ ...current, ...patch });
+  setCoupleProfile({
+    ...current,
+    ...patch,
+    members: patch.members || current.members,
+    preferences: {
+      ...(current.preferences || {}),
+      ...(patch.preferences || {}),
+    },
+  });
 }
 
 // --- Saved Items ---

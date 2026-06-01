@@ -1117,42 +1117,92 @@ function pickFirst(items: Recommendation[], matchers: string[], fallback: Recomm
   return found || fallback[0] || null;
 }
 
+function toTimeWindow(context: ExperienceContext): "morning" | "afternoon" | "night" {
+  if (context.time_label === "manhã") return "morning";
+  if (context.time_label === "fim de tarde") return "afternoon";
+  return "night";
+}
+
+function isIndoorPreferred(context: ExperienceContext, item: Recommendation) {
+  if (context.isRainy) return true;
+  if (context.isCold && context.isNight) return true;
+  return item.indoor_outdoor === "indoor";
+}
+
+function noveltyLabel(item: Recommendation): "new" | "familiar" {
+  if (item.related_favorite || item.personalization_label?.includes("favorito")) return "familiar";
+  return "new";
+}
+
+function spoilerHint(item: Recommendation, context: ExperienceContext) {
+  const location = item.location || item.city || "São Paulo";
+  if (context.isRainy) return `Com chuva, priorize deslocamento curto para ${location}.`;
+  if (context.isNight) return `Chegue com 10 min de folga para curtir melhor ${location}.`;
+  return `Reserve uma janela de 1h30 para aproveitar ${location} sem correria.`;
+}
+
+function buildActivity(item: Recommendation, type: string, context: ExperienceContext) {
+  const indoor = isIndoorPreferred(context, item);
+  const novelty = noveltyLabel(item);
+  const familiarityText = novelty === "familiar" ? "algo que vocês já gostam" : "uma experiência nova para testar";
+  const baseReason =
+    item.couple_fit_reason ||
+    item.reason ||
+    (indoor
+      ? `Com o clima de agora, este plano fechado funciona melhor e mantém conforto.`
+      : `Com o tempo atual, vale aproveitar este rolê sem complicar a logística.`);
+
+  return {
+    title: item.title,
+    type,
+    reason: `${baseReason} Hoje a ideia é ${familiarityText}.`,
+    recommendation_id: item.id,
+    time_window: toTimeWindow(context),
+    is_indoor: indoor,
+    is_new_vs_familiar: novelty,
+    image_url: item.image_url || null,
+    cta_url: item.booking_url || item.url || null,
+    spoiler_hint: spoilerHint(item, context),
+  };
+}
+
 export function buildDateNightPlan(args: { recommendations: Recommendation[]; context: ExperienceContext; couple?: CoupleSnapshot | null }): DateNightPlan | null {
   const snapshot = getCoupleSnapshot(args.couple);
   const curated = curateRecommendations(args.recommendations, { context: args.context, couple: snapshot });
   if (curated.length < 2) return null;
-  const warmup = pickFirst(curated, ["cafe", "café", "livraria", "bookstore"], curated);
-  const culture = pickFirst(curated, ["museum", "museu", "ims", "masp", "cinema", "exposição", "theatro", "planetario"], curated.slice(1));
-  const dinner = pickFirst(curated, ["restaurant", "jantar", "massa", "trattoria", "dessert", "libertango", "issho"], curated.slice(2));
+
+  const dayPlan = [
+    pickFirst(curated, ["museum", "museu", "exposição", "planetario", "livraria"], curated),
+    pickFirst(curated, ["cinema", "movie", "filme", "serie", "série", "evento"], curated.slice(1)),
+    pickFirst(curated, ["restaurant", "restaurante", "jantar", "cafe", "café", "delivery"], curated.slice(2)),
+  ];
+  const nightPlan = [
+    pickFirst(curated, ["cinema", "movie", "filme", "serie", "série"], curated),
+    pickFirst(curated, ["restaurant", "restaurante", "jantar", "massa", "trattoria"], curated.slice(1)),
+    pickFirst(curated, ["bar", "cafe", "café", "delivery", "sobremesa"], curated.slice(2)),
+  ];
+  const planBase = args.context.time_label === "manhã" ? dayPlan : nightPlan;
+  const [warmup, culture, dinner] = planBase;
   if (!warmup || !culture || !dinner) return null;
 
+  const weatherSummary = args.context.isRainy
+    ? "Com previsão de chuva agora, o plano priorizou locais fechados e de fácil acesso."
+    : args.context.isCold && args.context.isNight
+      ? "Como está frio à noite, o plano focou em ambientes confortáveis e acolhedores."
+      : "Com o tempo estável, o plano equilibrou novidade e conforto perto de vocês.";
+
   return {
-    activity_1: {
-      title: warmup?.title || "Café gostoso em lugar calmo",
-      type: "warmup",
-      reason: warmup?.couple_fit_reason || "Começa a noite sem pressa e ajuda a entrar no ritmo do encontro.",
-      recommendation_id: warmup?.id || null
-    },
-    activity_2: {
-      title: culture?.title || "Programa cultural leve",
-      type: "culture",
-      reason: culture?.couple_fit_reason || "Traz assunto e repertório sem pesar a programação.",
-      recommendation_id: culture?.id || null
-    },
-    activity_3: {
-      title: dinner?.title || "Jantar confortável e sem excesso de logística",
-      type: "dining",
-      reason: dinner?.couple_fit_reason || "Fecha a noite em clima de conversa boa, sem depender de bebida.",
-      recommendation_id: dinner?.id || null
-    },
-    reasoning: "Roteiro montado a partir das sugestões com melhor aderência real ao perfil do casal, priorizando favoritos, wishlist cultural e conforto logístico.",
-    weather_note: args.context.weather_note,
-    couple_note: "Mantive o plano sem foco em bares, sem cara de curso e puxando lugares mais conectados ao histórico de vocês.",
+    activity_1: buildActivity(warmup, "warmup", args.context),
+    activity_2: buildActivity(culture, "culture", args.context),
+    activity_3: buildActivity(dinner, "dining", args.context),
+    reasoning: weatherSummary,
+    weather_note: weatherSummary,
+    couple_note: "Sugestões filtradas pelo perfil do casal, com menos deslocamento e decisões mais diretas.",
     source_recommendation_ids: [warmup?.id, culture?.id, dinner?.id].filter(Boolean) as string[],
     planning_notes: [
       `Base de saída: ${snapshot.neighborhood || snapshot.city}`,
-      snapshot.avoid_going_out_when_rain ? "Se o tempo fechar, prefira os trechos cobertos." : "Vocês podem aceitar um pouco mais de improviso com o clima.",
-      "Se uma etapa encaixar muito bem, vale estender e cortar a próxima sem culpa."
+      args.context.isRainy ? "Hoje vale priorizar trajetos curtos e locais cobertos." : "Tempo aberto: dá para estender o passeio se estiver fluindo.",
+      "Se a primeira opção não agradar, toque na próxima card e siga sem travar."
     ]
   };
 }

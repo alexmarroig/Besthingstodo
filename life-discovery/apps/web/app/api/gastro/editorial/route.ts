@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { loadDailySource } from "../../_lib/data-hub";
 import { jsonFallback, jsonWithCache } from "../../_lib/external-api";
 import {
   dedupeRecommendations,
@@ -47,6 +48,7 @@ export async function GET(request: Request) {
 
   try {
     const liveItems = [];
+    const snapshotHubItems = await loadDailySource("gastro", "São Paulo");
 
     for (const source of GASTRO_EDITORIAL_SOURCES) {
       for (const feedUrl of source.feeds || []) {
@@ -66,7 +68,7 @@ export async function GET(request: Request) {
     }
 
     const snapshotItems = await loadSnapshot();
-    const merged = dedupeRecommendations([...liveItems, ...snapshotItems]);
+    const merged = dedupeRecommendations([...snapshotHubItems, ...liveItems, ...snapshotItems]);
     const filtered = filterByTopic(merged, topic).slice(0, limit);
 
     if (filtered.length === 0) {

@@ -1,4 +1,5 @@
 import { fetchExternalJson, jsonFallback, jsonWithCache } from "../_lib/external-api";
+import { loadDailySource } from "../_lib/data-hub";
 import { isSportsEvent, localizeRecommendation } from "../_lib/labels-pt";
 import { loadLocalEvents } from "../_lib/local-data";
 import { dedupeRecommendations } from "../_lib/recommendation-mapper";
@@ -187,6 +188,7 @@ export async function GET(request: Request) {
           : keyword;
 
   const localEvents = await loadLocalEvents();
+  const snapshotEvents = await loadDailySource("events", city);
 
   try {
     let ticketmasterEvents: RecommendationPayload[] = [];
@@ -197,14 +199,14 @@ export async function GET(request: Request) {
       }
     }
 
-    const merged = dedupeRecommendations([...localEvents, ...ticketmasterEvents, ...FALLBACK_EVENTS])
+    const merged = dedupeRecommendations([...snapshotEvents, ...localEvents, ...ticketmasterEvents, ...FALLBACK_EVENTS])
       .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0))
       .slice(0, Number(size));
 
     const localized = merged.map((item) => localizeRecommendation(item));
     return jsonWithCache(localized, { revalidate: 900, stale: 300 });
   } catch {
-    const fallback = dedupeRecommendations([...localEvents, ...FALLBACK_EVENTS]).map((item) =>
+    const fallback = dedupeRecommendations([...snapshotEvents, ...localEvents, ...FALLBACK_EVENTS]).map((item) =>
       localizeRecommendation(item)
     );
     return jsonFallback(fallback, { revalidate: 900, fallbackMaxAge: 60 });

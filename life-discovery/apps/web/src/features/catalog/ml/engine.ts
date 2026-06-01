@@ -103,6 +103,7 @@ function buildTagWeightsFromFeedback(feedback: FeedbackEntry[]) {
 function buildTagWeightsFromProfile(couple: CoupleSnapshot) {
   const weights: Record<string, number> = {};
   const profile = couple.profile?.couple_profile_json || {};
+  const preferences = couple.preferences || {};
   const buckets = [
     profile.interests?.topics,
     profile.interests?.series,
@@ -114,7 +115,17 @@ function buildTagWeightsFromProfile(couple: CoupleSnapshot) {
     profile.culture?.liked_exhibitions,
     profile.culture?.wishlist,
     profile.lifestyle?.preferences,
-    ...(couple.members || []).flatMap((member) => [...(member.interests || []), ...(member.dislikes || [])]),
+    preferences.preferred_cuisines,
+    preferences.preferred_activities,
+    preferences.romantic_walk_types,
+    ...(couple.members || []).flatMap((member) => [
+      ...(member.interests || []),
+      ...(member.dislikes || []),
+      ...(member.movie_genres || []),
+      ...(member.series_genres || []),
+      ...(member.music_genres || []),
+      ...(member.food_dislikes || []),
+    ]),
   ];
 
   for (const bucket of buckets) {
@@ -178,6 +189,27 @@ function contextMatch(item: Recommendation, context: ExperienceContext) {
   return Math.min(1, score);
 }
 
+function profilePolicyMatch(item: Recommendation, couple: CoupleSnapshot) {
+  const tags = (item.tags || []).map((tag) => tag.toLowerCase());
+  const text = `${item.title} ${item.description} ${item.location} ${(item.tags || []).join(" ")}`.toLowerCase();
+  const preferences = couple.preferences || {};
+  const preferredActivities = preferences.preferred_activities || [];
+  const romanticWalks = preferences.romantic_walk_types || [];
+  const preferredCuisines = preferences.preferred_cuisines || [];
+  const avoidedCuisines = preferences.avoided_cuisines || [];
+  let score = 0.5;
+
+  if (preferredActivities.some((value) => text.includes(value.toLowerCase()))) score += 0.2;
+  if (romanticWalks.some((value) => text.includes(value.toLowerCase()))) score += 0.15;
+  if (preferredCuisines.some((value) => text.includes(value.toLowerCase()))) score += 0.2;
+  if (avoidedCuisines.some((value) => text.includes(value.toLowerCase()))) score -= 0.25;
+  if (preferences.alcohol_policy === "none_drink" && tags.some((tag) => ["bar", "vinho", "drinks", "cocktail"].includes(tag))) {
+    score -= 0.25;
+  }
+
+  return Math.max(0, Math.min(1, score));
+}
+
 function noveltyScore(seenIds: Set<string>, itemId: string) {
   return seenIds.has(itemId) ? 0.1 : 1;
 }
@@ -196,6 +228,18 @@ function penaltyScore(item: Recommendation) {
   if (tags.some((tag) => ["nightclub", "bar", "party", "esporte", "sports", "basquete", "nba"].includes(tag))) penalty += 0.25;
   if (item.avoid_reason) penalty += 0.2;
   return penalty;
+}
+
+function foodRestrictionPenalty(item: Recommendation, couple: CoupleSnapshot) {
+  const text = `${item.title} ${item.description} ${(item.tags || []).join(" ")}`.toLowerCase();
+  const restrictions = (couple.members || []).flatMap((member) => [
+    ...(member.allergies || []),
+    ...(member.intolerances || []),
+    ...(member.food_dislikes || []),
+  ]);
+  if (!restrictions.length) return 0;
+  if (restrictions.some((value) => text.includes(value.toLowerCase()))) return 0.35;
+  return 0;
 }
 
 function finalScore(parts: {
@@ -253,14 +297,15 @@ export function scoreItemWithML(item: Recommendation, state: MLState) {
   const semantic = cosineSimilarity(state.userEmbedding, itemEmbedding);
   const tagMatch = tagOverlap(state.userTagWeights, [...(item.tags || []), item.title, item.category]);
   const contextScore = contextMatch(item, state.context);
+  const policyScore = profilePolicyMatch(item, state.couple);
   const popularity = interactionStats(state.interactionByItem[item.id] || {});
   const novelty = noveltyScore(state.seenIds, item.id);
   const coupleCompat = coupleCompatibility(item);
-  const penalty = penaltyScore(item);
+  const penalty = penaltyScore(item) + foodRestrictionPenalty(item, state.couple);
 
   const normalized = finalScore({
     semantic,
-    tagMatch,
+    tagMatch: (tagMatch + policyScore) / 2,
     context: contextScore,
     popularity,
     novelty,
