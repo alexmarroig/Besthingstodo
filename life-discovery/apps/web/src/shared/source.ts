@@ -11,6 +11,8 @@ const HOST_LABELS: Array<{ match: string; label: string; badge: string; eyebrow:
   { match: "masp.org.br", label: "MASP", badge: "Fonte oficial", eyebrow: "Museu oficial", gradient: "from-[#1d4ed8] via-[#0f172a] to-[#f97316]" },
   { match: "ims.com.br", label: "IMS Paulista", badge: "Fonte oficial", eyebrow: "Acervo oficial", gradient: "from-[#1e293b] via-[#111827] to-[#38bdf8]" },
   { match: "pinacoteca.org.br", label: "Pinacoteca", badge: "Fonte oficial", eyebrow: "Museu oficial", gradient: "from-[#4c1d95] via-[#111827] to-[#f59e0b]" },
+  { match: "culturabancodobrasil.com.br", label: "CCBB SP", badge: "Fonte oficial", eyebrow: "Centro cultural", gradient: "from-[#0f766e] via-[#111827] to-[#fbbf24]" },
+  { match: "sescsp.org.br", label: "Sesc SP", badge: "Fonte oficial", eyebrow: "Programacao cultural", gradient: "from-[#0f172a] via-[#1d4ed8] to-[#22c55e]" },
   { match: "theatromunicipal.org.br", label: "Theatro Municipal", badge: "Fonte oficial", eyebrow: "Palco oficial", gradient: "from-[#6b21a8] via-[#111827] to-[#f97316]" },
   { match: "prefeitura.sp.gov.br", label: "Planetario Ibirapuera", badge: "Fonte oficial", eyebrow: "Agenda oficial", gradient: "from-[#14532d] via-[#111827] to-[#22c55e]" },
   { match: "asas.br.com", label: "REAG Belas Artes", badge: "Cinema oficial", eyebrow: "Sala de cinema", gradient: "from-[#1e1b4b] via-[#111827] to-[#ef4444]" },
