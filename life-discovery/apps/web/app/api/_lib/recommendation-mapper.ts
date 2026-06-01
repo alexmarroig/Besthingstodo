@@ -80,6 +80,51 @@ function stableId(prefix: string, value: string) {
   return `${prefix}-${Math.abs(hash)}`;
 }
 
+export function mapScrapedEventToRecommendation(
+  event: {
+    title: string;
+    description: string;
+    url: string;
+    source: string;
+    venue?: string;
+    city?: string;
+    date?: string | null;
+    price?: number | null;
+    category?: string;
+    tags?: string[];
+    image_url?: string | null;
+    quality_score?: number;
+    content_tier?: ContentTier;
+  }
+): RecommendationPayload {
+  const tags = inferTags(event.title, event.description, event.tags || []);
+  return {
+    id: stableId(event.source, event.url || event.title),
+    title: event.title.slice(0, 140),
+    description: event.description.slice(0, 420) || `Evento em São Paulo — ${event.title}`,
+    category: event.category || "event",
+    domain: "events_exhibitions",
+    content_tier: event.content_tier || "curated",
+    city: event.city || "São Paulo",
+    location: event.venue || "São Paulo",
+    neighborhood: null,
+    image_url: event.image_url || null,
+    tags,
+    source: event.source,
+    editorial_source: event.source,
+    url: event.url,
+    booking_url: event.url,
+    availability_kind: "event",
+    quality_score: event.quality_score ?? 78,
+    score: (event.quality_score ?? 78) / 10,
+    price: event.price ?? null,
+    start_time: event.date || null,
+    profile_signals: tags.slice(0, 4),
+    personalization_label: null,
+    related_favorite: null,
+  };
+}
+
 export function mapRssItemToRecommendation(
   item: RssItem,
   options: {

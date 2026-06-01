@@ -1,5 +1,6 @@
 import { fetchExternalJson, jsonFallback, jsonWithCache } from "../_lib/external-api";
 import { loadDailySource } from "../_lib/data-hub";
+import { fetchAllLocalEvents } from "../_lib/event-providers";
 import { enrichRecommendationImagesAsync } from "../_lib/recommendation-images";
 import { isSportsEvent, localizeRecommendation } from "../_lib/labels-pt";
 import { loadLocalEvents } from "../_lib/local-data";
@@ -134,6 +135,7 @@ function mapEvent(event: any): RecommendationPayload {
     image_url: bestImage?.url || null,
     tags,
     source: "Ticketmaster",
+    editorial_source: "Ticketmaster",
     url: event.url || null,
     score: null,
     price: priceRange?.min ?? null,
@@ -190,6 +192,7 @@ export async function GET(request: Request) {
 
   const localEvents = await loadLocalEvents();
   const snapshotEvents = await loadDailySource("events", city);
+  const aggregatedLocal = await fetchAllLocalEvents({ limit: 24, gastroOnly: preset === "gastro" });
 
   try {
     let ticketmasterEvents: RecommendationPayload[] = [];
@@ -200,20 +203,37 @@ export async function GET(request: Request) {
       }
     }
 
-    const merged = dedupeRecommendations([...snapshotEvents, ...localEvents, ...ticketmasterEvents, ...FALLBACK_EVENTS])
-      .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0))
+    let merged = dedupeRecommendations([
+      ...snapshotEvents,
+      ...localEvents,
+      ...aggregatedLocal,
+      ...ticketmasterEvents,
+    ])
+      .sort((a, b) => {
+        const sourceBoost = (item: RecommendationPayload) => {
+          const label = (item.source || "").toLowerCase();
+          if (label.includes("sympla")) return 4;
+          if (label.includes("ticketmaster")) return 3;
+          if (label.includes("fever")) return 2;
+          if (label.includes("timeout")) return 2;
+          if (label.includes("catraca")) return 2;
+          return 0;
+        };
+        return (b.quality_score || 0) + sourceBoost(b) - ((a.quality_score || 0) + sourceBoost(a));
+      })
       .slice(0, Number(size));
 
-    const localized = await enrichRecommendationImagesAsync(merged.map((item) => localizeRecommendation(item)), {
-      maxOgLookups: 10,
-    });
+    if (merged.length === 0) {
+      merged.push(...FALLBACK_EVENTS);
+    }
+
+    const localized = await enrichRecommendationImagesAsync(merged.map((item) => localizeRecommendation(item)));
     return jsonWithCache(localized, { revalidate: 900, stale: 300 });
   } catch {
     const fallback = await enrichRecommendationImagesAsync(
-      dedupeRecommendations([...snapshotEvents, ...localEvents, ...FALLBACK_EVENTS]).map((item) =>
+      dedupeRecommendations([...snapshotEvents, ...localEvents, ...aggregatedLocal, ...FALLBACK_EVENTS]).map((item) =>
         localizeRecommendation(item)
-      ),
-      { maxOgLookups: 8 }
+      )
     );
     return jsonFallback(fallback, { revalidate: 900, fallbackMaxAge: 60 });
   }

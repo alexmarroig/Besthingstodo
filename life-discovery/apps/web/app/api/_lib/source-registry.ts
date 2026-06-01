@@ -88,6 +88,26 @@ export const LOCAL_EVENT_SOURCES: SourceDefinition[] = [
     topics: ["events", "all"],
     tags: ["gratuito", "evento", "sao paulo"],
   },
+  {
+    id: "sao_paulo_secreto",
+    label: "São Paulo Secreto",
+    feeds: ["https://saopaulosecreto.com/feed/"],
+    domain: "events_exhibitions",
+    contentTier: "curated",
+    curationBoost: 17,
+    topics: ["events", "trends", "openings", "all"],
+    tags: ["sao paulo", "rolê", "guia", "abertura"],
+  },
+  {
+    id: "sympla_blog",
+    label: "Sympla",
+    feeds: ["https://blog.sympla.com.br/feed/"],
+    domain: "events_exhibitions",
+    contentTier: "curated",
+    curationBoost: 15,
+    topics: ["events", "all"],
+    tags: ["sympla", "evento", "experiencia"],
+  },
 ];
 
 export const EDITORIAL_SOURCE_BOOST: Record<string, number> = {
@@ -97,12 +117,17 @@ export const EDITORIAL_SOURCE_BOOST: Record<string, number> = {
   "folha comer & beber": 22,
   "exame casual": 16,
   "catraca livre": 18,
-  "são paulo secreto": 15,
   cumbuca: 14,
   "farofa magazine": 20,
   michelin: 26,
   omelete: 12,
   adorocinema: 12,
+  "são paulo secreto": 17,
+  "sao paulo secreto": 17,
+  sympla: 15,
+  fever: 14,
+  "time out sp": 16,
+  timeout: 16,
 };
 
 export const PLACE_INTENT_QUERIES: Record<string, { query: string; tags: string[] }> = {
