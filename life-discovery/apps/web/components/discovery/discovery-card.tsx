@@ -7,6 +7,7 @@ import Link from "next/link";
 import ExperienceImage from "./experience-image";
 import { getRecommendationSourceMeta } from "@/shared/source";
 import { localizeCategory, localizeTags } from "@/shared/labels-pt";
+import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
 import { sendFeedback } from "@/shared/api/client";
 import { upsertSavedItem, upsertAgendaItem } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
@@ -38,7 +39,8 @@ export default function DiscoveryCard({
 }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const source = getRecommendationSourceMeta(item);
-  const hasImage = Boolean(item.image_url);
+  const imageUrl = normalizeRecommendationImageUrl(item.image_url);
+  const hasImage = Boolean(imageUrl);
 
   const handleAction = (action: "like" | "dislike" | "save" | "skip") => {
     sendFeedback(userId, item.id, action, { title: item.title, tags: item.tags });
@@ -66,7 +68,7 @@ export default function DiscoveryCard({
         )}
         {hasImage ? (
           <img
-            src={item.image_url!}
+            src={imageUrl!}
             alt={item.title}
             className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             onLoad={() => setImgLoaded(true)}

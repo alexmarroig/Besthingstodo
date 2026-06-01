@@ -9,7 +9,12 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
-    "tags": ["italiana", "massas", "romântico", "casal"],
+    "tags": [
+      "italiana",
+      "massas",
+      "romântico",
+      "casal"
+    ],
     "source": "Guia SP",
     "editorial_source": "Favorito do casal",
     "url": "https://www.lellistrattoria.com.br/",
@@ -31,7 +36,12 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
-    "tags": ["carne", "argentina", "jantar", "casal"],
+    "tags": [
+      "carne",
+      "argentina",
+      "jantar",
+      "casal"
+    ],
     "source": "Guia SP",
     "editorial_source": "Favorito do casal",
     "url": "https://www.libertango.com.br/",
@@ -53,7 +63,11 @@
     "city": "São Paulo",
     "location": "Vila Olímpia",
     "neighborhood": "Vila Olímpia",
-    "tags": ["japonês", "sushi", "yakissoba"],
+    "tags": [
+      "japonês",
+      "sushi",
+      "yakissoba"
+    ],
     "source": "Guia SP",
     "editorial_source": "Favorito do casal",
     "availability_kind": "venue",
@@ -74,7 +88,11 @@
     "city": "São Paulo",
     "location": "Mooca",
     "neighborhood": "Mooca",
-    "tags": ["pizza", "italiana", "tradicional"],
+    "tags": [
+      "pizza",
+      "italiana",
+      "tradicional"
+    ],
     "source": "Guia SP",
     "availability_kind": "venue",
     "quality_score": 88,
@@ -94,9 +112,14 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
-    "tags": ["autoral", "brasileira", "fine dining"],
+    "tags": [
+      "autoral",
+      "brasileira",
+      "fine dining"
+    ],
     "source": "Estadão Paladar",
     "editorial_source": "Estadão Paladar",
+    "url": "https://mani.com.br/",
     "availability_kind": "venue",
     "quality_score": 96,
     "score": 9.6,
@@ -115,9 +138,14 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
-    "tags": ["fine dining", "vinho", "date night"],
+    "tags": [
+      "fine dining",
+      "vinho",
+      "date night"
+    ],
     "source": "Michelin Guide",
     "editorial_source": "Michelin Guide",
+    "url": "https://www.evvai.com.br/",
     "availability_kind": "venue",
     "quality_score": 97,
     "score": 9.7,
@@ -136,9 +164,14 @@
     "city": "São Paulo",
     "location": "Centro",
     "neighborhood": "Centro",
-    "tags": ["autoral", "porco", "casual premium"],
+    "tags": [
+      "autoral",
+      "porco",
+      "casual premium"
+    ],
     "source": "Michelin Guide",
     "editorial_source": "Michelin Guide",
+    "url": "https://casadoporco.com/",
     "availability_kind": "venue",
     "quality_score": 95,
     "score": 9.5,
@@ -157,8 +190,13 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
-    "tags": ["pizza", "napolitana", "forno a lenha"],
+    "tags": [
+      "pizza",
+      "napolitana",
+      "forno a lenha"
+    ],
     "source": "Guia SP",
+    "url": "https://www.brazpizza.com.br/",
     "availability_kind": "venue",
     "quality_score": 89,
     "score": 8.9,
@@ -177,7 +215,11 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
-    "tags": ["sanduíche", "deli", "casual"],
+    "tags": [
+      "sanduíche",
+      "deli",
+      "casual"
+    ],
     "source": "Guia SP",
     "availability_kind": "venue",
     "quality_score": 87,
@@ -197,7 +239,11 @@
     "city": "São Paulo",
     "location": "Vila Madalena",
     "neighborhood": "Vila Madalena",
-    "tags": ["café", "brunch", "specialty"],
+    "tags": [
+      "café",
+      "brunch",
+      "specialty"
+    ],
     "source": "Guia SP",
     "availability_kind": "venue",
     "quality_score": 85,
@@ -217,12 +263,18 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
-    "tags": ["café", "livraria", "calmo", "casal"],
+    "tags": [
+      "café",
+      "livraria",
+      "calmo",
+      "casal"
+    ],
     "source": "Guia SP",
     "editorial_source": "Favorito do casal",
+    "url": "https://www.travessa.com.br/",
     "availability_kind": "venue",
     "quality_score": 90,
-    "score": 9.0,
+    "score": 9,
     "latitude": -23.5658,
     "longitude": -46.6912
   },
@@ -236,12 +288,16 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
-    "tags": ["delivery", "burger", "casal"],
+    "tags": [
+      "delivery",
+      "burger",
+      "casal"
+    ],
     "source": "Guia SP",
     "availability_kind": "delivery",
     "quality_score": 86,
     "score": 8.6,
-    "latitude": -23.5840,
-    "longitude": -46.6730
+    "latitude": -23.584,
+    "longitude": -46.673
   }
 ]

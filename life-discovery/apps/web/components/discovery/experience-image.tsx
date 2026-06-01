@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
 import { getRecommendationSourceMeta } from "@/shared/source";
 import { localizeCategory } from "@/shared/labels-pt";
 import { Recommendation } from "@life/shared-types";
@@ -27,63 +28,52 @@ export default function ExperienceImage({
 }) {
   const theme = fallbackThemes[item.image_fallback_key || "editorial"] || fallbackThemes.editorial;
   const sourceMeta = getRecommendationSourceMeta(item);
-  const [resolvedImage, setResolvedImage] = useState<string | null>(item.image_url || null);
+  const directImage = normalizeRecommendationImageUrl(item.image_url);
+  const [resolvedImage, setResolvedImage] = useState<string | null>(directImage);
   const [failed, setFailed] = useState(false);
 
   const imageResolverUrl = useMemo(() => {
-    if (item.image_url) return item.image_url;
-    const target = item.booking_url || item.url;
-    if (!target) return null;
+    if (directImage) return directImage;
 
     const params = new URLSearchParams({
-      target,
       title: item.title,
-      location: item.location || "",
+      location: item.location || item.neighborhood || "",
       city: item.city || "Sao Paulo",
+      domain: item.domain || "",
+      id: item.id || "",
     });
+    if (item.neighborhood) params.set("neighborhood", item.neighborhood);
+    const target = item.booking_url || item.url;
+    if (target) params.set("target", target);
     return `/api/editorial-image?${params.toString()}`;
-  }, [item.booking_url, item.city, item.image_url, item.location, item.title, item.url]);
+  }, [directImage, item.booking_url, item.city, item.domain, item.id, item.location, item.neighborhood, item.title, item.url]);
 
   useEffect(() => {
     let active = true;
     setFailed(false);
 
-    if (item.image_url) {
-      setResolvedImage(item.image_url);
+    if (directImage) {
+      setResolvedImage(directImage);
       return () => {
         active = false;
       };
     }
 
-    if (!imageResolverUrl || imageResolverUrl.startsWith("/api/")) {
-      if (!imageResolverUrl) {
+    fetch(imageResolverUrl, { cache: "force-cache" })
+      .then((res) => (res.ok ? res.json() : { url: null }))
+      .then((payload) => {
+        if (!active) return;
+        setResolvedImage(normalizeRecommendationImageUrl(payload?.url) || null);
+      })
+      .catch(() => {
+        if (!active) return;
         setResolvedImage(null);
-        return () => {
-          active = false;
-        };
-      }
+      });
 
-      fetch(imageResolverUrl, { cache: "force-cache" })
-        .then((res) => (res.ok ? res.json() : { url: null }))
-        .then((payload) => {
-          if (!active) return;
-          setResolvedImage(payload?.url || null);
-        })
-        .catch(() => {
-          if (!active) return;
-          setResolvedImage(null);
-        });
-
-      return () => {
-        active = false;
-      };
-    }
-
-    setResolvedImage(imageResolverUrl);
     return () => {
       active = false;
     };
-  }, [imageResolverUrl, item.image_url]);
+  }, [directImage, imageResolverUrl]);
 
   const rootClass = className ? `relative overflow-hidden ${className}` : "relative h-52 overflow-hidden";
   const showImage = Boolean(resolvedImage) && !failed;

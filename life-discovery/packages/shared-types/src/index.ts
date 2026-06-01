@@ -98,6 +98,19 @@ export type CouplePreferences = {
   budget_range?: "low" | "medium" | "high";
   alcohol_policy?: "both_drink" | "one_drinks" | "none_drink";
   avoids_outdoor_when_rain?: boolean;
+  favorite_restaurants?: string[];
+  favorite_places?: string[];
+  favorite_movies?: string[];
+  favorite_series?: string[];
+  wishlist?: string[];
+  noise_tolerance?: "low" | "medium" | "high";
+  crowd_tolerance?: "avoid" | "balanced" | "like";
+  date_goal?: "relax" | "celebrate" | "discover" | "talk";
+  mood?: "romantic" | "cultural" | "calm" | "mixed";
+  planning_style?: "fast" | "balanced" | "detailed";
+  preferred_neighborhoods?: string[];
+  food_restrictions?: string[];
+  onboarding_complete?: boolean;
 };
 
 export type CoupleSnapshot = {

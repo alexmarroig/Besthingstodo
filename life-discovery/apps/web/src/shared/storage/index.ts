@@ -2,6 +2,8 @@
 
 import { CoupleSnapshot, DEFAULT_USER_ID } from "@life/shared-types";
 
+import { buildCoupleProfileFromForm } from "../couple-profile-builder";
+
 const KEY = "life_user_id";
 const TOKEN_KEY = "life_access_token";
 const CONCIERGE_MEMORY_KEY = "life_concierge_memory";
@@ -94,13 +96,41 @@ const DEFAULT_COUPLE_PROFILE: CoupleSnapshot = {
     budget_range: "medium",
     alcohol_policy: "none_drink",
     avoids_outdoor_when_rain: true,
+    favorite_restaurants: ["Lellis Trattoria", "Libertango", "Issho"],
+    favorite_places: ["Livraria da Travessa", "MASP"],
+    favorite_movies: ["Interstellar", "Parasita"],
+    favorite_series: ["The Bear", "Succession"],
+    wishlist: ["Theatro Municipal", "Planetário"],
+    crowd_tolerance: "avoid",
+    noise_tolerance: "low",
+    onboarding_complete: false,
   },
   profile: {
+    schema_version: "2",
     couple_profile_json: {
+      dining: {
+        dining_out: [{ name: "Lellis Trattoria" }, { name: "Libertango" }, { name: "Issho" }],
+        likes: ["italiana", "japonesa"],
+        favorite_bookstore: "Livraria da Travessa",
+      },
       interests: {
-        cinema: { favorite_titles: ["Interstellar", "Parasita", "Pobres Criaturas"] },
-        series: ["The Bear", "Succession", "Shōgun"],
-        dining: { favorites: ["Lellis Trattoria", "Issho", "A Pizza da Mooca"] },
+        cinema: { favorite_titles: ["Interstellar", "Parasita"], favorite_style: ["sci-fi", "drama"] },
+        series: ["The Bear", "Succession"],
+        favorite_places: ["Livraria da Travessa", "MASP"],
+      },
+      culture: {
+        wishlist: ["Theatro Municipal", "Planetário"],
+        liked_exhibitions: ["MASP"],
+      },
+      lifestyle: {
+        avoid_crowded_places: true,
+        avoid_bar: true,
+        preferences: ["romantic", "cinema", "museu"],
+      },
+      location: {
+        city: "São Paulo",
+        neighborhood: "Campo Belo",
+        preferred_daypart: "night",
       },
     },
   },
@@ -116,15 +146,7 @@ export function setCoupleProfile(profile: CoupleSnapshot) {
 
 export function patchCoupleProfileLocal(patch: Partial<CoupleSnapshot>) {
   const current = getCoupleProfile();
-  setCoupleProfile({
-    ...current,
-    ...patch,
-    members: patch.members || current.members,
-    preferences: {
-      ...(current.preferences || {}),
-      ...(patch.preferences || {}),
-    },
-  });
+  setCoupleProfile(buildCoupleProfileFromForm(patch, current));
 }
 
 // --- Saved Items ---

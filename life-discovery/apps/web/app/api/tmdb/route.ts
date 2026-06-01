@@ -1,6 +1,6 @@
 import { fetchExternalJson, jsonFallback, jsonWithCache } from "../_lib/external-api";
+import { buildTmdbRequest, getTmdbApiKey } from "../_lib/tmdb-client";
 
-const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMG_BASE = "https://image.tmdb.org/t/p/w500";
 
 const FALLBACK_MOVIES = [
@@ -55,39 +55,50 @@ export async function GET(request: Request) {
   const query = searchParams.get("query") || "";
   const genre = searchParams.get("genre") || "";
   const media = searchParams.get("media") || "movie";
-  const apiKey = process.env.TMDB_API_KEY;
+  const apiKey = getTmdbApiKey();
 
   if (!apiKey) {
     return jsonWithCache(FALLBACK_MOVIES, { revalidate: 600, stale: 300 });
   }
 
-  const headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
-
   try {
-    let url = "";
+    let path = "";
+    let params: Record<string, string> = { language: "pt-BR", page: "1" };
     let mediaType = media;
 
     switch (type) {
       case "trending":
-        url = `${TMDB_BASE}/trending/all/week?language=pt-BR&page=1`;
+        path = "/trending/all/week";
         mediaType = "all";
         break;
       case "now_playing":
-        url = `${TMDB_BASE}/movie/now_playing?language=pt-BR&region=BR&page=1`;
+        path = "/movie/now_playing";
+        params.region = "BR";
         mediaType = "movie";
         break;
       case "discover":
-        url = `${TMDB_BASE}/discover/${media}?language=pt-BR&sort_by=popularity.desc&page=1${genre ? `&with_genres=${genre}` : ""}`;
+        path = `/discover/${media}`;
+        params.sort_by = "popularity.desc";
+        if (genre) params.with_genres = genre;
         break;
       case "search":
-        url = `${TMDB_BASE}/search/${media}?language=pt-BR&query=${encodeURIComponent(query)}&page=1`;
+        path = `/search/${media}`;
+        params.query = query;
         break;
       default:
-        url = `${TMDB_BASE}/trending/all/week?language=pt-BR&page=1`;
+        path = "/trending/all/week";
         mediaType = "all";
     }
 
-    const data = await fetchExternalJson<any>(url, { headers, revalidate: 600 });
+    const request = buildTmdbRequest(path, params);
+    if (!request) {
+      return jsonWithCache(FALLBACK_MOVIES, { revalidate: 600, stale: 300 });
+    }
+
+    const data = await fetchExternalJson<any>(request.url, {
+      headers: request.headers,
+      revalidate: 600,
+    });
     const results = (data.results || []).slice(0, 20).map((item: any) => mapTmdbItem(item, mediaType));
 
     return jsonWithCache(results, { revalidate: 600, stale: 300 });

@@ -2,6 +2,7 @@
 
 import ExperienceImage from "./experience-image";
 import { localizeCategory } from "@/shared/labels-pt";
+import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
 import { Recommendation } from "@life/shared-types";
 
 export type MediaTileVariant = "landscape" | "poster";
@@ -16,6 +17,7 @@ export default function MediaTile({
   variant?: MediaTileVariant;
 }) {
   const isPoster = variant === "poster";
+  const imageUrl = normalizeRecommendationImageUrl(item.image_url);
 
   return (
     <button
@@ -30,10 +32,10 @@ export default function MediaTile({
           isPoster ? "aspect-[2/3]" : "aspect-[16/10]"
         }`}
       >
-        {item.image_url ? (
+        {imageUrl ? (
           <>
             <img
-              src={item.image_url}
+              src={imageUrl}
               alt={item.title}
               className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
               loading="lazy"
@@ -65,6 +67,11 @@ export default function MediaTile({
           {item.personalization_label ? (
             <span className="rounded-full bg-[#f4d06f]/12 px-2 py-0.5 text-[11px] text-[#f4d06f]">{item.personalization_label}</span>
           ) : null}
+          {(item.couple_fit_reason || item.reason) && (
+            <span className="line-clamp-1 text-[11px] text-white/50" title={item.couple_fit_reason || item.reason}>
+              {item.couple_fit_reason || item.reason}
+            </span>
+          )}
         </div>
       </div>
     </button>

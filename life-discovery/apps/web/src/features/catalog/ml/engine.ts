@@ -116,8 +116,17 @@ function buildTagWeightsFromProfile(couple: CoupleSnapshot) {
     profile.culture?.wishlist,
     profile.lifestyle?.preferences,
     preferences.preferred_cuisines,
+    preferences.avoided_cuisines,
     preferences.preferred_activities,
     preferences.romantic_walk_types,
+    preferences.favorite_restaurants,
+    preferences.favorite_places,
+    preferences.favorite_movies,
+    preferences.favorite_series,
+    preferences.wishlist,
+    preferences.food_restrictions,
+    preferences.budget_range,
+    preferences.preferred_dayparts,
     ...(couple.members || []).flatMap((member) => [
       ...(member.interests || []),
       ...(member.dislikes || []),
@@ -236,6 +245,7 @@ function foodRestrictionPenalty(item: Recommendation, couple: CoupleSnapshot) {
     ...(member.allergies || []),
     ...(member.intolerances || []),
     ...(member.food_dislikes || []),
+    ...((couple.preferences?.food_restrictions as string[]) || []),
   ]);
   if (!restrictions.length) return 0;
   if (restrictions.some((value) => text.includes(value.toLowerCase()))) return 0.35;
@@ -315,11 +325,23 @@ export function scoreItemWithML(item: Recommendation, state: MLState) {
 
   return {
     mlScore: Math.round(normalized * 100),
-    mlReason: buildMLReason({ semantic, tagMatch, contextScore, item }),
+    mlReason: buildMLReason({ semantic, tagMatch, contextScore, item, couple: state.couple }),
   };
 }
 
-function buildMLReason(parts: { semantic: number; tagMatch: number; contextScore: number; item: Recommendation }) {
+function buildMLReason(parts: {
+  semantic: number;
+  tagMatch: number;
+  contextScore: number;
+  item: Recommendation;
+  couple: CoupleSnapshot;
+}) {
+  const prefs = parts.couple.preferences || {};
+  const text = `${parts.item.title} ${(parts.item.tags || []).join(" ")}`.toLowerCase();
+  const cuisineHit = (prefs.preferred_cuisines || []).find((c) => text.includes(c.toLowerCase()));
+  if (cuisineHit) return `Combina com a culinária ${cuisineHit} que vocês marcaram.`;
+  const favoriteHit = (prefs.favorite_restaurants || []).find((name) => text.includes(name.toLowerCase()));
+  if (favoriteHit) return `Perto do estilo de ${favoriteHit}, favorito do casal.`;
   if (parts.semantic > 0.42) return "Parecido com o que vocês já curtiram.";
   if (parts.tagMatch > 0.35) return "Combina com os gostos do casal.";
   if (parts.contextScore > 0.65) return "Encaixa bem no clima e horário de hoje.";

@@ -43,6 +43,36 @@ async function assertPublicUrl(url: URL) {
   }
 }
 
+function extractJsonLdImages(html: string, pageUrl: URL) {
+  const scripts = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+  for (const block of scripts) {
+    const payload = block.replace(/<\/?script[^>]*>/gi, "").trim();
+    if (!payload) continue;
+    try {
+      const parsed = JSON.parse(payload);
+      const nodes = Array.isArray(parsed) ? parsed : parsed["@graph"] ? parsed["@graph"] : [parsed];
+      for (const node of nodes) {
+        const image = node?.image;
+        if (typeof image === "string") {
+          const resolved = new URL(image, pageUrl);
+          if (resolved.protocol.startsWith("http")) return resolved.toString();
+        }
+        if (image?.url && typeof image.url === "string") {
+          const resolved = new URL(image.url, pageUrl);
+          if (resolved.protocol.startsWith("http")) return resolved.toString();
+        }
+        if (Array.isArray(image) && typeof image[0] === "string") {
+          const resolved = new URL(image[0], pageUrl);
+          if (resolved.protocol.startsWith("http")) return resolved.toString();
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 export function extractImageUrlFromHtml(html: string, pageUrl: URL) {
   const patterns = [
     /<meta[^>]+property=["']og:image:secure_url["'][^>]+content=["']([^"']+)["']/i,
@@ -66,6 +96,9 @@ export function extractImageUrlFromHtml(html: string, pageUrl: URL) {
       continue;
     }
   }
+
+  const jsonLdImage = extractJsonLdImages(html, pageUrl);
+  if (jsonLdImage) return jsonLdImage;
 
   return null;
 }
@@ -108,7 +141,8 @@ export async function fetchOgImageFromUrl(target: string, timeoutMs = 4500): Pro
     }
 
     const html = await res.text();
-    const imageUrl = extractImageUrlFromHtml(html.slice(0, 250_000), finalUrl);
+    const slice = html.slice(0, 350_000);
+    const imageUrl = extractImageUrlFromHtml(slice, finalUrl);
     if (!imageUrl) return null;
 
     const imageParsed = new URL(imageUrl);
@@ -180,3 +214,4 @@ export async function fetchWikipediaThumbnail(query: string): Promise<string | n
     clearTimeout(timeout);
   }
 }
+import { fetchTmdbPosterByTitle } from "./tmdb-client";

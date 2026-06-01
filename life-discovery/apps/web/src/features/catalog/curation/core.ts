@@ -839,6 +839,12 @@ function buildCoupleReason(item: Recommendation, couple: CoupleSnapshot, context
     return "Funciona bem para uma noite mais íntima, com o tipo de cinema que conversa com o gosto de vocês.";
   }
   if (item.domain === "dining_out") {
+    const cuisine = (couple.preferences?.preferred_cuisines || []).find((value) =>
+      combinedText.includes(normalizeText(value))
+    );
+    if (cuisine) {
+      return `Restaurante alinhado à culinária ${cuisine}, que vocês escolheram no perfil.`;
+    }
     return "Ajuda a transformar a saída em encontro de verdade, priorizando restaurantes com mais chance de agradar vocês dois.";
   }
   if (context.isRainy && item.indoor_outdoor === "indoor") {

@@ -22,10 +22,14 @@ Comandos:
 
 Required Vercel environment variables:
 
-- `TMDB_API_KEY`
+- `TMDB_API_KEY` — API Key v3 ou Read Access Token v4 do TMDB
 - `GEOAPIFY_API_KEY`
 - `TICKETMASTER_API_KEY`
 - `OPENWEATHER_API_KEY`
+
+Optional (melhora fotos de restaurantes):
+
+- `GOOGLE_PLACES_API_KEY` — Places API **(New)** no Google Cloud Console
 
 Optional:
 

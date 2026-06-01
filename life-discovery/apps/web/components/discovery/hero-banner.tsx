@@ -17,11 +17,7 @@ export default function HeroBanner({
       className="group relative block w-full overflow-hidden rounded-[2rem] border border-white/10 text-left"
     >
       <div className="relative aspect-[21/9] min-h-[220px] w-full bg-black/30 sm:min-h-[280px]">
-        {item.image_url ? (
-          <img src={item.image_url} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]" />
-        ) : (
-          <ExperienceImage item={item} mode="hero" className="h-full w-full" />
-        )}
+        <ExperienceImage item={item} mode="hero" className="h-full w-full" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
           <p className="text-[11px] uppercase tracking-[0.34em] text-[#f4d06f]">Principal para vocês</p>

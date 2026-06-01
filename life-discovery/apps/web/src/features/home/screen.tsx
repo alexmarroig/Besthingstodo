@@ -3,13 +3,16 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import ProfileNudge from "@/components/profile/profile-nudge";
 import CoupleWeatherBadge from "@/components/discovery/couple-weather-badge";
 import HeroBanner from "@/components/discovery/hero-banner";
 import MediaDetailModal from "@/components/discovery/media-detail-modal";
 import MediaRail from "@/components/discovery/media-rail";
 import { buildDayBrief, buildFallbackContext, buildHomeRails } from "@/features/catalog/curation";
 import { fetchCoupleMe, fetchRecommendations, fetchUserContext } from "@/shared/api/client";
+import { getProfileCompleteness } from "@/shared/profile-completeness";
 import { getUserId } from "@/shared/storage";
+import Link from "next/link";
 import { Recommendation } from "@life/shared-types";
 
 export default function HomeScreen() {
@@ -43,6 +46,8 @@ export default function HomeScreen() {
     () => buildDayBrief(items, context || buildFallbackContext(city), couple || undefined),
     [items, context, couple, city]
   );
+
+  const profileCompleteness = useMemo(() => getProfileCompleteness(couple), [couple]);
 
   const onCardAction = (id: string, action: "like" | "dislike" | "save" | "skip") => {
     if (action === "dislike") {
@@ -80,6 +85,23 @@ export default function HomeScreen() {
           </div>
         </div>
       </div>
+
+      <ProfileNudge couple={couple} />
+
+      {profileCompleteness.percent < 40 && !isLoading ? (
+        <div className="editorial-card rounded-[2rem] p-6 text-center">
+          <p className="text-lg font-semibold text-white">Monte o perfil do casal em 2 minutos</p>
+          <p className="mt-2 text-sm text-white/65">
+            Com cidade, culinárias e favoritos, as sugestões deixam de ser genéricas.
+          </p>
+          <Link
+            href="/onboarding"
+            className="mt-4 inline-flex rounded-full bg-[#f97352] px-6 py-3 text-sm font-medium text-white"
+          >
+            Começar onboarding
+          </Link>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="rounded-[1.5rem] border border-white/10 p-6 text-sm text-white/60">Montando recomendações...</div>

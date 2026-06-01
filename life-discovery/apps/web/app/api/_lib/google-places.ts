@@ -129,3 +129,17 @@ export async function searchGooglePlaces(options: GoogleSearchOptions): Promise<
     clearTimeout(timeout);
   }
 }
+
+export async function fetchGooglePlacePhotoForVenue(
+  title: string,
+  options?: { neighborhood?: string | null; city?: string }
+): Promise<string | null> {
+  const city = options?.city || "São Paulo";
+  const neighborhood = options?.neighborhood || "";
+  const textQuery = `${title} restaurante ${neighborhood} ${city}`.replace(/\s+/g, " ").trim();
+  const results = await searchGooglePlaces({ textQuery, maxResultCount: 1, includedType: "restaurant" });
+  if (results[0]?.image_url) return results[0].image_url;
+
+  const cafeResults = await searchGooglePlaces({ textQuery: `${title} ${city}`, maxResultCount: 1, includedType: "cafe" });
+  return cafeResults[0]?.image_url || null;
+}

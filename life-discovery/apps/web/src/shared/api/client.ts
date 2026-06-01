@@ -1,6 +1,6 @@
 import { buildConciergeResponse, buildDateNightPlan, buildFallbackContext, curateRecommendations, refineContext } from "../../features/catalog/curation";
 import { API_ENDPOINTS } from "./config";
-import { getCoupleProfile, getFeedbackHistory } from "../storage";
+import { getCoupleProfile, getFeedbackHistory, getUserId } from "../storage";
 import { ConciergeResponse, CoupleSnapshot, DateNightPlan, ExperienceContext, Recommendation } from "@life/shared-types";
 
 type RecommendationDomain = "dining_out" | "delivery" | "movies_series" | "events_exhibitions";
@@ -62,9 +62,22 @@ export async function fetchCoupleMe(): Promise<CoupleSnapshot | null> {
 
 export async function patchCoupleProfile(payload: Record<string, any>) {
   const current = getCoupleProfile();
-  const updated = { ...current, ...payload };
+  const { buildCoupleProfileFromForm } = await import("../couple-profile-builder");
   const { setCoupleProfile } = await import("../storage");
+  const updated = buildCoupleProfileFromForm(payload as Partial<import("@life/shared-types").CoupleSnapshot>, current);
   setCoupleProfile(updated);
+
+  try {
+    const userId = updated.user_id || getUserId();
+    await fetch("/api/couple/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: updated, user_id: userId }),
+    });
+  } catch {
+    // Supabase sync is optional; local profile remains source of truth offline.
+  }
+
   return updated;
 }
 
