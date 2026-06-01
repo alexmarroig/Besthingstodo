@@ -107,7 +107,7 @@ export function mapRssItemToRecommendation(
     city: options.city || "São Paulo",
     location: "São Paulo",
     neighborhood: null,
-    image_url: null,
+    image_url: item.image_url || null,
     tags,
     source: options.sourceLabel,
     editorial_source: options.sourceLabel,

@@ -1,5 +1,6 @@
 import { fetchExternalJson, jsonFallback, jsonWithCache } from "../_lib/external-api";
 import { loadDailySource } from "../_lib/data-hub";
+import { enrichRecommendationImagesAsync } from "../_lib/recommendation-images";
 import { isSportsEvent, localizeRecommendation } from "../_lib/labels-pt";
 import { loadLocalEvents } from "../_lib/local-data";
 import { dedupeRecommendations } from "../_lib/recommendation-mapper";
@@ -203,11 +204,16 @@ export async function GET(request: Request) {
       .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0))
       .slice(0, Number(size));
 
-    const localized = merged.map((item) => localizeRecommendation(item));
+    const localized = await enrichRecommendationImagesAsync(merged.map((item) => localizeRecommendation(item)), {
+      maxOgLookups: 10,
+    });
     return jsonWithCache(localized, { revalidate: 900, stale: 300 });
   } catch {
-    const fallback = dedupeRecommendations([...snapshotEvents, ...localEvents, ...FALLBACK_EVENTS]).map((item) =>
-      localizeRecommendation(item)
+    const fallback = await enrichRecommendationImagesAsync(
+      dedupeRecommendations([...snapshotEvents, ...localEvents, ...FALLBACK_EVENTS]).map((item) =>
+        localizeRecommendation(item)
+      ),
+      { maxOgLookups: 8 }
     );
     return jsonFallback(fallback, { revalidate: 900, fallbackMaxAge: 60 });
   }

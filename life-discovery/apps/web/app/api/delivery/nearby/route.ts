@@ -2,6 +2,7 @@ import { fetchExternalJson, jsonFallback, jsonWithCache } from "../../_lib/exter
 import { localizeRecommendation } from "../../_lib/labels-pt";
 import { loadLocalRestaurants } from "../../_lib/local-data";
 import { filterValidPlaces, mergePlaces } from "../../_lib/places-utils";
+import { enrichRecommendationImagesAsync } from "../../_lib/recommendation-images";
 import { searchGooglePlaces } from "../../_lib/google-places";
 
 const SP_LAT = -23.5489;
@@ -61,12 +62,18 @@ export async function GET(request: Request) {
       remoteResults = (data.features || []).map(mapGeoapifyDelivery).filter(Boolean);
     }
 
-    const merged = mergePlaces(localDelivery, remoteResults, limit).map((item) => localizeRecommendation(item));
+    const merged = await enrichRecommendationImagesAsync(
+      mergePlaces(localDelivery, remoteResults, limit).map((item) => localizeRecommendation(item)),
+      { maxOgLookups: 8 }
+    );
     return jsonWithCache(merged, { revalidate: 900, stale: 300 });
   } catch {
-    const fallback = (await loadLocalRestaurants())
-      .filter((item) => item.domain === "delivery")
-      .map((item) => localizeRecommendation(item));
+    const fallback = await enrichRecommendationImagesAsync(
+      (await loadLocalRestaurants())
+        .filter((item) => item.domain === "delivery")
+        .map((item) => localizeRecommendation(item)),
+      { maxOgLookups: 6 }
+    );
     return jsonFallback(fallback, { revalidate: 900, fallbackMaxAge: 120 });
   }
 }

@@ -7,7 +7,7 @@ import CoupleWeatherBadge from "@/components/discovery/couple-weather-badge";
 import HeroBanner from "@/components/discovery/hero-banner";
 import MediaDetailModal from "@/components/discovery/media-detail-modal";
 import MediaRail from "@/components/discovery/media-rail";
-import { buildDayBrief, buildFallbackContext, pickForVibe } from "@/features/catalog/curation";
+import { buildDayBrief, buildFallbackContext, buildHomeRails } from "@/features/catalog/curation";
 import { fetchCoupleMe, fetchRecommendations, fetchUserContext } from "@/shared/api/client";
 import { getUserId } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
@@ -36,14 +36,8 @@ export default function HomeScreen() {
     [recommendations, hiddenIds]
   );
 
-  const heroItem = items[0];
-  const movies = items.filter((item) => item.domain === "movies_series").slice(0, 12);
-  const restaurants = items.filter((item) => item.domain === "dining_out").slice(0, 12);
-  const events = items.filter((item) => item.domain === "events_exhibitions").slice(0, 12);
-  const editorial = items.filter((item) => item.editorial_source || item.content_tier === "signature").slice(0, 12);
-  const forYou = items.filter((item) => item.personalization_label || item.related_favorite).slice(0, 12);
-  const romantic = pickForVibe(items, "romantic").slice(0, 12);
-  const nearby = pickForVibe(items, "nearby").slice(0, 12);
+  const rails = useMemo(() => buildHomeRails(recommendations || [], hiddenIds), [recommendations, hiddenIds]);
+  const { hero: heroItem, forYou, romantic, restaurants, movies, events, editorial, nearby } = rails;
 
   const brief = useMemo(
     () => buildDayBrief(items, context || buildFallbackContext(city), couple || undefined),

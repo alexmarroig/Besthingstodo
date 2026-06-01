@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { fetchExternalJson, jsonFallback, jsonWithCache } from "../_lib/external-api";
 import { loadDailySource } from "../_lib/data-hub";
 import { searchGooglePlaces } from "../_lib/google-places";
@@ -10,6 +12,7 @@ import {
   mergePlaces,
 } from "../_lib/places-utils";
 import { PLACE_INTENT_QUERIES } from "../_lib/source-registry";
+import { enrichRecommendationImagesAsync } from "../_lib/recommendation-images";
 import type { RecommendationPayload } from "../_lib/recommendation-mapper";
 
 const SP_LAT = -23.5489;
@@ -141,12 +144,18 @@ export async function GET(request: Request) {
     }
   }
 
-  const merged = mergePlaces([...snapshotRestaurants, ...localRestaurants], remoteResults, 18);
-  const filtered = filterByNeighborhood(merged, neighborhood).map((item) => localizeRecommendation(item));
+  const merged = mergePlaces([...snapshotRestaurants, ...localRestaurants], remoteResults, 24);
+  const filtered = await enrichRecommendationImagesAsync(
+    filterByNeighborhood(merged, neighborhood).map((item) => localizeRecommendation(item)),
+    { maxOgLookups: 16 }
+  );
 
   if (filtered.length === 0) {
-    const fallback = filterByNeighborhood([...snapshotRestaurants, ...localRestaurants], neighborhood).map((item) =>
-      localizeRecommendation(item)
+    const fallback = await enrichRecommendationImagesAsync(
+      filterByNeighborhood([...snapshotRestaurants, ...localRestaurants], neighborhood).map((item) =>
+        localizeRecommendation(item)
+      ),
+      { maxOgLookups: 12 }
     );
     return jsonWithCache(fallback, { revalidate: 900, stale: 300 });
   }

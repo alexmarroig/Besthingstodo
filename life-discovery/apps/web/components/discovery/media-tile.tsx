@@ -30,7 +30,29 @@ export default function MediaTile({
           isPoster ? "aspect-[2/3]" : "aspect-[16/10]"
         }`}
       >
-        <ExperienceImage item={item} mode="tile" className="absolute inset-0 h-full w-full" />
+        {item.image_url ? (
+          <>
+            <img
+              src={item.image_url}
+              alt={item.title}
+              className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+              <span className="rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
+                {localizeCategory(item.category)}
+              </span>
+              {item.score != null && item.score > 0 ? (
+                <span className="rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                  {Number(item.score).toFixed(1)}
+                </span>
+              ) : null}
+            </div>
+          </>
+        ) : (
+          <ExperienceImage item={item} mode="tile" className="absolute inset-0 h-full w-full" />
+        )}
       </div>
 
       <div className="mt-3 space-y-1 pr-1">

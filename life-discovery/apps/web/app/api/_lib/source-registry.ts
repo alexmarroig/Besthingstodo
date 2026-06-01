@@ -110,6 +110,13 @@ export const PLACE_INTENT_QUERIES: Record<string, { query: string; tags: string[
   brunch: { query: "brunch cafe sao paulo", tags: ["brunch", "cafe"] },
   wine: { query: "vinho wine bar sao paulo", tags: ["vinho", "wine bar"] },
   japanese: { query: "restaurante japones sushi sao paulo", tags: ["japones", "sushi"] },
+  italian: { query: "restaurante italiano trattoria sao paulo", tags: ["italiano", "massa"] },
+  mexican: { query: "restaurante mexicano tacos sao paulo", tags: ["mexicano", "taco"] },
+  french: { query: "restaurante frances bistro sao paulo", tags: ["frances", "bistro"] },
+  indian: { query: "restaurante indiano curry sao paulo", tags: ["indiano", "curry"] },
+  thai: { query: "restaurante tailandes sao paulo", tags: ["tailandes", "thai"] },
+  brazilian: { query: "restaurante brasileiro churrasco sao paulo", tags: ["brasileiro", "churrasco"] },
+  chinese: { query: "restaurante chines dim sum sao paulo", tags: ["chines", "dim sum"] },
 };
 
 export const TICKETMASTER_GASTRO_KEYWORDS = [

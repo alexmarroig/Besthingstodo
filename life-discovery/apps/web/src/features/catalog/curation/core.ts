@@ -7,6 +7,7 @@
   Recommendation
 } from "./types";
 import { buildMLState, scoreItemWithML, type FeedbackEntry } from "../ml/engine";
+import { attachRecommendationImages } from "@/shared/recommendation-images";
 
 const DEFAULT_PROFILE = {
   location: {
@@ -979,7 +980,8 @@ export function curateRecommendations(
     .filter((item) => (item.quality_score || 0) >= 40)
     .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
 
-  return curated.slice(0, options?.limit || curated.length);
+  const limited = curated.slice(0, options?.limit || curated.length);
+  return attachRecommendationImages(limited);
 }
 
 export function buildDayBrief(items: Recommendation[], context: ExperienceContext, couple?: CoupleSnapshot) {
@@ -1026,7 +1028,71 @@ export function pickForVibe(items: Recommendation[], vibe: "romantic" | "cultura
     return containsKeyword(text, ["cozy", "calm", "quiet", "café", "livraria", "bookstore", "trattoria"]);
   });
 
-  return filtered.length ? filtered : items;
+  return filtered;
+}
+
+export type HomeRails = {
+  hero: Recommendation | null;
+  forYou: Recommendation[];
+  romantic: Recommendation[];
+  restaurants: Recommendation[];
+  movies: Recommendation[];
+  events: Recommendation[];
+  editorial: Recommendation[];
+  nearby: Recommendation[];
+};
+
+export function buildHomeRails(items: Recommendation[], hiddenIds: string[] = []): HomeRails {
+  const pool = items.filter((item) => !hiddenIds.includes(item.id));
+  const used = new Set<string>();
+
+  const take = (candidates: Recommendation[], limit: number, domain?: Recommendation["domain"]) => {
+    let list = candidates.filter((item) => !used.has(item.id));
+    if (list.length < limit && domain) {
+      list = [
+        ...list,
+        ...pool.filter((item) => !used.has(item.id) && item.domain === domain && !list.some((x) => x.id === item.id)),
+      ];
+    }
+    if (list.length < limit) {
+      list = [...list, ...pool.filter((item) => !used.has(item.id) && !list.some((x) => x.id === item.id))];
+    }
+    const selected = list.slice(0, limit);
+    for (const item of selected) used.add(item.id);
+    return selected;
+  };
+
+  const sorted = [...pool].sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
+  const hero = sorted[0] || null;
+  if (hero) used.add(hero.id);
+
+  const forYouCandidates = pool.filter((item) => item.personalization_label || item.related_favorite);
+  const editorialCandidates = pool.filter((item) => item.editorial_source || item.content_tier === "signature");
+  const romanticCandidates = pickForVibe(pool, "romantic");
+  const nearbyCandidates = pickForVibe(pool, "nearby");
+
+  return {
+    hero,
+    forYou: take(forYouCandidates.length ? forYouCandidates : sorted, 12),
+    romantic: take(romanticCandidates, 12, "dining_out"),
+    restaurants: take(
+      pool.filter((item) => item.domain === "dining_out"),
+      12,
+      "dining_out"
+    ),
+    movies: take(
+      pool.filter((item) => item.domain === "movies_series"),
+      12,
+      "movies_series"
+    ),
+    events: take(
+      pool.filter((item) => item.domain === "events_exhibitions"),
+      12,
+      "events_exhibitions"
+    ),
+    editorial: take(editorialCandidates.length ? editorialCandidates : pool.filter((item) => item.domain === "dining_out"), 12),
+    nearby: take(nearbyCandidates, 12),
+  };
 }
 
 function extractMemory(message: string, previousMemory: string[]) {

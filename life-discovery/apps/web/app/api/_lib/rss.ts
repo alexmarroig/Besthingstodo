@@ -6,6 +6,7 @@ export type RssItem = {
   description: string;
   pubDate?: string;
   guid?: string;
+  image_url?: string | null;
 };
 
 const RSS_HEADERS = {
@@ -28,6 +29,43 @@ function readText(node: unknown): string {
     return String((node as { "#text"?: string })["#text"] || "").trim();
   }
   return "";
+}
+
+function readAttr(node: unknown, key: string): string {
+  if (!node || typeof node !== "object") return "";
+  const value = (node as Record<string, string>)[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function extractImageFromHtml(html: string) {
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (!match?.[1]) return null;
+  try {
+    const url = new URL(match[1]);
+    if (url.protocol === "http:" || url.protocol === "https:") return url.toString();
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function extractRssImage(item: Record<string, unknown>, descriptionHtml: string) {
+  const fromHtml = extractImageFromHtml(descriptionHtml);
+  if (fromHtml) return fromHtml;
+
+  const mediaThumb = item["media:thumbnail"];
+  const thumbUrl = readAttr(mediaThumb, "url") || readText(mediaThumb);
+  if (thumbUrl) return thumbUrl;
+
+  const mediaContent = item["media:content"];
+  const contentUrl = readAttr(mediaContent, "url") || readText(mediaContent);
+  if (contentUrl && /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(contentUrl)) return contentUrl;
+
+  const enclosure = item.enclosure;
+  const enclosureUrl = readAttr(enclosure, "url") || readText(enclosure);
+  if (enclosureUrl && /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(enclosureUrl)) return enclosureUrl;
+
+  return null;
 }
 
 export async function fetchRssFeed(url: string, timeoutMs = 8000): Promise<RssItem[]> {
@@ -62,19 +100,20 @@ export async function fetchRssFeed(url: string, timeoutMs = 8000): Promise<RssIt
             ? readText((item.link as { href?: string }).href)
             : "") ||
           readText(item.guid);
-        const description = stripHtml(
+        const rawDescription =
           readText(item.description) ||
-            readText(item.summary) ||
-            readText(item.content) ||
-            readText(item["content:encoded"])
-        );
+          readText(item.summary) ||
+          readText(item.content) ||
+          readText(item["content:encoded"]);
+        const description = stripHtml(rawDescription);
+        const image_url = extractRssImage(item, rawDescription);
         const pubDate =
           readText(item.pubDate) ||
           readText(item.published) ||
           readText(item.updated) ||
           undefined;
         const guid = readText(item.guid) || link || title;
-        return { title, link, description, pubDate, guid };
+        return { title, link, description, pubDate, guid, image_url };
       })
       .filter((item) => item.title.length >= 6 && item.link.length > 0);
   } catch {

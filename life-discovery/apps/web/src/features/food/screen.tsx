@@ -11,15 +11,36 @@ import { fetchMealSuggestions, fetchPlaces, fetchGastroEditorial, fetchDeliveryN
 import { getUserId } from "@/shared/storage";
 
 const CUISINES = [
-  { key: "Italian", label: "Italiana" },
-  { key: "Japanese", label: "Japonesa" },
-  { key: "Mexican", label: "Mexicana" },
-  { key: "French", label: "Francesa" },
-  { key: "Indian", label: "Indiana" },
-  { key: "Thai", label: "Tailandesa" },
-  { key: "Brazilian", label: "Brasileira" },
-  { key: "Chinese", label: "Chinesa" },
+  { key: "Italian", label: "Italiana", intent: "italian" },
+  { key: "Japanese", label: "Japonesa", intent: "japanese" },
+  { key: "Mexican", label: "Mexicana", intent: "mexican" },
+  { key: "French", label: "Francesa", intent: "french" },
+  { key: "Indian", label: "Indiana", intent: "indian" },
+  { key: "Thai", label: "Tailandesa", intent: "thai" },
+  { key: "Brazilian", label: "Brasileira", intent: "brazilian" },
+  { key: "Chinese", label: "Chinesa", intent: "chinese" },
 ];
+
+const CUISINE_TAG_KEYWORDS: Record<string, string[]> = {
+  Italian: ["italian", "italiana", "massa", "trattoria", "pizza", "pasta"],
+  Japanese: ["japan", "japones", "japonês", "sushi", "izakaya", "ramen"],
+  Mexican: ["mexican", "mexicana", "taco", "tacos"],
+  French: ["french", "francesa", "bistro"],
+  Indian: ["indian", "indiana", "curry"],
+  Thai: ["thai", "tailandesa"],
+  Brazilian: ["brazilian", "brasileira", "churrasco", "feijoada"],
+  Chinese: ["chinese", "chinesa", "dim sum"],
+};
+
+function filterRestaurantsByCuisine(items: any[], cuisineKey: string) {
+  const keywords = CUISINE_TAG_KEYWORDS[cuisineKey] || [];
+  if (!keywords.length) return items;
+  const filtered = items.filter((item) => {
+    const text = [item.title, item.description, ...(item.tags || [])].join(" ").toLowerCase();
+    return keywords.some((keyword) => text.includes(keyword));
+  });
+  return filtered.length ? filtered : items;
+}
 
 function MealCard({ meal, index }: { meal: any; index: number }) {
   const [showIngredients, setShowIngredients] = useState(false);
@@ -132,9 +153,14 @@ export default function FoodScreen() {
     queryFn: () => fetchMealSuggestions("filter", { area: selectedCuisine }),
   });
 
+  const cuisineIntent = CUISINES.find((c) => c.key === selectedCuisine)?.intent;
+
   const { data: restaurants } = useQuery({
-    queryKey: ["food-restaurants"],
-    queryFn: () => fetchPlaces("Sao Paulo", "catering.restaurant"),
+    queryKey: ["food-restaurants", selectedCuisine],
+    queryFn: () =>
+      fetchPlaces("Sao Paulo", "catering.restaurant", {
+        intent: cuisineIntent,
+      }),
   });
 
   const { data: cafes } = useQuery({
@@ -160,7 +186,7 @@ export default function FoodScreen() {
   });
 
   const dailyMeal = randomMeal?.[0];
-  const restaurantItems = restaurants || [];
+  const restaurantItems = filterRestaurantsByCuisine(restaurants || [], selectedCuisine);
   const cafeItems = cafes || [];
   const editorialItems = gastroEditorial || [];
   const deliveryItems = deliveryNearby || [];
@@ -307,9 +333,11 @@ export default function FoodScreen() {
         <div className="space-y-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Perto de vocês</p>
-            <h3 className="mt-2 text-3xl font-semibold">Restaurantes para sair hoje</h3>
+            <h3 className="mt-2 text-3xl font-semibold">
+              Restaurantes {CUISINES.find((c) => c.key === selectedCuisine)?.label || ""} para sair hoje
+            </h3>
             <p className="mt-2 text-sm text-white/66">
-              Restaurantes reais encontrados por localização. Sem sugestão inventada.
+              Busca por culinária selecionada e lugares reais perto de vocês — a lista muda quando você troca o tipo de cozinha.
             </p>
           </div>
           <MediaRail title="Restaurantes" items={restaurantItems.slice(0, 12)} onOpen={setSelectedItem} />

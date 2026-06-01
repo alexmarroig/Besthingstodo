@@ -270,7 +270,7 @@ export async function fetchRecommendations(
       context: localContext,
       couple: couple || getCoupleProfile(),
       feedback: getFeedbackHistory(),
-      limit: 24,
+      limit: 56,
     });
   } catch {
     return [];

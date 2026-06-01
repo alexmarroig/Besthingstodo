@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { loadDailySource } from "../../_lib/data-hub";
+import { enrichRecommendationImagesAsync } from "../../_lib/recommendation-images";
 import { jsonFallback, jsonWithCache } from "../../_lib/external-api";
 import {
   dedupeRecommendations,
@@ -69,10 +70,15 @@ export async function GET(request: Request) {
 
     const snapshotItems = await loadSnapshot();
     const merged = dedupeRecommendations([...snapshotHubItems, ...liveItems, ...snapshotItems]);
-    const filtered = filterByTopic(merged, topic).slice(0, limit);
+    const filtered = await enrichRecommendationImagesAsync(filterByTopic(merged, topic).slice(0, limit), {
+      maxOgLookups: 10,
+    });
 
     if (filtered.length === 0) {
-      return jsonFallback(filterByTopic(FALLBACK, topic), { revalidate: 900, fallbackMaxAge: 120 });
+      return jsonFallback(await enrichRecommendationImagesAsync(filterByTopic(FALLBACK, topic)), {
+        revalidate: 900,
+        fallbackMaxAge: 120,
+      });
     }
 
     return jsonWithCache(filtered, { revalidate: 1800, stale: 600 });
