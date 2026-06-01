@@ -31,11 +31,6 @@ Optional (melhora fotos de restaurantes):
 
 - `GOOGLE_PLACES_API_KEY` — Places API **(New)** no Google Cloud Console
 
-Optional (eventos culturais com dados oficiais):
-
-- `SYMPLA_API_TOKEN` — chave em Sympla → Minha Conta → Integrações
-- `SYMPLA_CITY` / `SYMPLA_STATE` — filtro geográfico (padrão São Paulo / SP)
-
 Optional:
 
 - `NEXT_PUBLIC_LIFE_API_URL` when the web app starts calling the public `services/api` deployment directly.

@@ -129,6 +129,11 @@ export const EDITORIAL_SOURCE_BOOST: Record<string, number> = {
   "sesc sp": 18,
   sesc: 18,
   masp: 20,
+  pinacoteca: 19,
+  ccbb: 18,
+  "ccbb sp": 18,
+  "ims paulista": 17,
+  ims: 17,
   "time out sp": 16,
   timeout: 16,
 };
