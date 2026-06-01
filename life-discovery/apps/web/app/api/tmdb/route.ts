@@ -72,6 +72,10 @@ export async function GET(request: Request) {
         url = `${TMDB_BASE}/trending/all/week?language=pt-BR&page=1`;
         mediaType = "all";
         break;
+      case "now_playing":
+        url = `${TMDB_BASE}/movie/now_playing?language=pt-BR&region=BR&page=1`;
+        mediaType = "movie";
+        break;
       case "discover":
         url = `${TMDB_BASE}/discover/${media}?language=pt-BR&sort_by=popularity.desc&page=1${genre ? `&with_genres=${genre}` : ""}`;
         break;

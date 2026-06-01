@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
 import DiscoveryCard from "@/components/discovery/discovery-card";
-import { fetchTrendingMovies, fetchMoviesByGenre, fetchCoupleMe, fetchUserContext } from "@/shared/api/client";
+import { fetchTrendingMovies, fetchMoviesByGenre, fetchCoupleMe, fetchUserContext, fetchCinemaNews, fetchNowPlayingMovies } from "@/shared/api/client";
 import { buildFallbackContext } from "@/features/catalog/curation";
 import { getUserId } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
@@ -25,8 +25,8 @@ export default function WatchScreen() {
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const { data: context } = useQuery({
-    queryKey: ["context", couple?.city || "Sao Paulo"],
-    queryFn: () => fetchUserContext(couple?.city || "Sao Paulo"),
+    queryKey: ["context", couple?.city || "Sao Paulo", couple?.neighborhood || ""],
+    queryFn: () => fetchUserContext(couple || undefined),
   });
 
   const { data: trending, isLoading: loadingTrending } = useQuery({
@@ -48,9 +48,19 @@ export default function WatchScreen() {
     },
   });
 
+  const { data: nowPlaying } = useQuery({
+    queryKey: ["watch-now-playing"],
+    queryFn: fetchNowPlayingMovies,
+  });
+
+  const { data: cinemaNews } = useQuery({
+    queryKey: ["watch-cinema-news"],
+    queryFn: fetchCinemaNews,
+  });
+
   const safeContext = context || buildFallbackContext(couple?.city || "Sao Paulo");
 
-  const movies = useMemo(() => (trending || []).filter((i: any) => i.category === "movie").slice(0, 6), [trending]);
+  const movies = useMemo(() => (nowPlaying?.length ? nowPlaying : trending || []).filter((i: any) => i.category === "movie").slice(0, 6), [nowPlaying, trending]);
   const series = useMemo(() => {
     const fromTrending = (trending || []).filter((i: any) => i.category === "series");
     const fromTV = (trendingTV || []).filter((i: any) => i.category === "series");
@@ -123,9 +133,9 @@ export default function WatchScreen() {
       {movies.length > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Filmes em alta</p>
-            <h3 className="mt-2 text-3xl font-semibold">Os mais populares desta semana</h3>
-            <p className="mt-2 text-sm text-white/66">Trending do TMDB com poster, nota e sinopse reais.</p>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Filmes em cartaz</p>
+            <h3 className="mt-2 text-3xl font-semibold">Em cartaz no Brasil agora</h3>
+            <p className="mt-2 text-sm text-white/66">Estreias e filmes em exibição via TMDB, com fallback para trending.</p>
           </div>
           <div className="grid gap-4 xl:grid-cols-2">
             {movies.map((item: Recommendation) => (
@@ -192,6 +202,21 @@ export default function WatchScreen() {
           </div>
         )}
       </div>
+
+      {(cinemaNews || []).length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Notícias</p>
+            <h3 className="mt-2 text-3xl font-semibold">Cinema e séries no radar</h3>
+            <p className="mt-2 text-sm text-white/66">Feed editorial de Omelete e AdoroCinema.</p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {(cinemaNews || []).slice(0, 6).map((item: Recommendation) => (
+              <DiscoveryCard key={item.id} item={item} userId={userId} />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

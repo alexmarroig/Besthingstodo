@@ -6,6 +6,7 @@
   ExperienceContext,
   Recommendation
 } from "./types";
+import { buildMLState, scoreItemWithML, type FeedbackEntry } from "../ml/engine";
 
 const DEFAULT_PROFILE = {
   location: {
@@ -86,7 +87,7 @@ const FAVORITE_VENUE_META: Record<string, { neighborhood: string; domain: Recomm
   "theatro municipal": { neighborhood: "Centro", domain: "events_exhibitions", category: "cultural", tags: ["teatro", "wishlist", "clássico"], fallback: "museum" },
   planetario: { neighborhood: "Ibirapuera", domain: "events_exhibitions", category: "cultural", tags: ["planetário", "wishlist", "experiência"], fallback: "museum" },
   masp: { neighborhood: "Paulista", domain: "events_exhibitions", category: "museum", tags: ["museu", "exposição", "clássico"], fallback: "museum" },
-  "ims paulista": { neighborhood: "Paulista", domain: "events_exhibitions", category: "museum", tags: ["fotografia", "café", "curadoria"], fallback: "museum" }
+  "ims paulista": { neighborhood: "Paulista", domain: "events_exhibitions", category: "museum", tags: ["fotografia", "café", "exposição"], fallback: "museum" }
 };
 
 
@@ -276,7 +277,7 @@ const SIMILAR_VENUE_CATALOG: Array<{
     domain: "events_exhibitions",
     category: "museum",
     theme: "museum-culture",
-    tags: ["museu", "imagem", "curadoria"],
+    tags: ["museu", "imagem", "exposição"],
     description: "Museu com energia parecida de repertório visual e conversa boa no pós.",
     reason: "Se MASP e IMS entram bem, o MIS aparece como similar natural dentro do mesmo território cultural.",
     fallback: "museum",
@@ -537,15 +538,23 @@ export function refineContext(raw: any, fallbackCity = "Sao Paulo"): ExperienceC
 
   return {
     city: raw?.city || fallbackCity,
+    neighborhood: raw?.neighborhood || null,
     temperature: typeof raw?.temperature === "number" ? raw.temperature : null,
+    feels_like: typeof raw?.feels_like === "number" ? raw.feels_like : null,
+    humidity: typeof raw?.humidity === "number" ? raw.humidity : null,
+    wind_speed: typeof raw?.wind_speed === "number" ? raw.wind_speed : null,
+    condition: raw?.condition || null,
     weather,
     local_time: localTime,
     day_of_week: raw?.day_of_week || base.day_of_week,
-    weather_label: weatherLabel,
-    weather_note: weatherNote,
+    weather_label: raw?.weather_label || weatherLabel,
+    weather_note: raw?.weather_note || weatherNote,
     time_label: dayLabel(hour),
-    isRainy,
-    isNight: hour >= 18
+    isRainy: typeof raw?.isRainy === "boolean" ? raw.isRainy : isRainy,
+    isHot: raw?.isHot,
+    isCold: raw?.isCold,
+    isNight: hour >= 18,
+    icon_url: raw?.icon_url || null,
   };
 }
 
@@ -626,7 +635,7 @@ function buildProfileAnchors(couple: CoupleSnapshot, context: ExperienceContext)
       neighborhood: couple.neighborhood || "São Paulo",
       domain: "events_exhibitions" as Recommendation["domain"],
       category: "experience",
-      tags: ["preferência do casal", "curadoria pessoal"],
+      tags: ["preferência do casal", "recomendação pessoal"],
       fallback: "editorial"
     };
 
@@ -659,7 +668,7 @@ function buildProfileAnchors(couple: CoupleSnapshot, context: ExperienceContext)
       quality_score: isDining ? 97 : 95,
       price: null,
       tags: [...meta.tags, "personalizado", "casal"],
-      source: "curadoria personalizada",
+      source: "recomendação personalizada",
       profile_signals: [venue],
       url: null
     });
@@ -717,7 +726,7 @@ function buildSimilarAnchors(couple: CoupleSnapshot, context: ExperienceContext)
         quality_score: 91,
         price: item.price ?? null,
         tags: [...item.tags, "similar aos favoritos", "descoberta guiada"],
-        source: "curadoria personalizada",
+        source: "recomendação personalizada",
         profile_signals: [reference],
         url: null
       } satisfies Recommendation;
@@ -756,7 +765,7 @@ function buildWatchAnchors(couple: CoupleSnapshot, context: ExperienceContext): 
       quality_score: atHome ? 90 : 92,
       price: item.price ?? null,
       tags: [...item.tags, "assistir juntos", "personalizado"],
-      source: "curadoria personalizada",
+      source: "recomendação personalizada",
       profile_signals: [reference],
       url: null
     } satisfies Recommendation;
@@ -874,13 +883,23 @@ function scoreRecommendation(item: Recommendation, couple: CoupleSnapshot, conte
   if (profileMatches.length) score += 18 + profileMatches.length * 4;
   if (preferenceTerms.some((term) => term && text.includes(term))) score += 12;
   if ((item.source || "").toLowerCase().includes("personalizada")) score += 18;
-  if ((item.source || "").toLowerCase().includes("guia curado")) score += 16;
+  if ((item.source || "").toLowerCase().includes("guia selecionado")) score += 16;
+  if (item.editorial_source) {
+    const editorial = item.editorial_source.toLowerCase();
+    if (editorial.includes("michelin")) score += 26;
+    else if (editorial.includes("paladar") || editorial.includes("folha") || editorial.includes("taste")) score += 22;
+    else if (editorial.includes("farofa") || editorial.includes("catraca")) score += 18;
+    else if (editorial.includes("omelete") || editorial.includes("adorocinema")) score += 12;
+    else score += 15;
+  }
+  if ((item.rating || 0) >= 4.5) score += 8;
 
   return Math.max(0, Math.min(100, score));
 }
 
 function shouldSuppressGenericItem(item: Recommendation, couple: CoupleSnapshot) {
   if (item.content_tier && item.content_tier !== "discovery") return false;
+  if (item.domain === "events_exhibitions" && ((item.quality_score || 0) >= 70 || item.start_time)) return false;
 
   const text = normalizeText([item.title, item.description, item.reason || "", item.location, ...(item.tags || [])].join(" "));
   const hasStrongSignal =
@@ -909,16 +928,27 @@ function uniqueByTitle(items: Recommendation[]) {
   return Array.from(map.values());
 }
 
-export function curateRecommendations(items: Recommendation[], options?: { context?: ExperienceContext; couple?: CoupleSnapshot; limit?: number }) {
+export function curateRecommendations(
+  items: Recommendation[],
+  options?: { context?: ExperienceContext; couple?: CoupleSnapshot; feedback?: FeedbackEntry[]; limit?: number }
+) {
   const couple = getCoupleSnapshot(options?.couple);
   const context = options?.context || buildFallbackContext(couple.city);
-  const mergedItems = [...items];
+  const mlState = buildMLState(couple, context, options?.feedback || []);
+  const mergedItems = [
+    ...buildProfileAnchors(couple, context),
+    ...buildSimilarAnchors(couple, context),
+    ...buildWatchAnchors(couple, context),
+    ...items,
+  ];
 
   const curated = uniqueByTitle(mergedItems)
     .map((item) => {
       const neighborhood = inferNeighborhood(item);
       const indoorOutdoor = inferIndoorOutdoor(item);
-      const qualityScore = scoreRecommendation(item, couple, context);
+      const ruleScore = scoreRecommendation(item, couple, context);
+      const { mlScore, mlReason } = scoreItemWithML(item, mlState);
+      const qualityScore = Math.round(ruleScore * 0.4 + mlScore * 0.6);
       const avoidReason = buildAvoidReason(item, couple, context);
       const favoriteMatch = favoriteVenueMatches(item, couple)[0];
       const weatherFit = context.isRainy
@@ -935,12 +965,14 @@ export function curateRecommendations(items: Recommendation[], options?: { conte
         distance_label: item.distance_label || buildDistanceLabel(neighborhood, couple),
         indoor_outdoor: indoorOutdoor,
         weather_fit: item.weather_fit || weatherFit,
-        couple_fit_reason: item.couple_fit_reason || buildCoupleReason(item, couple, context),
+        couple_fit_reason: item.couple_fit_reason || buildCoupleReason(item, couple, context) || mlReason,
         personalization_label: item.personalization_label || (favoriteMatch ? "favorito do casal" : undefined),
         related_favorite: item.related_favorite || favoriteMatch || undefined,
         avoid_reason: item.avoid_reason || avoidReason || undefined,
         image_fallback_key: item.image_fallback_key || inferFallbackKey(item),
-        quality_score: item.quality_score ?? qualityScore
+        quality_score: item.quality_score ?? qualityScore,
+        score: (item.quality_score ?? qualityScore) / 10,
+        reason: item.reason || mlReason,
       };
     })
     .filter((item) => !shouldSuppressGenericItem(item, couple))

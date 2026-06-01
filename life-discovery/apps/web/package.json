@@ -14,6 +14,7 @@
     "@life/shared-types": "workspace:*",
     "@tanstack/react-query": "^5.62.7",
     "framer-motion": "^11.14.4",
+    "fast-xml-parser": "^5.2.5",
     "mapbox-gl": "^3.9.1",
     "next": "^15.5.12",
     "react": "19.0.0",

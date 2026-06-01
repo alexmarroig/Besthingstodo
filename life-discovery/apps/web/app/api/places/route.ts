@@ -1,36 +1,44 @@
 import { fetchExternalJson, jsonFallback, jsonWithCache } from "../_lib/external-api";
+import { searchGooglePlaces } from "../_lib/google-places";
+import { localizeRecommendation } from "../_lib/labels-pt";
+import { loadLocalRestaurants } from "../_lib/local-data";
+import {
+  buildPlaceDescription,
+  filterValidPlaces,
+  isValidPlaceName,
+  mergePlaces,
+} from "../_lib/places-utils";
+import { PLACE_INTENT_QUERIES } from "../_lib/source-registry";
+import type { RecommendationPayload } from "../_lib/recommendation-mapper";
 
 const SP_LAT = -23.5489;
 const SP_LNG = -46.6388;
 
-const FALLBACK_PLACES = [
-  { id: "place-1", title: "Lellis Trattoria", description: "Trattoria italiana clássica com massas artesanais e ambiente romântico no Itaim Bibi.", category: "restaurant", domain: "dining_out", city: "São Paulo", location: "Itaim Bibi", image_url: null, tags: ["italiana", "massas", "romântico"], source: "Geoapify", url: null, score: 9.2, price: 120, latitude: -23.5845, longitude: -46.6734, neighborhood: "Itaim Bibi", personalization_label: null, related_favorite: null, quality_score: 92, profile_signals: [] },
-  { id: "place-2", title: "A Pizza da Mooca", description: "Pizzaria tradicional do bairro da Mooca com receitas de família e massa crocante.", category: "restaurant", domain: "dining_out", city: "São Paulo", location: "Mooca", image_url: null, tags: ["pizza", "italiana", "tradicional"], source: "Geoapify", url: null, score: 8.8, price: 65, latitude: -23.5631, longitude: -46.5988, neighborhood: "Mooca", personalization_label: null, related_favorite: null, quality_score: 88, profile_signals: [] },
-  { id: "place-3", title: "Issho Restaurante", description: "Gastronomia japonesa contemporânea com peixes frescos e ambiente minimalista.", category: "restaurant", domain: "dining_out", city: "São Paulo", location: "Vila Olímpia", image_url: null, tags: ["japonesa", "sushi", "contemporâneo"], source: "Geoapify", url: null, score: 9.0, price: 150, latitude: -23.5969, longitude: -46.6856, neighborhood: "Vila Olímpia", personalization_label: null, related_favorite: null, quality_score: 90, profile_signals: [] },
-  { id: "place-4", title: "Café Octavio", description: "Cafeteria specialty com grãos selecionados e brunch caprichado na Vila Madalena.", category: "cafe", domain: "dining_out", city: "São Paulo", location: "Vila Madalena", image_url: null, tags: ["café", "brunch", "specialty"], source: "Geoapify", url: null, score: 8.5, price: 45, latitude: -23.5531, longitude: -46.6903, neighborhood: "Vila Madalena", personalization_label: null, related_favorite: null, quality_score: 85, profile_signals: [] },
-  { id: "place-5", title: "Braz Elettrica", description: "Pizza napolitana assada em forno a lenha com ingredientes importados e massa leve.", category: "restaurant", domain: "dining_out", city: "São Paulo", location: "Pinheiros", image_url: null, tags: ["pizza", "napolitana", "forno a lenha"], source: "Geoapify", url: null, score: 8.9, price: 80, latitude: -23.5627, longitude: -46.6917, neighborhood: "Pinheiros", personalization_label: null, related_favorite: null, quality_score: 89, profile_signals: [] },
-  { id: "place-6", title: "Z Deli Sanduíches", description: "Sanduíches artesanais no estilo deli nova-iorquina com pastrami e picles caseiros.", category: "restaurant", domain: "dining_out", city: "São Paulo", location: "Itaim Bibi", image_url: null, tags: ["sanduíches", "deli", "artesanal"], source: "Geoapify", url: null, score: 8.7, price: 55, latitude: -23.5842, longitude: -46.6731, neighborhood: "Itaim Bibi", personalization_label: null, related_favorite: null, quality_score: 87, profile_signals: [] },
-];
-
-function mapPlace(feature: any) {
+function mapPlace(feature: any): RecommendationPayload | null {
   const p = feature.properties || {};
+  const name = (p.name || "").trim();
+  if (!isValidPlaceName(name)) return null;
+
   const cat = (p.categories || []).join(",");
   let category = "restaurant";
-  if (cat.includes("bar")) category = "bar";
-  else if (cat.includes("cafe")) category = "cafe";
+  if (cat.includes("cafe")) category = "cafe";
+  else if (cat.includes("bar")) category = "bar";
   else if (cat.includes("fast_food")) category = "fast_food";
 
   return {
     id: `place-${p.place_id || crypto.randomUUID()}`,
-    title: p.name || p.address_line1 || "Local",
-    description: [p.address_line1, p.address_line2].filter(Boolean).join(", "),
+    title: name,
+    description: buildPlaceDescription(name, p),
     category,
     domain: "dining_out",
     city: p.city || "São Paulo",
     location: p.suburb || p.district || p.city || "",
     neighborhood: p.suburb || p.district || null,
     image_url: null,
-    tags: (p.categories || []).map((c: string) => c.split(".").pop()).filter(Boolean),
+    tags: (p.categories || [])
+      .map((c: string) => c.split(".").pop())
+      .filter(Boolean)
+      .slice(0, 4),
     source: "Geoapify",
     url: p.website || null,
     score: null,
@@ -39,46 +47,109 @@ function mapPlace(feature: any) {
     longitude: feature.geometry?.coordinates?.[0] ?? null,
     personalization_label: null,
     related_favorite: null,
-    quality_score: null,
+    quality_score: 72,
     profile_signals: [],
+    rating: null,
+    review_snippet: null,
+    price_band: null,
   };
+}
+
+function filterByNeighborhood<T extends { neighborhood?: string | null; location?: string; title?: string; description?: string }>(
+  items: T[],
+  neighborhood?: string | null
+) {
+  if (!neighborhood) return items;
+  const needle = neighborhood.toLowerCase();
+  return items.filter((item) =>
+    [item.neighborhood, item.location, item.title, item.description]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(needle))
+  );
+}
+
+function filterByCategory(items: RecommendationPayload[], categories: string) {
+  if (categories.includes("cafe")) {
+    return items.filter((item) => item.category === "cafe" || (item.tags || []).some((tag) => tag.includes("caf")));
+  }
+  if (categories.includes("restaurant")) {
+    return items.filter((item) => item.category !== "cafe");
+  }
+  return items;
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
-  const radius = searchParams.get("radius") || "5000";
+  const radius = searchParams.get("radius") || "8000";
   const categories = searchParams.get("categories") || "catering.restaurant";
   const city = searchParams.get("city") || "Sao Paulo";
+  const intent = searchParams.get("intent") || "";
+  const neighborhood = searchParams.get("neighborhood") || "";
   const apiKey = process.env.GEOAPIFY_API_KEY;
+  const googleKey = process.env.GOOGLE_PLACES_API_KEY;
 
-  if (!apiKey) {
-    return jsonWithCache(FALLBACK_PLACES, { revalidate: 900, stale: 300 });
+  const localRestaurants = filterByCategory(await loadLocalRestaurants(), categories);
+  let remoteResults: RecommendationPayload[] = [];
+
+  if (googleKey) {
+    try {
+      const intentConfig = PLACE_INTENT_QUERIES[intent];
+      const textQuery = intentConfig
+        ? `${intentConfig.query}${neighborhood ? ` ${neighborhood}` : ""}`
+        : `${categories.includes("cafe") ? "cafeteria" : "restaurante"} sao paulo${neighborhood ? ` ${neighborhood}` : ""}`;
+
+      remoteResults = filterValidPlaces(
+        await searchGooglePlaces({
+          textQuery,
+          maxResultCount: 15,
+          includedType: categories.includes("cafe") ? "cafe" : "restaurant",
+        })
+      );
+    } catch {
+      remoteResults = [];
+    }
+  }
+
+  if (remoteResults.length === 0 && apiKey) {
+    try {
+      let useLat = lat ? parseFloat(lat) : SP_LAT;
+      let useLng = lng ? parseFloat(lng) : SP_LNG;
+
+      if (!lat && !lng && city && city.toLowerCase() !== "sao paulo") {
+        const geoData = await fetchExternalJson<any>(
+          `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&limit=1&apiKey=${apiKey}`,
+          { revalidate: 3600 }
+        );
+        const firstResult = geoData.features?.[0]?.properties;
+        if (firstResult) {
+          useLat = firstResult.lat;
+          useLng = firstResult.lon;
+        }
+      }
+
+      const url = `https://api.geoapify.com/v2/places?categories=${encodeURIComponent(categories)}&filter=circle:${useLng},${useLat},${radius}&limit=20&apiKey=${apiKey}`;
+      const data = await fetchExternalJson<any>(url, { revalidate: 900 });
+      remoteResults = (data.features || [])
+        .map(mapPlace)
+        .filter(Boolean) as RecommendationPayload[];
+    } catch {
+      remoteResults = [];
+    }
+  }
+
+  const merged = mergePlaces(localRestaurants, remoteResults, 18);
+  const filtered = filterByNeighborhood(merged, neighborhood).map((item) => localizeRecommendation(item));
+
+  if (filtered.length === 0) {
+    const fallback = filterByNeighborhood(localRestaurants, neighborhood).map((item) => localizeRecommendation(item));
+    return jsonWithCache(fallback, { revalidate: 900, stale: 300 });
   }
 
   try {
-    let useLat = lat ? parseFloat(lat) : SP_LAT;
-    let useLng = lng ? parseFloat(lng) : SP_LNG;
-
-    if (!lat && !lng && city && city.toLowerCase() !== "sao paulo") {
-      const geoData = await fetchExternalJson<any>(
-        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&limit=1&apiKey=${apiKey}`,
-        { revalidate: 3600 }
-      );
-      const firstResult = geoData.features?.[0]?.properties;
-      if (firstResult) {
-        useLat = firstResult.lat;
-        useLng = firstResult.lon;
-      }
-    }
-
-    const url = `https://api.geoapify.com/v2/places?categories=${encodeURIComponent(categories)}&filter=circle:${useLng},${useLat},${radius}&limit=15&apiKey=${apiKey}`;
-    const data = await fetchExternalJson<any>(url, { revalidate: 900 });
-    const results = (data.features || []).map(mapPlace);
-
-    return jsonWithCache(results, { revalidate: 900, stale: 300 });
+    return jsonWithCache(filtered, { revalidate: 900, stale: 300 });
   } catch {
-    return jsonFallback(FALLBACK_PLACES, { revalidate: 900, fallbackMaxAge: 60 });
+    return jsonFallback(filtered, { revalidate: 900, fallbackMaxAge: 60 });
   }
 }

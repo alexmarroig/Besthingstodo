@@ -29,6 +29,8 @@ export type Experience = {
   price_band?: string | null;
   start_time?: string | null;
   price?: number | null;
+  rating?: number | null;
+  review_snippet?: string | null;
   tags: string[];
   source: string;
   url?: string | null;
@@ -87,7 +89,12 @@ export type CoupleSnapshot = {
 
 export type ExperienceContext = {
   city: string;
+  neighborhood?: string | null;
   temperature: number | null;
+  feels_like?: number | null;
+  humidity?: number | null;
+  wind_speed?: number | null;
+  condition?: string | null;
   weather: string;
   local_time: string;
   day_of_week: string;

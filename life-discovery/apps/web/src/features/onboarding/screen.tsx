@@ -74,7 +74,7 @@ export default function OnboardingScreen() {
         ],
       }),
     onSuccess: () => {
-      setStatus("✓ Preferências salvas. A curadoria já usa este contexto.");
+      setStatus("✓ Preferências salvas. As recomendações já usam este contexto.");
       refetch();
     },
     onError: () => {
@@ -88,7 +88,7 @@ export default function OnboardingScreen() {
         <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Onboarding do casal</p>
         <h1 className="mt-2 text-4xl font-semibold">Configurar preferências</h1>
         <p className="mt-3 max-w-3xl text-sm text-white/68">
-          Localização, transporte, interesses e o que evitar. Tudo salvo localmente no navegador e usado pela curadoria.
+          Localização, transporte, interesses e o que evitar. Tudo salvo localmente no navegador e usado nas recomendações.
         </p>
       </div>
 

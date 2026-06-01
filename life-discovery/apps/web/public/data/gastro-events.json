@@ -1,0 +1,50 @@
+[
+  {
+    "id": "gastro-event-taste-sp",
+    "title": "Taste São Paulo Festival",
+    "description": "Festival gastronômico com chefs, atrações e experiências degustativas.",
+    "category": "gastro_event",
+    "domain": "events_exhibitions",
+    "content_tier": "signature",
+    "city": "São Paulo",
+    "location": "Distrito Anhembi",
+    "tags": ["festival", "gastronomia", "chefs"],
+    "source": "Agenda Gastronômica",
+    "editorial_source": "Taste São Paulo",
+    "url": "https://tastesaopaulo.com.br/",
+    "availability_kind": "event",
+    "quality_score": 90
+  },
+  {
+    "id": "gastro-event-restaurant-week",
+    "title": "Restaurant Week São Paulo",
+    "description": "Menus especiais em dezenas de restaurantes para conhecer casas premium pagando menos.",
+    "category": "gastro_event",
+    "domain": "events_exhibitions",
+    "content_tier": "signature",
+    "city": "São Paulo",
+    "location": "São Paulo",
+    "tags": ["restaurant week", "menu especial", "desconto"],
+    "source": "Agenda Gastronômica",
+    "editorial_source": "Restaurant Week",
+    "url": "https://restaurantweek.com.br/",
+    "availability_kind": "event",
+    "quality_score": 88
+  },
+  {
+    "id": "gastro-event-ceagesp",
+    "title": "Festivais Gastronômicos CEAGESP",
+    "description": "Festivais temáticos ao longo do ano com frutos do mar, fondues e experiências populares.",
+    "category": "gastro_event",
+    "domain": "events_exhibitions",
+    "content_tier": "curated",
+    "city": "São Paulo",
+    "location": "CEAGESP",
+    "tags": ["festival", "frutos do mar", "popular"],
+    "source": "Agenda Gastronômica",
+    "editorial_source": "CEAGESP",
+    "url": "https://www.ceagesp.gov.br/",
+    "availability_kind": "event",
+    "quality_score": 80
+  }
+]

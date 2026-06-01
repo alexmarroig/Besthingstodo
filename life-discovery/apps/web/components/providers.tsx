@@ -16,7 +16,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       })
   );
-  const [bootState, setBootState] = useState({ ready: false, message: "Preparando a curadoria personalizada..." });
+  const [bootState, setBootState] = useState({ ready: false, message: "Preparando suas recomendações..." });
 
   useEffect(() => {
     let mounted = true;

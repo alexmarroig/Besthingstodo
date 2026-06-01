@@ -31,7 +31,10 @@ function groupBySource(items: any[]) {
 export default function ConciergeScreen() {
   const userId = getUserId();
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
-  const { data: context } = useQuery({ queryKey: ["context", couple?.city || "Sao Paulo"], queryFn: () => fetchUserContext(couple?.city || "Sao Paulo") });
+  const { data: context } = useQuery({
+    queryKey: ["context", couple?.city || "Sao Paulo", couple?.neighborhood || ""],
+    queryFn: () => fetchUserContext(couple || undefined),
+  });
   const { data: recommendations, isLoading } = useQuery({
     queryKey: ["collections-recos", userId, couple?.city || "Sao Paulo", context?.weather || "unknown"],
     queryFn: () => fetchRecommendations(userId, couple?.city || "Sao Paulo", undefined, context?.weather || undefined, couple || undefined, context || undefined)
@@ -41,6 +44,7 @@ export default function ConciergeScreen() {
   const topPicks = items.slice(0, 4);
   const diningAndDelivery = items.filter((item) => item.domain === "dining_out" || item.domain === "delivery").slice(0, 4);
   const cinemaAndCulture = items.filter((item) => item.domain === "movies_series" || item.domain === "events_exhibitions").slice(0, 4);
+  const radarSp = items.filter((item) => item.editorial_source || item.content_tier === "signature").slice(0, 4);
   const personalized = items.filter((item) => item.personalization_label || item.related_favorite).slice(0, 4);
   const bySource = useMemo(() => groupBySource(items), [items]);
   const hasLiveItems = items.length > 0;
@@ -73,7 +77,7 @@ export default function ConciergeScreen() {
             <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
               <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Pistas fortes</p>
               <p className="mt-3 text-4xl font-semibold text-white">{items.length}</p>
-              <p className="mt-2 text-sm text-white/62">recomendacoes ordenadas pela curadoria do casal.</p>
+              <p className="mt-2 text-sm text-white/62">recomendações ordenadas pelo perfil do casal.</p>
             </div>
             <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
               <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Fontes em destaque</p>
@@ -106,6 +110,21 @@ export default function ConciergeScreen() {
           </div>
           <div className="grid gap-4 xl:grid-cols-2">
             {topPicks.map((item) => (
+              <DiscoveryCard key={item.id} item={item} userId={userId} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {radarSp.length ? (
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Radar SP</p>
+            <h3 className="mt-2 text-3xl font-semibold">Crítica, aberturas e agenda editorial</h3>
+            <p className="mt-2 text-sm text-white/66">Paladar, Folha, Catraca e radar gastronômico com peso editorial na recomendação.</p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {radarSp.map((item) => (
               <DiscoveryCard key={item.id} item={item} userId={userId} />
             ))}
           </div>

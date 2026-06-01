@@ -114,6 +114,19 @@ export function upsertAgendaItem(item: any) {
   setAgendaItems([{ ...item, date }, ...current]);
 }
 
+export type FeedbackEntry = {
+  user_id: string;
+  experience_id: string;
+  feedback_type: "like" | "dislike" | "save" | "skip";
+  timestamp: string;
+  title?: string;
+  tags?: string[];
+};
+
+export function getFeedbackHistory(): FeedbackEntry[] {
+  return safeJsonParse(getStorage("local")?.getItem("life_feedback") || null, []);
+}
+
 // --- Concierge Memory ---
 
 export function getConciergeMemory(): string[] {

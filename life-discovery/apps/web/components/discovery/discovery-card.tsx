@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import ExperienceImage from "./experience-image";
 import { getRecommendationSourceMeta } from "@/shared/source";
+import { localizeCategory, localizeTags } from "@/shared/labels-pt";
 import { sendFeedback } from "@/shared/api/client";
 import { upsertSavedItem, upsertAgendaItem } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
@@ -40,7 +41,7 @@ export default function DiscoveryCard({
   const hasImage = Boolean(item.image_url);
 
   const handleAction = (action: "like" | "dislike" | "save" | "skip") => {
-    sendFeedback(userId, item.id, action);
+    sendFeedback(userId, item.id, action, { title: item.title, tags: item.tags });
     if (action === "save") upsertSavedItem(item);
     if (action === "like") upsertAgendaItem(item);
     onAction?.(item.id, action);
@@ -88,7 +89,7 @@ export default function DiscoveryCard({
         {/* Category badge */}
         <div className="absolute left-3 top-3">
           <span className="rounded-full bg-white/12 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white/90 backdrop-blur-sm">
-            {item.category}
+            {localizeCategory(item.category)}
           </span>
         </div>
 
@@ -140,7 +141,7 @@ export default function DiscoveryCard({
         {/* Tags */}
         {item.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {item.tags.slice(0, 4).map((tag) => (
+            {localizeTags(item.tags).slice(0, 4).map((tag) => (
               <span key={tag} className="rounded-full border border-white/8 px-2.5 py-0.5 text-[10px] text-white/50">
                 {tag}
               </span>

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
 import DiscoveryCard from "@/components/discovery/discovery-card";
-import { fetchMealSuggestions, fetchPlaces } from "@/shared/api/client";
+import { fetchMealSuggestions, fetchPlaces, fetchGastroEditorial, fetchDeliveryNearby, fetchEvents } from "@/shared/api/client";
 import { getUserId } from "@/shared/storage";
 
 const CUISINES = [
@@ -117,6 +117,7 @@ function MealCard({ meal, index }: { meal: any; index: number }) {
 export default function FoodScreen() {
   const userId = getUserId();
   const [selectedCuisine, setSelectedCuisine] = useState("Italian");
+  const [activeTab, setActiveTab] = useState<"editorial" | "restaurants" | "delivery">("editorial");
 
   const { data: randomMeal } = useQuery({
     queryKey: ["random-meal"],
@@ -138,9 +139,29 @@ export default function FoodScreen() {
     queryFn: () => fetchPlaces("Sao Paulo", "catering.cafe"),
   });
 
+  const { data: gastroEditorial } = useQuery({
+    queryKey: ["food-gastro-editorial"],
+    queryFn: () => fetchGastroEditorial("all"),
+  });
+
+  const { data: deliveryNearby } = useQuery({
+    queryKey: ["food-delivery-nearby"],
+    queryFn: () => fetchDeliveryNearby("Sao Paulo"),
+    enabled: activeTab === "delivery",
+  });
+
+  const { data: events } = useQuery({
+    queryKey: ["food-events"],
+    queryFn: () => fetchEvents("Sao Paulo"),
+    enabled: activeTab === "restaurants",
+  });
+
   const dailyMeal = randomMeal?.[0];
   const restaurantItems = restaurants || [];
   const cafeItems = cafes || [];
+  const editorialItems = gastroEditorial || [];
+  const deliveryItems = deliveryNearby || [];
+  const eventItems = events || [];
 
   return (
     <section className="space-y-7">
@@ -178,6 +199,56 @@ export default function FoodScreen() {
           </div>
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: "editorial", label: "Editorial" },
+          { key: "restaurants", label: "Restaurantes" },
+          { key: "delivery", label: "Delivery" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as typeof activeTab)}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
+              activeTab === tab.key
+                ? "bg-[#f97352] text-white shadow-[0_12px_28px_rgba(249,115,82,0.24)]"
+                : "border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "editorial" && editorialItems.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Radar gastronômico</p>
+            <h3 className="mt-2 text-3xl font-semibold">Críticas, aberturas e tendências</h3>
+            <p className="mt-2 text-sm text-white/66">Matérias de Paladar, Folha, Catraca e radar editorial de São Paulo.</p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {editorialItems.slice(0, 8).map((item: any) => (
+              <DiscoveryCard key={item.id} item={item} userId={userId} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "delivery" && deliveryItems.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Delivery perto</p>
+            <h3 className="mt-2 text-3xl font-semibold">Opções para pedir em casa</h3>
+            <p className="mt-2 text-sm text-white/66">Restaurantes com entrega encontrados por localização. iFood/Rappi não possuem API pública de descoberta.</p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {deliveryItems.slice(0, 6).map((item: any) => (
+              <DiscoveryCard key={item.id} item={item} userId={userId} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Receita do dia */}
       {dailyMeal && (
@@ -237,7 +308,7 @@ export default function FoodScreen() {
       </div>
 
       {/* Restaurantes */}
-      {restaurantItems.length > 0 && (
+      {activeTab === "restaurants" && restaurantItems.length > 0 && (
         <div className="space-y-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Perto de vocês</p>
@@ -254,8 +325,26 @@ export default function FoodScreen() {
         </div>
       )}
 
+      {/* Eventos gastronômicos e cultura */}
+      {activeTab === "restaurants" && eventItems.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Agenda SP</p>
+            <h3 className="mt-2 text-3xl font-semibold">Eventos para sair juntos</h3>
+            <p className="mt-2 text-sm text-white/66">
+              Festivais, exposições e experiências gastronômicas da cidade.
+            </p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {eventItems.slice(0, 4).map((item: any) => (
+              <DiscoveryCard key={item.id} item={item} userId={userId} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Cafés */}
-      {cafeItems.length > 0 && (
+      {activeTab === "restaurants" && cafeItems.length > 0 && (
         <div className="space-y-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Cafés e brunch</p>

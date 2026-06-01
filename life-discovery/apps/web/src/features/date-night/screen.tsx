@@ -9,7 +9,10 @@ import { getUserId } from "@/shared/storage";
 export default function DateNightScreen() {
   const userId = getUserId();
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
-  const { data: context } = useQuery({ queryKey: ["context", couple?.city || "Sao Paulo"], queryFn: () => fetchUserContext(couple?.city || "Sao Paulo") });
+  const { data: context } = useQuery({
+    queryKey: ["context", couple?.city || "Sao Paulo", couple?.neighborhood || ""],
+    queryFn: () => fetchUserContext(couple || undefined),
+  });
   const { data: recommendations } = useQuery({
     queryKey: ["date-night-recos", userId, couple?.city || "Sao Paulo", context?.weather || "unknown"],
     queryFn: () => fetchRecommendations(userId, couple?.city || "Sao Paulo", undefined, context?.weather || undefined, couple || undefined, context || undefined)

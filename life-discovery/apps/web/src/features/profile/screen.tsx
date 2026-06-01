@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -200,11 +200,11 @@ export default function ProfileScreen() {
           <div className="editorial-card rounded-[2rem] p-5">
             <p className="text-[11px] uppercase tracking-[0.28em] text-[#f4d06f]">DNA cultural</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {data?.cultural_dna
-                ? Object.entries(data.cultural_dna).map(([key, value]) => (
+              {data
+                ? Object.entries(data).map(([key, value]) => (
                     <div key={key} className="rounded-[1.3rem] border border-white/10 bg-white/5 p-4">
                       <p className="text-[11px] uppercase tracking-[0.22em] text-white/48">{key.replaceAll("_", " ")}</p>
-                      <p className="mt-2 text-lg font-medium capitalize text-white">{String(value)}</p>
+                      <p className="mt-2 text-lg font-medium capitalize text-white">{Array.isArray(value) ? value.join(", ") : String(value)}</p>
                     </div>
                   ))
                 : <p className="text-sm text-white/62">Complete o onboarding para enriquecer o perfil cultural.</p>}

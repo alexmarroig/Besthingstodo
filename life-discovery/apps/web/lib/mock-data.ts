@@ -53,7 +53,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 96,
     price: 0,
     tags: ["museu", "café", "intimista", "paulista"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   },
   {
@@ -73,7 +73,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 94,
     price: 0,
     tags: ["design", "exposição", "jantar", "indoor"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   },
   {
@@ -93,7 +93,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 98,
     price: 0,
     tags: ["livraria", "café", "pinheiros", "cozy"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   },
   {
@@ -113,7 +113,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 97,
     price: 34,
     tags: ["cinema", "intimista", "sobremesa", "quiet"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   },
   {
@@ -133,7 +133,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 99,
     price: 0,
     tags: ["masp", "museu", "jantar", "romântico"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   },
   {
@@ -153,7 +153,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 95,
     price: 90,
     tags: ["jantar", "confortável", "quiet", "romântico"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   },
   {
@@ -173,7 +173,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 86,
     price: 0,
     tags: ["parque", "caminhada", "café", "leve"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   },
   {
@@ -193,7 +193,7 @@ const editorialSeeds: Recommendation[] = [
     quality_score: 92,
     price: 0,
     tags: ["literatura", "café", "jardim", "calmo"],
-    source: "curadoria local",
+    source: "radar local",
     url: null
   }
 ];
@@ -593,10 +593,10 @@ const repairedRawEvents: Recommendation[] = (rawEvents as RawEvent[])
   ...item,
   id: String(item.id || `mock-${index}`),
   title: repairText(item.title) || "Experiência em destaque",
-  description: repairText(item.description) || "Sugestão curada para vocês explorarem juntos.",
+  description: repairText(item.description) || "Sugestão selecionada para vocês explorarem juntos.",
   location: repairText(item.location) || "São Paulo",
   city: repairText(item.city) || "São Paulo",
-  source: repairText(item.source) || "curadoria local",
+  source: repairText(item.source) || "radar local",
   domain: item.domain || inferDomain(item),
   content_tier: "discovery" as const,
   image_fallback_key: "editorial",
