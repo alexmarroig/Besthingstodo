@@ -10,12 +10,15 @@
 
 ## Vercel
 
-Configure the project with one of these Root Directory options:
+O projeto `besthingstodo` usa **Root Directory = `life-discovery`** no dashboard da Vercel.
 
-- **`life-discovery`** (monorepo root): uses `life-discovery/vercel.json` with custom build (`framework: null`)
-- **`apps/web`** (recommended): uses `apps/web/vercel.json` and native Next.js detection
+A configuração fica em `life-discovery/vercel.json` com `experimentalServices.web` apontando para `apps/web` como app Next.js. Isso evita o erro 404 causado por tratar `apps/web/.next` como site estático.
 
-If the Vercel project is linked to the GitHub repo root (`Besthingstodo`), use **`life-discovery`** or **`life-discovery/apps/web`** accordingly.
+Comandos:
+
+- Install: `corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --frozen-lockfile`
+- Build: detectado automaticamente pelo serviço Next.js em `apps/web`
+- URL de produção: `https://besthingstodo-plum.vercel.app`
 
 Required Vercel environment variables:
 

@@ -112,4 +112,7 @@ console.log(JSON.stringify({
   expectedFailure:
     effectiveFramework === "nextjs" && !hasNextDependency(simulatedEffectivePkg),
   bypassesNextDetection: effectiveFramework === null,
+  outputHasIndexHtml: existsSync(join(repoRoot, "apps/web/.next/index.html")),
+  outputHasStandalone: existsSync(join(repoRoot, "apps/web/.next/standalone")),
+  usesExperimentalServices: Boolean(rootVercel?.experimentalServices?.web),
 }, null, 2));
