@@ -213,6 +213,8 @@ export async function GET(request: Request) {
         const sourceBoost = (item: RecommendationPayload) => {
           const label = (item.source || "").toLowerCase();
           if (label.includes("sympla")) return 4;
+          if (label.includes("masp")) return 4;
+          if (label.includes("sesc")) return 3;
           if (label.includes("ticketmaster")) return 3;
           if (label.includes("fever")) return 2;
           if (label.includes("timeout")) return 2;

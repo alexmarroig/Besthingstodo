@@ -5,6 +5,8 @@ import {
   mapSnapshotItem,
   type RecommendationPayload,
 } from "./recommendation-mapper";
+import { fetchMaspEvents, fetchSescSpEvents } from "./cultural-providers";
+import { fetchSymplaApiEvents } from "./sympla-api";
 import { fetchRssFeed } from "./rss";
 import { LOCAL_EVENT_SOURCES } from "./source-registry";
 
@@ -272,19 +274,23 @@ export async function fetchTimeoutSpEvents(limit = 16): Promise<RecommendationPa
 }
 
 export async function fetchSymplaEvents(limit = 20): Promise<RecommendationPayload[]> {
+  const apiEvents = await fetchSymplaApiEvents(limit);
   const html = await fetchHtml("https://www.sympla.com.br/eventos/sao-paulo-sp");
-  if (!html) return [];
+  if (!html) return apiEvents.slice(0, limit);
 
   const fromJsonLd = extractJsonLdEvents(html, "Sympla", 82);
-  if (fromJsonLd.length >= 8) return fromJsonLd.slice(0, limit);
+  const fromLinks =
+    fromJsonLd.length >= 8
+      ? []
+      : extractLinkCards(html, {
+          source: "Sympla",
+          qualityScore: 80,
+          hrefPattern: /\/evento\//i,
+          baseUrl: "https://www.sympla.com.br",
+          maxItems: limit,
+        });
 
-  return extractLinkCards(html, {
-    source: "Sympla",
-    qualityScore: 80,
-    hrefPattern: /\/evento\//i,
-    baseUrl: "https://www.sympla.com.br",
-    maxItems: limit,
-  });
+  return dedupeRecommendations([...apiEvents, ...fromJsonLd, ...fromLinks]).slice(0, limit);
 }
 
 export async function fetchFeverEvents(limit = 16): Promise<RecommendationPayload[]> {
@@ -310,6 +316,8 @@ export async function fetchLiveEventProviders(options?: { limit?: number }) {
     fetchTimeoutSpEvents(limit),
     fetchSymplaEvents(limit),
     fetchFeverEvents(limit),
+    fetchSescSpEvents(limit),
+    fetchMaspEvents(limit),
   ]);
 
   const merged: RecommendationPayload[] = [];

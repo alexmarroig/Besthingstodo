@@ -126,6 +126,9 @@ export const EDITORIAL_SOURCE_BOOST: Record<string, number> = {
   "sao paulo secreto": 17,
   sympla: 15,
   fever: 14,
+  "sesc sp": 18,
+  sesc: 18,
+  masp: 20,
   "time out sp": 16,
   timeout: 16,
 };
