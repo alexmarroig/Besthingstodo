@@ -213,8 +213,9 @@ export async function GET(request: Request) {
         const sourceBoost = (item: RecommendationPayload) => {
           const label = (item.source || "").toLowerCase();
           if (label.includes("sympla")) return 4;
-          if (label.includes("masp") || label.includes("pinacoteca") || label.includes("ccbb")) return 4;
-          if (label.includes("ims") || label.includes("sesc")) return 3;
+          if (label.includes("masp") || label.includes("pinacoteca") || label.includes("ccbb") || label.includes("mis")) return 4;
+          if (label.includes("itau") || label.includes("itaú")) return 4;
+          if (label.includes("ims") || label.includes("sesc") || label.includes("planet")) return 3;
           if (label.includes("ticketmaster")) return 3;
           if (label.includes("fever")) return 2;
           if (label.includes("timeout")) return 2;

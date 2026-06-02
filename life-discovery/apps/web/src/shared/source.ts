@@ -9,6 +9,8 @@ type SourceTheme = {
 const HOST_LABELS: Array<{ match: string; label: string; badge: string; eyebrow: string; gradient: string }> = [
   { match: "guide.michelin.com", label: "Michelin Guide", badge: "Guia confiavel", eyebrow: "Selecao Michelin", gradient: "from-[#7f1d1d] via-[#111827] to-[#f59e0b]" },
   { match: "masp.org.br", label: "MASP", badge: "Fonte oficial", eyebrow: "Museu oficial", gradient: "from-[#1d4ed8] via-[#0f172a] to-[#f97316]" },
+  { match: "mis-sp.org.br", label: "MIS SP", badge: "Fonte oficial", eyebrow: "Museu da imagem", gradient: "from-[#312e81] via-[#111827] to-[#f472b6]" },
+  { match: "itaucultural.org.br", label: "Itaú Cultural", badge: "Fonte oficial", eyebrow: "Centro cultural", gradient: "from-[#7f1d1d] via-[#111827] to-[#fbbf24]" },
   { match: "ims.com.br", label: "IMS Paulista", badge: "Fonte oficial", eyebrow: "Acervo oficial", gradient: "from-[#1e293b] via-[#111827] to-[#38bdf8]" },
   { match: "pinacoteca.org.br", label: "Pinacoteca", badge: "Fonte oficial", eyebrow: "Museu oficial", gradient: "from-[#4c1d95] via-[#111827] to-[#f59e0b]" },
   { match: "culturabancodobrasil.com.br", label: "CCBB SP", badge: "Fonte oficial", eyebrow: "Centro cultural", gradient: "from-[#0f766e] via-[#111827] to-[#fbbf24]" },

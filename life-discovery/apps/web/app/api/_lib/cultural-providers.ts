@@ -8,6 +8,38 @@ const FETCH_HEADERS = {
 
 const SESC_CULTURAL_CATEGORY_IDS = [682, 230, 225, 241, 245];
 
+const SESC_UNIT_PAGES: Array<{ slug: string; venue: string }> = [
+  { slug: "pinheiros", venue: "Sesc Pinheiros" },
+  { slug: "24-de-maio", venue: "Sesc 24 de Maio" },
+  { slug: "consolacao", venue: "Sesc Consolação" },
+  { slug: "belenzinho", venue: "Sesc Belenzinho" },
+  { slug: "pompeia", venue: "Sesc Pompeia" },
+  { slug: "itaquera", venue: "Sesc Itaquera" },
+  { slug: "santana", venue: "Sesc Santana" },
+];
+
+type TribeEvent = {
+  title?: string;
+  url?: string;
+  description?: string;
+  excerpt?: string;
+  start_date?: string;
+  end_date?: string;
+  cost?: string;
+  image?: { url?: string };
+};
+
+type ItauSchedule = {
+  title?: string;
+  shortDescription?: string;
+  slug?: string;
+  publishedAt?: string;
+  image?: string;
+  ticket?: boolean;
+  exhibition?: boolean;
+  online?: boolean;
+};
+
 type WpPost = {
   id: number;
   link: string;
@@ -330,14 +362,282 @@ export async function fetchImsEvents(limit = 16) {
   return fetchMuseumExhibitions(IMS_CONFIG, limit);
 }
 
+const MIS_EXHIBITION_CONFIG: MuseumScrapeConfig = {
+  pages: ["https://mis-sp.org.br/exposicoes/"],
+  baseUrl: "https://mis-sp.org.br",
+  hrefPattern: /mis-sp\.org\.br\/exposicao\//i,
+  hrefExclude: /\/exposicao\/?$/,
+  source: "MIS SP",
+  venue: "MIS SP",
+  descriptionPrefix: "Exposição no MIS",
+  tags: ["mis", "exposição", "imagem", "museu", "cultural"],
+  qualityScore: 85,
+  contentTier: "signature",
+};
+
+export async function fetchMisEvents(limit = 16): Promise<RecommendationPayload[]> {
+  const merged: RecommendationPayload[] = [];
+  const seen = new Set<string>();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const params = new URLSearchParams({
+    per_page: String(Math.min(limit, 20)),
+    start_date: today,
+  });
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(`https://mis-sp.org.br/wp-json/tribe/events/v1/events?${params.toString()}`, {
+      headers: FETCH_HEADERS,
+      signal: controller.signal,
+      next: { revalidate: 1800 },
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { events?: TribeEvent[] };
+      for (const event of data.events || []) {
+        const title = String(event.title || "").trim();
+        const url = String(event.url || "").trim();
+        if (title.length < 6 || !url || seen.has(url)) continue;
+        seen.add(url);
+
+        const description = stripHtml(decodeHtmlEntities(event.excerpt || event.description || "")).slice(0, 420);
+        merged.push(
+          mapScrapedEventToRecommendation({
+            title,
+            description: description || `Programação no MIS — ${title}`,
+            url,
+            source: "MIS SP",
+            venue: "MIS SP",
+            city: "São Paulo",
+            date: event.start_date || null,
+            price: parsePrice(`${event.cost || ""} ${description}`),
+            category: "cultural",
+            tags: ["mis", "evento", "imagem", "museu", "cultural"],
+            image_url: event.image?.url || null,
+            quality_score: 85,
+            content_tier: "signature",
+          })
+        );
+        if (merged.length >= limit) return merged;
+      }
+    }
+  } catch {
+    // Tribe API indisponível — segue com exposições
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  for (const item of await fetchMuseumExhibitions(MIS_EXHIBITION_CONFIG, limit)) {
+    if (!item.url || seen.has(item.url)) continue;
+    seen.add(item.url);
+    merged.push(item);
+    if (merged.length >= limit) break;
+  }
+
+  return merged;
+}
+
+async function fetchItauAgendaSchedules(): Promise<ItauSchedule[]> {
+  const html = await fetchHtml("https://www.itaucultural.org.br/agenda");
+  if (!html) return [];
+
+  const buildMatch = html.match(/"buildId":"([^"]+)"/);
+  const buildId = buildMatch?.[1];
+  if (!buildId) {
+    const nextData = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+    if (nextData) {
+      try {
+        const parsed = JSON.parse(nextData[1]) as { props?: { pageProps?: { schedules?: ItauSchedule[] } } };
+        return parsed.props?.pageProps?.schedules || [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`https://www.itaucultural.org.br/_next/data/${buildId}/agenda.json`, {
+      headers: FETCH_HEADERS,
+      signal: controller.signal,
+      next: { revalidate: 1800 },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { pageProps?: { schedules?: ItauSchedule[] } };
+    return data.pageProps?.schedules || [];
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function fetchItauCulturalEvents(limit = 16): Promise<RecommendationPayload[]> {
+  const schedules = await fetchItauAgendaSchedules();
+  return schedules.slice(0, limit).flatMap((item) => {
+    const title = String(item.title || "").trim();
+    const slug = String(item.slug || "").trim();
+    if (title.length < 6 || !slug) return [];
+
+    const description = String(item.shortDescription || `Agenda no Itaú Cultural — ${title}`).slice(0, 420);
+    const url = `https://www.itaucultural.org.br/agenda/${slug}`;
+    const category = item.exhibition ? "exhibition" : item.online ? "streaming" : "cultural";
+
+    return [
+      mapScrapedEventToRecommendation({
+        title,
+        description,
+        url,
+        source: "Itaú Cultural",
+        venue: "Itaú Cultural",
+        city: "São Paulo",
+        date: item.publishedAt || null,
+        price: item.ticket ? null : parsePrice(description),
+        category,
+        tags: ["itau cultural", "exposição", "show", "cultural", "gratuito"],
+        image_url: item.image || null,
+        quality_score: 84,
+        content_tier: "signature",
+      }),
+    ];
+  });
+}
+
+const PLANETARIO_BASE = "https://prefeitura.sp.gov.br";
+const PLANETARIO_PAGES = [
+  `${PLANETARIO_BASE}/web/meio_ambiente/w/programacao-sessoes-planet%C3%A1rio`,
+  `${PLANETARIO_BASE}/web/meio_ambiente/w/umapaz/programacao_mensal/1`,
+  `${PLANETARIO_BASE}/web/meio_ambiente/w/programacao-umapaz`,
+];
+
+const PLANETARIO_LINK_PATTERN = /\/web\/meio_ambiente\/w\/(sess[aã]o|mostra|o-show)/i;
+const PLANETARIO_LINK_EXCLUDE =
+  /programacao-umapaz|programacao_mensal|planetario_municipal|sobre_a_umapaz|biblioteca|duvidas|183420|284047|\/243|\/244|divis|atividades-em-andamento/i;
+
+export async function fetchPlanetarioEvents(limit = 12): Promise<RecommendationPayload[]> {
+  const merged: RecommendationPayload[] = [];
+  const seen = new Set<string>();
+
+  for (const pageUrl of PLANETARIO_PAGES) {
+    const html = await fetchHtml(pageUrl);
+    if (!html) continue;
+
+    const anchorRegex = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    for (const match of html.matchAll(anchorRegex)) {
+      let href = match[1];
+      if (!PLANETARIO_LINK_PATTERN.test(href)) continue;
+      if (PLANETARIO_LINK_EXCLUDE.test(href)) continue;
+
+      if (href.startsWith("/")) href = new URL(href, PLANETARIO_BASE).toString();
+      href = href.split("#")[0].replace(/\/$/, "");
+      if (seen.has(href)) continue;
+
+      const inner = match[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      if (/^(saiba mais|programa[cç][aã]o|planet[aá]rios)$/i.test(inner)) continue;
+      const title = inner.length >= 10 ? inner.slice(0, 140) : slugToTitle(href);
+      if (title.length < 10) continue;
+      seen.add(href);
+
+      const imgMatch = match[2].match(/<img[^>]+src=["']([^"']+)["']/i);
+      const image_url = imgMatch?.[1] ? new URL(imgMatch[1], PLANETARIO_BASE).toString() : null;
+
+      merged.push(
+        mapScrapedEventToRecommendation({
+          title,
+          description: `Sessão ou programação no Planetário Ibirapuera — ${title}`,
+          url: href,
+          source: "Planetário Ibirapuera",
+          venue: "Planetário Ibirapuera",
+          city: "São Paulo",
+          category: "cultural",
+          tags: ["planetário", "ibirapuera", "sessão", "família", "gratuito"],
+          image_url,
+          price: 0,
+          quality_score: 82,
+          content_tier: "curated",
+        })
+      );
+
+      if (merged.length >= limit) return merged;
+    }
+  }
+
+  return merged;
+}
+
+export async function fetchSescUnitEvents(limit = 14): Promise<RecommendationPayload[]> {
+  const perUnit = Math.max(2, Math.ceil(limit / SESC_UNIT_PAGES.length));
+  const merged: RecommendationPayload[] = [];
+  const seen = new Set<string>();
+
+  for (const unit of SESC_UNIT_PAGES) {
+    const html = await fetchHtml(`https://www.sescsp.org.br/unidades/${unit.slug}/`);
+    if (!html) continue;
+
+    const anchorRegex = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    let unitCount = 0;
+
+    for (const match of html.matchAll(anchorRegex)) {
+      let href = match[1];
+      if (!/\/editorial\//i.test(href)) continue;
+      if (/\/editorial\/?$/i.test(href.replace(/\/$/, ""))) continue;
+
+      if (href.startsWith("/")) href = new URL(href, "https://www.sescsp.org.br").toString();
+      href = href.split("#")[0].replace(/\/$/, "");
+      if (seen.has(href)) continue;
+
+      const inner = match[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const title = inner.length >= 8 ? inner.slice(0, 140) : slugToTitle(href);
+      if (title.length < 8) continue;
+      seen.add(href);
+
+      const imgMatch = match[2].match(/<img[^>]+src=["']([^"']+)["']/i);
+      const image_url = imgMatch?.[1] ? new URL(imgMatch[1], "https://www.sescsp.org.br").toString() : null;
+
+      merged.push(
+        mapScrapedEventToRecommendation({
+          title,
+          description: `Programação cultural no ${unit.venue} — ${title}`,
+          url: href,
+          source: "Sesc SP",
+          venue: unit.venue,
+          city: "São Paulo",
+          category: "cultural",
+          tags: ["sesc", unit.slug, "cultural", "sao paulo"],
+          image_url,
+          price: /gratuit|grátis|entrada livre/i.test(title) ? 0 : null,
+          quality_score: 83,
+          content_tier: "curated",
+        })
+      );
+
+      unitCount += 1;
+      if (unitCount >= perUnit || merged.length >= limit) break;
+    }
+
+    if (merged.length >= limit) break;
+  }
+
+  return merged;
+}
+
 export async function fetchMuseumAndCulturalEvents(limit = 20) {
-  const perVenue = Math.max(6, Math.ceil(limit / 4));
+  const providerCount = 10;
+  const perVenue = Math.max(4, Math.ceil(limit / providerCount));
   const results = await Promise.allSettled([
     fetchMaspEvents(perVenue),
     fetchPinacotecaEvents(perVenue),
     fetchCcbbEvents(perVenue),
     fetchImsEvents(perVenue),
+    fetchMisEvents(perVenue),
+    fetchItauCulturalEvents(perVenue),
+    fetchPlanetarioEvents(perVenue),
     fetchSescSpEvents(perVenue),
+    fetchSescUnitEvents(perVenue),
   ]);
 
   const merged: RecommendationPayload[] = [];
