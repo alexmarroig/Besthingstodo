@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
-import DiscoveryCard from "@/components/discovery/discovery-card";
 import MediaDetailModal from "@/components/discovery/media-detail-modal";
 import MediaRail from "@/components/discovery/media-rail";
 import { fetchMealSuggestions, fetchPlaces, fetchGastroEditorial, fetchDeliveryNearby, fetchEvents } from "@/shared/api/client";
@@ -32,6 +31,12 @@ const CUISINE_TAG_KEYWORDS: Record<string, string[]> = {
   Chinese: ["chinese", "chinesa", "dim sum"],
 };
 
+const TABS = [
+  { key: "editorial", label: "Radar" },
+  { key: "restaurants", label: "Restaurantes" },
+  { key: "delivery", label: "Delivery" },
+] as const;
+
 function filterRestaurantsByCuisine(items: any[], cuisineKey: string) {
   const keywords = CUISINE_TAG_KEYWORDS[cuisineKey] || [];
   if (!keywords.length) return items;
@@ -42,95 +47,67 @@ function filterRestaurantsByCuisine(items: any[], cuisineKey: string) {
   return filtered.length ? filtered : items;
 }
 
+function tabClass(active: boolean) {
+  return active ? "btn-primary py-2 px-4 text-xs shadow-none" : "btn-ghost py-2 px-4 text-xs";
+}
+
 function MealCard({ meal, index }: { meal: any; index: number }) {
   const [showIngredients, setShowIngredients] = useState(false);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.08 }}
-      className="card-hover recipe-card overflow-hidden rounded-[1.5rem]"
+      transition={{ duration: 0.35, delay: index * 0.06 }}
+      className="experience-card overflow-hidden"
     >
-      {meal.image_url && (
-        <div className="relative aspect-video w-full overflow-hidden">
-          <img
-            src={meal.image_url}
-            alt={meal.title}
-            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          <div className="absolute bottom-3 left-4 right-4">
-            <h4 className="text-lg font-semibold text-white drop-shadow-lg">{meal.title}</h4>
+      {meal.image_url ? (
+        <div className="relative aspect-[4/3] w-full overflow-hidden">
+          <img src={meal.image_url} alt={meal.title} className="h-full w-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          <div className="absolute bottom-3 left-3 right-3">
+            <h4 className="line-clamp-2 text-base font-semibold text-white">{meal.title}</h4>
           </div>
-          {meal.tags?.length > 0 && (
-            <div className="absolute right-3 top-3 flex gap-1.5">
-              {meal.tags.slice(0, 2).map((tag: string) => (
-                <span key={tag} className="rounded-full bg-black/50 px-2.5 py-1 text-[10px] text-white/90 backdrop-blur-sm">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+        </div>
+      ) : (
+        <div className="flex aspect-[4/3] items-center justify-center bg-white/[0.03]">
+          <p className="text-sm font-semibold text-white/70">{meal.title}</p>
         </div>
       )}
 
-      <div className="space-y-3 p-5">
-        {meal.location && (
-          <p className="text-xs text-[#f4d06f]/80"> Culinária {meal.location}</p>
-        )}
+      <div className="space-y-3 p-4">
+        {meal.location ? <p className="pill-accent inline-flex text-[10px]">{meal.location}</p> : null}
+        {meal.description ? <p className="line-clamp-3 text-sm text-white/55">{meal.description}</p> : null}
 
-        {meal.description && (
-          <p className="line-clamp-3 text-sm leading-relaxed text-white/65">
-            {meal.description}
-          </p>
-        )}
+        {meal.ingredients?.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setShowIngredients(!showIngredients)}
+            className="text-xs font-medium text-[#f4d06f]"
+          >
+            {showIngredients ? "Esconder" : "Ver"} ingredientes ({meal.ingredients.length})
+          </button>
+        ) : null}
 
-        {meal.ingredients?.length > 0 && (
-          <div>
-            <button
-              onClick={() => setShowIngredients(!showIngredients)}
-              className="flex items-center gap-2 text-xs font-medium text-[#f4d06f] transition hover:text-[#f4d06f]/80"
-            >
-              <span>{showIngredients ? "▾" : "▸"}</span>
-              <span>{showIngredients ? "Esconder" : "Ver"} ingredientes ({meal.ingredients.length})</span>
-            </button>
-            {showIngredients && (
-              <motion.ul
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-2 space-y-1"
-              >
-                {meal.ingredients.map((ing: string, i: number) => (
-                  <li key={i} className="text-xs text-white/55">• {ing}</li>
-                ))}
-              </motion.ul>
-            )}
-          </div>
-        )}
+        {showIngredients && meal.ingredients?.length > 0 ? (
+          <ul className="space-y-1 text-xs text-white/50">
+            {meal.ingredients.map((ing: string, i: number) => (
+              <li key={i}>• {ing}</li>
+            ))}
+          </ul>
+        ) : null}
 
-        <div className="flex flex-wrap gap-2 border-t border-white/6 pt-3">
-          {meal.youtube_url && (
-            <a
-              href={meal.youtube_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/25"
-            >
+        <div className="flex flex-wrap gap-2 border-t border-white/[0.06] pt-3">
+          {meal.youtube_url ? (
+            <a href={meal.youtube_url} target="_blank" rel="noopener noreferrer" className="pill-accent text-[10px]">
               ▶ YouTube
             </a>
-          )}
-          {meal.url && !meal.youtube_url && (
-            <a
-              href={meal.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-white/8 px-3 py-2 text-xs font-medium text-white/60 transition hover:bg-white/15"
-            >
-              ↗ Receita completa
+          ) : null}
+          {meal.url && !meal.youtube_url ? (
+            <a href={meal.url} target="_blank" rel="noopener noreferrer" className="btn-ghost py-1.5 text-[10px]">
+              Receita completa
             </a>
-          )}
+          ) : null}
         </div>
       </div>
     </motion.div>
@@ -140,14 +117,10 @@ function MealCard({ meal, index }: { meal: any; index: number }) {
 export default function FoodScreen() {
   const userId = getUserId();
   const [selectedCuisine, setSelectedCuisine] = useState("Italian");
-  const [activeTab, setActiveTab] = useState<"editorial" | "restaurants" | "delivery">("editorial");
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["key"]>("editorial");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
-  const { data: randomMeal } = useQuery({
-    queryKey: ["random-meal"],
-    queryFn: () => fetchMealSuggestions("random"),
-  });
-
+  const { data: randomMeal } = useQuery({ queryKey: ["random-meal"], queryFn: () => fetchMealSuggestions("random") });
   const { data: cuisineMeals, isLoading: loadingCuisine } = useQuery({
     queryKey: ["cuisine-meals", selectedCuisine],
     queryFn: () => fetchMealSuggestions("filter", { area: selectedCuisine }),
@@ -157,10 +130,7 @@ export default function FoodScreen() {
 
   const { data: restaurants } = useQuery({
     queryKey: ["food-restaurants", selectedCuisine],
-    queryFn: () =>
-      fetchPlaces("Sao Paulo", "catering.restaurant", {
-        intent: cuisineIntent,
-      }),
+    queryFn: () => fetchPlaces("Sao Paulo", "catering.restaurant", { intent: cuisineIntent }),
   });
 
   const { data: cafes } = useQuery({
@@ -179,134 +149,88 @@ export default function FoodScreen() {
     enabled: activeTab === "delivery",
   });
 
-  const { data: events } = useQuery({
-    queryKey: ["food-events"],
-    queryFn: () => fetchEvents("Sao Paulo"),
-    enabled: activeTab === "restaurants",
-  });
-
   const dailyMeal = randomMeal?.[0];
   const restaurantItems = filterRestaurantsByCuisine(restaurants || [], selectedCuisine);
-  const cafeItems = cafes || [];
   const editorialItems = gastroEditorial || [];
   const deliveryItems = deliveryNearby || [];
-  const eventItems = events || [];
+  const cafeItems = cafes || [];
 
   return (
-    <section className="space-y-7">
-      {/* Hero */}
-      <div className="hero-mesh overflow-hidden rounded-[2.5rem] border border-white/8 p-6 md:p-8">
-        <div className="grid gap-8 lg:grid-cols-[1.25fr_0.85fr]">
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <p className="text-[11px] uppercase tracking-[0.34em] text-[#f4d06f]">Gastronomia</p>
-              <h2 className="max-w-3xl text-4xl font-semibold leading-[1.02] text-white md:text-6xl">
-                Receitas e restaurantes para a noite do casal
-              </h2>
-              <p className="max-w-2xl text-base text-white/72">
-                Combinamos receitas para cozinhar juntos com os melhores restaurantes e cafés perto de vocês. De delivery gourmet a jantar fora — tudo pensado para o casal.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Restaurantes</p>
-              <p className="mt-3 text-4xl font-semibold text-white">{restaurantItems.length}</p>
-              <p className="mt-2 text-sm text-white/62">lugares reais perto de vocês agora.</p>
-            </div>
-            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Culinárias</p>
-              <p className="mt-3 text-4xl font-semibold text-white">{CUISINES.length}</p>
-              <p className="mt-2 text-sm text-white/62">tipos de cozinha com receitas reais.</p>
-            </div>
-            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Cafés</p>
-              <p className="mt-3 text-4xl font-semibold text-white">{cafeItems.length}</p>
-              <p className="mt-2 text-sm text-white/62">cafeterias para um encontro mais leve.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {[
-          { key: "editorial", label: "Editorial" },
-          { key: "restaurants", label: "Restaurantes" },
-          { key: "delivery", label: "Delivery" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as typeof activeTab)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
-              activeTab === tab.key
-                ? "bg-[#f97352] text-white shadow-[0_12px_28px_rgba(249,115,82,0.24)]"
-                : "border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "editorial" && editorialItems.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Radar gastronômico</p>
-            <h3 className="mt-2 text-3xl font-semibold">Críticas, aberturas e tendências</h3>
-            <p className="mt-2 text-sm text-white/66">Matérias de Paladar, Folha, Catraca e radar editorial de São Paulo.</p>
-          </div>
-          <MediaRail title="Editorial" items={editorialItems.slice(0, 12)} onOpen={setSelectedItem} />
-        </div>
-      )}
-
-      {activeTab === "delivery" && deliveryItems.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Delivery perto</p>
-            <h3 className="mt-2 text-3xl font-semibold">Opções para pedir em casa</h3>
-            <p className="mt-2 text-sm text-white/66">Restaurantes com entrega encontrados por localização. iFood/Rappi não possuem API pública de descoberta.</p>
-          </div>
-          <MediaRail title="Delivery perto" items={deliveryItems.slice(0, 12)} onOpen={setSelectedItem} />
-        </div>
-      )}
-
-      {/* Receita do dia */}
-      {dailyMeal && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Receita do dia</p>
-            <h3 className="mt-2 text-3xl font-semibold">Uma ideia para cozinhar juntos</h3>
-            <p className="mt-2 text-sm text-white/66">
-              Receita aleatória para inspirar a noite. Cozinhar junto é o date mais subestimado que existe.
-            </p>
-          </div>
-          <div className="max-w-2xl">
-            <MealCard meal={dailyMeal} index={0} />
-          </div>
-        </div>
-      )}
-
-      {/* Receitas por culinária */}
-      <div className="space-y-4">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Por culinária</p>
-          <h3 className="mt-2 text-3xl font-semibold">Receitas organizadas pelo tipo de cozinha</h3>
-          <p className="mt-2 text-sm text-white/66">
-            Escolha a culinária e veja receitas reais com imagem, ingredientes e vídeo.
+    <section className="space-y-8">
+      <header className="animate-fade-up space-y-4">
+        <div className="space-y-2">
+          <p className="text-xs text-white/45">Gastronomia</p>
+          <h2 className="font-display text-3xl font-semibold text-white sm:text-4xl">Comer bem, juntos</h2>
+          <p className="max-w-lg text-sm text-white/55">
+            Receitas para cozinhar em casa, restaurantes reais e delivery perto de vocês.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <span className="pill">{restaurantItems.length} restaurantes</span>
+          <span className="pill">{cafeItems.length} cafés</span>
+          <span className="pill">{CUISINES.length} culinárias</span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {TABS.map((tab) => (
+            <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)} className={tabClass(activeTab === tab.key)}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {activeTab === "editorial" && editorialItems.length > 0 ? (
+        <MediaRail
+          title="Radar gastronômico"
+          subtitle="Paladar, Folha, Catraca e aberturas"
+          items={editorialItems.slice(0, 12)}
+          onOpen={setSelectedItem}
+          className="animate-slide-up stagger-2"
+        />
+      ) : null}
+
+      {activeTab === "delivery" && deliveryItems.length > 0 ? (
+        <MediaRail
+          title="Delivery perto"
+          subtitle="Opções com entrega na região"
+          items={deliveryItems.slice(0, 12)}
+          onOpen={setSelectedItem}
+          className="animate-slide-up stagger-2"
+        />
+      ) : null}
+
+      {dailyMeal ? (
+        <div className="animate-slide-up stagger-3 space-y-3">
+          <div>
+            <div className="mb-2 flex items-center gap-3">
+              <div className="rail-accent" />
+              <h3 className="rail-title">Receita do dia</h3>
+            </div>
+            <p className="text-sm text-white/45">Uma ideia leve para cozinhar juntos</p>
+          </div>
+          <div className="max-w-sm">
+            <MealCard meal={dailyMeal} index={0} />
+          </div>
+        </div>
+      ) : null}
+
+      <div className="animate-slide-up stagger-4 space-y-4">
+        <div>
+          <div className="mb-2 flex items-center gap-3">
+            <div className="rail-accent" />
+            <h3 className="rail-title">Por culinária</h3>
+          </div>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {CUISINES.map((c) => (
             <button
               key={c.key}
+              type="button"
               onClick={() => setSelectedCuisine(c.key)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
-                selectedCuisine === c.key
-                  ? "bg-[#f97352] text-white shadow-[0_12px_28px_rgba(249,115,82,0.24)]"
-                  : "border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-              }`}
+              className={`shrink-0 ${tabClass(selectedCuisine === c.key)}`}
             >
               {c.label}
             </button>
@@ -314,13 +238,13 @@ export default function FoodScreen() {
         </div>
 
         {loadingCuisine ? (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton h-64 rounded-[1.5rem]" />
+              <div key={i} className="experience-card aspect-[4/5] shimmer" />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {(cuisineMeals || []).slice(0, 6).map((meal: any, i: number) => (
               <MealCard key={meal.id} meal={meal} index={i} />
             ))}
@@ -328,53 +252,25 @@ export default function FoodScreen() {
         )}
       </div>
 
-      {/* Restaurantes */}
-      {activeTab === "restaurants" && restaurantItems.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Perto de vocês</p>
-            <h3 className="mt-2 text-3xl font-semibold">
-              Restaurantes {CUISINES.find((c) => c.key === selectedCuisine)?.label || ""} para sair hoje
-            </h3>
-            <p className="mt-2 text-sm text-white/66">
-              Busca por culinária selecionada e lugares reais perto de vocês — a lista muda quando você troca o tipo de cozinha.
-            </p>
-          </div>
-          <MediaRail title="Restaurantes" items={restaurantItems.slice(0, 12)} onOpen={setSelectedItem} />
-        </div>
-      )}
+      {activeTab === "restaurants" && restaurantItems.length > 0 ? (
+        <MediaRail
+          title={`Restaurantes ${CUISINES.find((c) => c.key === selectedCuisine)?.label || ""}`}
+          subtitle="Lugares reais alinhados ao tipo de cozinha"
+          items={restaurantItems.slice(0, 12)}
+          onOpen={setSelectedItem}
+          className="animate-slide-up stagger-5"
+        />
+      ) : null}
 
-      {/* Eventos gastronômicos e cultura */}
-      {activeTab === "restaurants" && eventItems.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Agenda SP</p>
-            <h3 className="mt-2 text-3xl font-semibold">Eventos para sair juntos</h3>
-            <p className="mt-2 text-sm text-white/66">
-              Festivais, exposições e experiências gastronômicas da cidade.
-            </p>
-          </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {eventItems.slice(0, 4).map((item: any) => (
-              <DiscoveryCard key={item.id} item={item} userId={userId} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Cafés */}
-      {activeTab === "restaurants" && cafeItems.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Cafés e brunch</p>
-            <h3 className="mt-2 text-3xl font-semibold">Para encontros mais leves</h3>
-            <p className="mt-2 text-sm text-white/66">
-              Cafeterias e casas de brunch perto. Bom para o fim de semana ou para mudar o ritmo.
-            </p>
-          </div>
-          <MediaRail title="Cafés e brunch" items={cafeItems.slice(0, 12)} onOpen={setSelectedItem} />
-        </div>
-      )}
+      {activeTab === "restaurants" && cafeItems.length > 0 ? (
+        <MediaRail
+          title="Cafés & brunch"
+          subtitle="Encontros mais leves"
+          items={cafeItems.slice(0, 12)}
+          onOpen={setSelectedItem}
+          className="animate-slide-up stagger-6"
+        />
+      ) : null}
 
       <MediaDetailModal item={selectedItem} userId={userId} onClose={() => setSelectedItem(null)} />
     </section>

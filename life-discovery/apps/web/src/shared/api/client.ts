@@ -243,16 +243,10 @@ export async function fetchMealSuggestions(type = "random", params?: Record<stri
   }
 }
 
-export async function fetchRecommendations(
-  userId: string,
+export async function fetchRecommendationSources(
   city = "Sao Paulo",
-  domain?: RecommendationDomain,
-  weather?: string,
-  couple?: CoupleSnapshot | null,
-  context?: ExperienceContext
+  domain?: RecommendationDomain
 ): Promise<Recommendation[]> {
-  const localContext = context || refineContext({ city, weather: weather || "unknown" }, city);
-
   try {
     const fetchers: Promise<Recommendation[]>[] = [];
 
@@ -263,7 +257,7 @@ export async function fetchRecommendations(
       fetchers.push(fetchPlaces(city, "catering.restaurant"), fetchGastroEditorial("all"));
     }
     if (!domain || domain === "events_exhibitions") {
-      fetchers.push(fetchEvents(city), fetchLocalEvents(city), fetchEvents(city, "gastro"));
+      fetchers.push(fetchEvents(city), fetchLocalEvents(city));
     }
     if (domain === "delivery") {
       fetchers.push(
@@ -275,8 +269,24 @@ export async function fetchRecommendations(
     }
 
     const allResults = await Promise.all(fetchers);
-    const combined = allResults.flat();
+    return allResults.flat();
+  } catch {
+    return [];
+  }
+}
 
+export async function fetchRecommendations(
+  userId: string,
+  city = "Sao Paulo",
+  domain?: RecommendationDomain,
+  weather?: string,
+  couple?: CoupleSnapshot | null,
+  context?: ExperienceContext
+): Promise<Recommendation[]> {
+  const localContext = context || refineContext({ city, weather: weather || "unknown" }, city);
+
+  try {
+    const combined = await fetchRecommendationSources(city, domain);
     if (combined.length === 0) return [];
 
     return curateRecommendations(combined, {

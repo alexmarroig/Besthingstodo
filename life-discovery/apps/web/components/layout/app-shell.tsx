@@ -6,13 +6,13 @@ import { BottomNav, Navbar } from "./navigation";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-bg pb-24 md:pb-10">
+    <div className="relative min-h-screen pb-28 md:pb-8">
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+      <main className="mx-auto max-w-6xl px-4 py-5 md:px-6 md:py-8">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.28, ease: "easeOut" }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
           {children}
         </motion.div>
@@ -21,4 +21,3 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-

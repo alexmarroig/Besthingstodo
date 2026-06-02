@@ -31,6 +31,8 @@ export default function ExperienceImage({
   const directImage = normalizeRecommendationImageUrl(item.image_url);
   const [resolvedImage, setResolvedImage] = useState<string | null>(directImage);
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [resolving, setResolving] = useState(!directImage);
 
   const imageResolverUrl = useMemo(() => {
     if (directImage) return directImage;
@@ -51,14 +53,17 @@ export default function ExperienceImage({
   useEffect(() => {
     let active = true;
     setFailed(false);
+    setLoaded(false);
 
     if (directImage) {
       setResolvedImage(directImage);
+      setResolving(false);
       return () => {
         active = false;
       };
     }
 
+    setResolving(true);
     fetch(imageResolverUrl, { cache: "force-cache" })
       .then((res) => (res.ok ? res.json() : { url: null }))
       .then((payload) => {
@@ -68,6 +73,10 @@ export default function ExperienceImage({
       .catch(() => {
         if (!active) return;
         setResolvedImage(null);
+      })
+      .finally(() => {
+        if (!active) return;
+        setResolving(false);
       });
 
     return () => {
@@ -78,20 +87,48 @@ export default function ExperienceImage({
   const rootClass = className ? `relative overflow-hidden ${className}` : "relative h-52 overflow-hidden";
   const showImage = Boolean(resolvedImage) && !failed;
   const isCompact = mode === "tile";
+  const showShimmer = resolving || (showImage && !loaded);
+
+  const overlayBadges = (
+    <>
+      <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+        <span className="rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
+          {localizeCategory(item.category)}
+        </span>
+        {item.quality_score != null && item.quality_score > 0 ? (
+          <span className="ifood-chip rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur-sm">
+            Match {Math.round(item.quality_score)}%
+          </span>
+        ) : item.score != null && item.score > 0 ? (
+          <span className="rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+            {Number(item.score).toFixed(1)}
+          </span>
+        ) : null}
+      </div>
+    </>
+  );
 
   if (showImage) {
     return (
       <div className={rootClass}>
+        {showShimmer ? <div className="absolute inset-0 shimmer" aria-hidden /> : null}
         <img
           src={resolvedImage!}
           alt={item.title}
-          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+          className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] ${
+            loaded ? "opacity-100" : "opacity-0"
+          }`}
           loading="lazy"
-          onError={() => setFailed(true)}
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            setFailed(true);
+            setLoaded(true);
+          }}
         />
         <div
           className={`absolute inset-0 bg-gradient-to-t ${
-            isCompact ? "from-black/75 via-black/15 to-transparent" : "from-[#04101d]/90 via-black/25 to-black/10"
+            isCompact ? "from-black/78 via-black/12 to-transparent" : "from-[#04101d]/90 via-black/25 to-black/10"
           }`}
         />
         {!isCompact && mode !== "hero" ? (
@@ -105,16 +142,7 @@ export default function ExperienceImage({
             </div>
           </>
         ) : (
-          <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-            <span className="rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
-              {localizeCategory(item.category)}
-            </span>
-            {item.score != null && item.score > 0 ? (
-              <span className="rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-                {Number(item.score).toFixed(1)}
-              </span>
-            ) : null}
-          </div>
+          overlayBadges
         )}
       </div>
     );
@@ -123,17 +151,9 @@ export default function ExperienceImage({
   if (isCompact || mode === "hero") {
     return (
       <div className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
+        {resolving ? <div className="absolute inset-0 shimmer opacity-70" aria-hidden /> : null}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]" />
-        <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-          <span className="rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
-            {localizeCategory(item.category)}
-          </span>
-          {item.score != null && item.score > 0 ? (
-            <span className="rounded-full bg-black/40 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {Number(item.score).toFixed(1)}
-            </span>
-          ) : null}
-        </div>
+        {overlayBadges}
         {mode === "hero" ? (
           <div className="absolute inset-x-0 bottom-0 p-4">
             <p className="text-[10px] uppercase tracking-[0.24em] text-white/65">{sourceMeta.eyebrow || theme.eyebrow}</p>
@@ -145,6 +165,7 @@ export default function ExperienceImage({
 
   return (
     <div className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
+      {resolving ? <div className="absolute inset-0 shimmer opacity-70" aria-hidden /> : null}
       <div className="absolute inset-0 transition duration-500 group-hover:scale-[1.04]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.12),transparent_22%)]" />
       </div>

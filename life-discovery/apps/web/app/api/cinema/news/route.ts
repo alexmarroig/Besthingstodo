@@ -1,4 +1,5 @@
 import { jsonFallback, jsonWithCache } from "../../_lib/external-api";
+import { enrichRecommendationImagesAsync } from "../../_lib/recommendation-images";
 import {
   dedupeRecommendations,
   mapRssItemToRecommendation,
@@ -55,7 +56,8 @@ export async function GET(request: Request) {
       return jsonFallback(FALLBACK, { revalidate: 900, fallbackMaxAge: 120 });
     }
 
-    return jsonWithCache(merged, { revalidate: 1800, stale: 600 });
+    const enriched = await enrichRecommendationImagesAsync(merged, { maxOgLookups: 10 });
+    return jsonWithCache(enriched, { revalidate: 1800, stale: 600 });
   } catch {
     return jsonFallback(FALLBACK, { revalidate: 900, fallbackMaxAge: 120 });
   }

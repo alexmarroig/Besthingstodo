@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import MediaTile, { MediaTileVariant } from "./media-tile";
+import MediaTileSkeleton from "./media-tile-skeleton";
 import { Recommendation } from "@life/shared-types";
 
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
@@ -12,7 +13,7 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-      className={`h-5 w-5 ${direction === "left" ? "" : "rotate-180"}`}
+      className={`h-4 w-4 ${direction === "left" ? "" : "rotate-180"}`}
       aria-hidden
     >
       <path d="M14 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -26,12 +27,16 @@ export default function MediaRail({
   items,
   onOpen,
   variant = "landscape",
+  loading = false,
+  className = "",
 }: {
   title: string;
   subtitle?: string;
   items: Recommendation[];
   onOpen: (item: Recommendation) => void;
   variant?: MediaTileVariant;
+  loading?: boolean;
+  className?: string;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -48,7 +53,7 @@ export default function MediaRail({
   const scrollByPage = (direction: -1 | 1) => {
     const el = trackRef.current;
     if (!el) return;
-    const amount = Math.max(el.clientWidth * 0.82, 280);
+    const amount = Math.max(el.clientWidth * 0.75, 220);
     el.scrollBy({ left: direction * amount, behavior: "smooth" });
     window.setTimeout(refreshScrollState, 320);
   };
@@ -62,24 +67,45 @@ export default function MediaRail({
     return () => observer.disconnect();
   }, [items, refreshScrollState]);
 
+  if (loading && !items.length) {
+    return (
+      <section className={`space-y-3 ${className}`} aria-busy="true">
+        <div className="flex items-center gap-3">
+          <div className="rail-accent" />
+          <div className="shimmer h-5 w-36 rounded-md" />
+        </div>
+        <div className="flex gap-2.5 overflow-hidden pb-1 pl-1">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <MediaTileSkeleton key={`${title}-sk-${index}`} variant={variant} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   if (!items.length) return null;
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between gap-4 pr-1">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.28em] text-[#f4d06f] sm:text-[13px]">{title}</p>
-          {subtitle ? <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-white/62 sm:text-[15px]">{subtitle}</p> : null}
+    <section className={`space-y-3 ${className}`}>
+      <div className="flex items-end justify-between gap-3 pr-1">
+        <div className="min-w-0">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="rail-accent" />
+            <h3 className="rail-title">{title}</h3>
+          </div>
+          {subtitle ? <p className="hidden max-w-lg text-sm text-white/45 sm:block">{subtitle}</p> : null}
         </div>
-        <p className="hidden shrink-0 text-xs text-white/40 sm:block">{items.length} opções · arraste ou use as setas</p>
+        <span className="shrink-0 rounded-full bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-white/40">
+          {items.length}
+        </span>
       </div>
 
-      <div className="relative">
+      <div className="relative -mx-1 px-1">
         {canScrollLeft ? (
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-12 bg-gradient-to-r from-[#06111d] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-10 bg-gradient-to-r from-[#060d16] to-transparent" />
         ) : null}
         {canScrollRight ? (
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-12 bg-gradient-to-l from-[#06111d] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-10 bg-gradient-to-l from-[#060d16] to-transparent" />
         ) : null}
 
         {canScrollLeft ? (
@@ -87,7 +113,7 @@ export default function MediaRail({
             type="button"
             aria-label="Ver anteriores"
             onClick={() => scrollByPage(-1)}
-            className="absolute left-0 top-[34%] z-[2] flex -translate-y-1/2 rounded-full border border-white/12 bg-[#0b1827]/95 p-2 text-white shadow-lg backdrop-blur-md transition hover:border-[#f97352]/40 hover:bg-[#0f2138] sm:left-1 sm:p-2.5"
+            className="absolute left-0 top-[30%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#0c1624]/90 p-2 text-white shadow-card backdrop-blur-md transition hover:border-[#ff7a59]/30 sm:flex"
           >
             <ChevronIcon direction="left" />
           </button>
@@ -98,7 +124,7 @@ export default function MediaRail({
             type="button"
             aria-label="Ver próximos"
             onClick={() => scrollByPage(1)}
-            className="absolute right-0 top-[34%] z-[2] flex -translate-y-1/2 rounded-full border border-white/12 bg-[#0b1827]/95 p-2 text-white shadow-lg backdrop-blur-md transition hover:border-[#f97352]/40 hover:bg-[#0f2138] sm:right-1 sm:p-2.5"
+            className="absolute right-0 top-[30%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#0c1624]/90 p-2 text-white shadow-card backdrop-blur-md transition hover:border-[#ff7a59]/30 sm:flex"
           >
             <ChevronIcon direction="right" />
           </button>
@@ -107,7 +133,7 @@ export default function MediaRail({
         <div
           ref={trackRef}
           onScroll={refreshScrollState}
-          className="carousel-track flex gap-4 overflow-x-auto pb-3 pl-0.5 pr-2 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="carousel-track flex gap-2.5 overflow-x-auto pb-2 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {items.map((item) => (
             <MediaTile key={item.id} item={item} onOpen={onOpen} variant={variant} />

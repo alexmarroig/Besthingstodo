@@ -47,57 +47,65 @@ export default function MediaDetailModal({
     setSavedFavorite(true);
     setPendingFavorite(false);
     queryClient.invalidateQueries({ queryKey: ["couple-me"] });
-    queryClient.invalidateQueries({ queryKey: ["home-recos"] });
+    queryClient.invalidateQueries({ queryKey: ["recommendation-sources"] });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[1.5rem] bg-[#0b0f17] shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[1.75rem] bg-[#0a121c] shadow-float ring-1 ring-white/[0.08] sm:max-h-[88vh] sm:rounded-[1.75rem]"
         onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={item.title}
       >
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <p className="text-sm font-medium text-white/80">Detalhes</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full bg-white/10 px-3 py-1 text-sm text-white/70 hover:bg-white/15"
-          >
+        <div className="flex shrink-0 justify-center pt-3 sm:hidden">
+          <div className="h-1 w-10 rounded-full bg-white/15" aria-hidden />
+        </div>
+
+        <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
+          <p className="text-sm font-semibold text-white">Detalhes</p>
+          <button type="button" onClick={onClose} className="btn-ghost px-3 py-1.5 text-xs">
             Fechar
           </button>
         </div>
 
-        {matchReason ? (
-          <div className="border-b border-white/8 px-5 py-4">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-[#f4d06f]">Match com vocês</p>
-            <p className="mt-2 text-sm leading-relaxed text-white/85">{matchReason}</p>
-            {matchSignals.length ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {matchSignals.map((signal) => (
-                  <span key={String(signal)} className="rounded-full bg-white/8 px-2.5 py-1 text-[11px] text-white/65">
-                    {signal}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+        <div className="overflow-y-auto overscroll-contain">
+          {matchReason ? (
+            <div className="border-b border-white/[0.06] px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#f4d06f]">Por que combina</p>
+              <p className="mt-2 text-sm leading-relaxed text-white/82">{matchReason}</p>
+              {matchSignals.length ? (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {matchSignals.map((signal) => (
+                    <span key={String(signal)} className="pill px-2.5 py-1 text-[10px]">
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
-        <DiscoveryCard item={item} userId={userId} onAction={handleAction} />
+          <DiscoveryCard item={item} userId={userId} onAction={handleAction} />
 
-        {item.domain === "dining_out" ? (
-          <div className="border-t border-white/8 px-5 py-4">
-            <p className="text-sm text-white/70">Curtiu? Salve como favorito do casal para priorizar lugares parecidos.</p>
-            <button
-              type="button"
-              disabled={savedFavorite || pendingFavorite}
-              onClick={() => void addAsFavorite()}
-              className="mt-3 rounded-full bg-[#f4d06f]/20 px-4 py-2 text-sm font-medium text-[#f4d06f] disabled:opacity-50"
-            >
-              {savedFavorite ? "Adicionado aos favoritos" : "Salvar como favorito do casal"}
-            </button>
-          </div>
-        ) : null}
+          {item.domain === "dining_out" ? (
+            <div className="border-t border-white/[0.06] px-5 py-4">
+              <p className="text-sm text-white/55">Salve nos favoritos do casal para priorizar lugares parecidos.</p>
+              <button
+                type="button"
+                disabled={savedFavorite || pendingFavorite}
+                onClick={() => void addAsFavorite()}
+                className="btn-ghost mt-3 border-[#f4d06f]/25 text-[#f4d06f] disabled:opacity-50"
+              >
+                {savedFavorite ? "✓ Nos favoritos" : "Salvar favorito do casal"}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

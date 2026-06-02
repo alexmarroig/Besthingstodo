@@ -61,16 +61,19 @@ export function enrichRecommendationImages<T extends RecommendationPayload>(item
 
 export async function enrichRecommendationImagesAsync<T extends RecommendationPayload>(
   items: T[],
-  _options?: { maxOgLookups?: number }
+  options?: { maxOgLookups?: number }
 ): Promise<T[]> {
   const batchSize = 4;
   const enriched: T[] = [];
+  let lookupsRemaining = options?.maxOgLookups ?? items.length;
 
   for (let index = 0; index < items.length; index += batchSize) {
     const batch = items.slice(index, index + batchSize);
     const resolved = await Promise.all(
       batch.map(async (item) => {
         if (normalizeRecommendationImageUrl(item.image_url)) return item;
+        if (lookupsRemaining <= 0) return item;
+        lookupsRemaining -= 1;
         const image_url = await resolveRecommendationImageUrlAsync(item);
         return { ...item, image_url };
       })

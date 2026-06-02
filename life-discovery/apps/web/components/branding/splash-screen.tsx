@@ -5,71 +5,37 @@ import { BRAND } from "@/shared/brand";
 
 export default function SplashScreen({ message }: { message: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 animate-gradient bg-gradient-to-br from-[#040b14] via-[#0b1827] to-[#06111d]" />
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="animate-float absolute left-[15%] top-[20%] h-32 w-32 rounded-full bg-[#f97352]/10 blur-3xl" style={{ animationDelay: "0s" }} />
-        <div className="animate-float absolute right-[20%] top-[30%] h-24 w-24 rounded-full bg-[#f4d06f]/8 blur-3xl" style={{ animationDelay: "1.5s" }} />
-        <div className="animate-float absolute bottom-[25%] left-[30%] h-28 w-28 rounded-full bg-[#38bdf8]/8 blur-3xl" style={{ animationDelay: "3s" }} />
-        <div className="animate-float absolute bottom-[15%] right-[15%] h-20 w-20 rounded-full bg-[#f97352]/6 blur-2xl" style={{ animationDelay: "2s" }} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#060d16]">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="animate-aurora absolute -left-20 top-0 h-64 w-64 rounded-full bg-[#ff7a59]/12 blur-3xl" />
+        <div className="animate-aurora absolute bottom-0 right-0 h-56 w-56 rounded-full bg-[#f4d06f]/8 blur-3xl" style={{ animationDelay: "2s" }} />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 flex flex-col items-center gap-7"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 flex flex-col items-center gap-6 px-6"
       >
-        {/* Logo with glow */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="animate-pulse-glow flex h-20 w-20 items-center justify-center rounded-[2rem] border border-[#f4d06f]/20 bg-[radial-gradient(circle_at_top_left,rgba(249,115,82,0.4),transparent_50%),linear-gradient(180deg,rgba(249,115,82,0.18),rgba(7,17,29,0.98))]"
-        >
-          <span className="text-2xl font-bold tracking-[0.22em] text-[#fff2cf]">R2</span>
-        </motion.div>
+        <div className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-[#ff7a59]/35 to-transparent text-lg font-bold tracking-wider text-[#fff2cf] ring-1 ring-white/10 shadow-glow-sm">
+          R2
+        </div>
 
-        {/* Brand name */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-          className="text-center"
-        >
-          <p className="text-[10px] uppercase tracking-[0.42em] text-[#f4d06f]/80">{BRAND.eyebrow}</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-white">{BRAND.name}</h1>
-        </motion.div>
+        <div className="text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-[#f4d06f]/85">{BRAND.eyebrow}</p>
+          <h1 className="mt-2 font-display text-2xl font-semibold text-white">{BRAND.name}</h1>
+        </div>
 
-        {/* Loading bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="w-56"
-        >
-          <div className="h-1 overflow-hidden rounded-full bg-white/8">
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-              className="h-full w-1/2 rounded-full bg-gradient-to-r from-transparent via-[#f97352] to-transparent"
-            />
-          </div>
-        </motion.div>
+        <div className="w-44 overflow-hidden rounded-full bg-white/[0.06]">
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: "200%" }}
+            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+            className="h-0.5 w-1/3 rounded-full bg-gradient-to-r from-transparent via-[#ff7a59] to-transparent"
+          />
+        </div>
 
-        {/* Status message */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center text-xs text-white/50"
-        >
-          {message}
-        </motion.p>
+        <p className="text-center text-xs text-white/42">{message}</p>
       </motion.div>
     </div>
   );
