@@ -1,6 +1,8 @@
 import dns from "node:dns/promises";
 import { isIP } from "node:net";
 
+import { isUsableRecommendationImage } from "@/shared/recommendation-images";
+
 const FETCH_HEADERS = {
   "User-Agent": "RoteiroADois/1.0 (+https://besthingstodo-plum.vercel.app)",
   Accept: "text/html,application/xhtml+xml",
@@ -43,6 +45,23 @@ async function assertPublicUrl(url: URL) {
   }
 }
 
+function normalizeLookupText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function wikiTitleMatchesQuery(pageTitle: string, query: string) {
+  const title = normalizeLookupText(pageTitle);
+  const tokens = normalizeLookupText(query)
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 4);
+  if (!tokens.length) return true;
+  return tokens.some((token) => title.includes(token));
+}
+
 function extractJsonLdImages(html: string, pageUrl: URL) {
   const scripts = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
   for (const block of scripts) {
@@ -55,15 +74,21 @@ function extractJsonLdImages(html: string, pageUrl: URL) {
         const image = node?.image;
         if (typeof image === "string") {
           const resolved = new URL(image, pageUrl);
-          if (resolved.protocol.startsWith("http")) return resolved.toString();
+          if (resolved.protocol.startsWith("http") && isUsableRecommendationImage(resolved.toString())) {
+            return resolved.toString();
+          }
         }
         if (image?.url && typeof image.url === "string") {
           const resolved = new URL(image.url, pageUrl);
-          if (resolved.protocol.startsWith("http")) return resolved.toString();
+          if (resolved.protocol.startsWith("http") && isUsableRecommendationImage(resolved.toString())) {
+            return resolved.toString();
+          }
         }
         if (Array.isArray(image) && typeof image[0] === "string") {
           const resolved = new URL(image[0], pageUrl);
-          if (resolved.protocol.startsWith("http")) return resolved.toString();
+          if (resolved.protocol.startsWith("http") && isUsableRecommendationImage(resolved.toString())) {
+            return resolved.toString();
+          }
         }
       }
     } catch {
@@ -80,8 +105,7 @@ export function extractImageUrlFromHtml(html: string, pageUrl: URL) {
     /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
     /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+property=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
-    /<link[^>]+rel=["'][^"']*image_src[^"']*["'][^>]+href=["']([^"']+)["']/i,
-    /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
+    /<link[^>]+rel=["'][^"']*image_src["'][^>]+href=["']([^"']+)["']/i,
   ];
 
   for (const pattern of patterns) {
@@ -89,7 +113,7 @@ export function extractImageUrlFromHtml(html: string, pageUrl: URL) {
     if (!match?.[1]) continue;
     try {
       const resolved = new URL(match[1], pageUrl);
-      if (resolved.protocol === "http:" || resolved.protocol === "https:") {
+      if ((resolved.protocol === "http:" || resolved.protocol === "https:") && isUsableRecommendationImage(resolved.toString())) {
         return resolved.toString();
       }
     } catch {
@@ -143,7 +167,7 @@ export async function fetchOgImageFromUrl(target: string, timeoutMs = 4500): Pro
     const html = await res.text();
     const slice = html.slice(0, 350_000);
     const imageUrl = extractImageUrlFromHtml(slice, finalUrl);
-    if (!imageUrl) return null;
+    if (!imageUrl || !isUsableRecommendationImage(imageUrl)) return null;
 
     const imageParsed = new URL(imageUrl);
     if (imageParsed.protocol !== "http:" && imageParsed.protocol !== "https:") return null;
@@ -161,8 +185,12 @@ export async function fetchOgImageFromUrl(target: string, timeoutMs = 4500): Pro
   }
 }
 
-export async function fetchWikipediaThumbnail(query: string): Promise<string | null> {
-  const term = query.trim().slice(0, 120);
+export async function fetchWikipediaThumbnail(
+  query: string,
+  options?: { validateAgainst?: string; city?: string }
+): Promise<string | null> {
+  const primary = query.trim().split(/[+—–-]/)[0]?.trim() || query.trim();
+  const term = primary.slice(0, 80);
   if (term.length < 3) return null;
 
   const searchParams = new URLSearchParams({
@@ -171,7 +199,7 @@ export async function fetchWikipediaThumbnail(query: string): Promise<string | n
     origin: "*",
     list: "search",
     srsearch: term,
-    srlimit: "1",
+    srlimit: "3",
     utf8: "1",
   });
 
@@ -186,7 +214,10 @@ export async function fetchWikipediaThumbnail(query: string): Promise<string | n
     if (!searchRes.ok) return null;
 
     const searchData = await searchRes.json();
-    const pageId = searchData?.query?.search?.[0]?.pageid;
+    const hits = searchData?.query?.search || [];
+    const validateAgainst = options?.validateAgainst || query;
+    const match = hits.find((row: { title?: string }) => wikiTitleMatchesQuery(row.title || "", validateAgainst)) || hits[0];
+    const pageId = match?.pageid;
     if (!pageId) return null;
 
     const imageParams = new URLSearchParams({
@@ -207,11 +238,10 @@ export async function fetchWikipediaThumbnail(query: string): Promise<string | n
 
     const imageData = await imageRes.json();
     const thumb = imageData?.query?.pages?.[String(pageId)]?.thumbnail?.source;
-    return typeof thumb === "string" ? thumb : null;
+    return typeof thumb === "string" && isUsableRecommendationImage(thumb) ? thumb : null;
   } catch {
     return null;
   } finally {
     clearTimeout(timeout);
   }
 }
-import { fetchTmdbPosterByTitle } from "./tmdb-client";

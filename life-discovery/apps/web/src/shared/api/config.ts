@@ -1,3 +1,5 @@
+export const RECOMMENDATION_POOL_LIMIT = 80;
+
 export const API_ENDPOINTS = {
   tmdb: "/api/tmdb",
   meals: "/api/meals",

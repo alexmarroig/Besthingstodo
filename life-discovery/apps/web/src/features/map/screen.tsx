@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { buildFallbackContext, curateRecommendations } from "@/features/catalog/curation";
 import { fetchCoupleMe, fetchRecommendationSources, fetchUserContext } from "@/shared/api/client";
+import { RECOMMENDATION_POOL_LIMIT } from "@/shared/api/config";
 import { getFeedbackHistory, getUserId } from "@/shared/storage";
 
 const SOURCE_STALE_MS = 5 * 60_000;
@@ -53,7 +54,7 @@ export default function MapScreen() {
       context: context || buildFallbackContext(city),
       couple: couple || undefined,
       feedback: getFeedbackHistory(),
-      limit: 56,
+      limit: RECOMMENDATION_POOL_LIMIT,
     });
   }, [sources, context, couple, city]);
 

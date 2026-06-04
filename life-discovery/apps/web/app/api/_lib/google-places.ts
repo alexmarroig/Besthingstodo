@@ -132,14 +132,69 @@ export async function searchGooglePlaces(options: GoogleSearchOptions): Promise<
 
 export async function fetchGooglePlacePhotoForVenue(
   title: string,
-  options?: { neighborhood?: string | null; city?: string }
+  options?: {
+    neighborhood?: string | null;
+    city?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+  }
 ): Promise<string | null> {
   const city = options?.city || "São Paulo";
   const neighborhood = options?.neighborhood || "";
-  const textQuery = `${title} restaurante ${neighborhood} ${city}`.replace(/\s+/g, " ").trim();
-  const results = await searchGooglePlaces({ textQuery, maxResultCount: 1, includedType: "restaurant" });
-  if (results[0]?.image_url) return results[0].image_url;
+  const textQuery = `${title} ${neighborhood} ${city}`.replace(/\s+/g, " ").trim();
 
-  const cafeResults = await searchGooglePlaces({ textQuery: `${title} ${city}`, maxResultCount: 1, includedType: "cafe" });
-  return cafeResults[0]?.image_url || null;
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return null;
+
+  const body: Record<string, unknown> = {
+    textQuery,
+    maxResultCount: 1,
+    languageCode: "pt-BR",
+    regionCode: "BR",
+  };
+
+  if (options?.latitude != null && options?.longitude != null) {
+    body.locationBias = {
+      circle: {
+        center: { latitude: options.latitude, longitude: options.longitude },
+        radius: 1200,
+      },
+    };
+  } else {
+    body.locationBias = {
+      circle: {
+        center: { latitude: -23.5505, longitude: -46.6333 },
+        radius: 18000,
+      },
+    };
+  }
+
+  const fieldMask = "places.photos,places.displayName";
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch(PLACES_BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": fieldMask,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+      next: { revalidate: 900 },
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const photoName = data.places?.[0]?.photos?.[0]?.name;
+    if (!photoName) return null;
+    return `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=720&key=${apiKey}`;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }

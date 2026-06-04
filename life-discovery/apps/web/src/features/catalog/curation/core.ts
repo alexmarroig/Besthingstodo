@@ -643,8 +643,10 @@ function buildProfileAnchors(couple: CoupleSnapshot, context: ExperienceContext)
     const isDining = meta.domain === "dining_out";
     const isRainFriendly = context.isRainy || meta.category === "restaurant" || meta.category === "museum" || meta.category === "bookstore";
 
+    const anchorId = `profile-anchor-${key.replace(/\s+/g, "-")}`;
+
     anchors.push({
-      id: `profile-anchor-${key.replace(/\s+/g, "-")}`,
+      id: anchorId,
       title: venue,
       description: isDining
         ? "Lugar que já conversa com o histórico gastronômico do casal e entra como aposta forte quando a ideia é jantar bem."
@@ -666,6 +668,7 @@ function buildProfileAnchors(couple: CoupleSnapshot, context: ExperienceContext)
       personalization_label: isDining || key.includes("livraria") ? "favorito do casal" : "wishlist do casal",
       related_favorite: venue,
       image_fallback_key: meta.fallback,
+      image_url: null,
       quality_score: isDining ? 97 : 95,
       price: null,
       tags: [...meta.tags, "personalizado", "casal"],
@@ -724,6 +727,7 @@ function buildSimilarAnchors(couple: CoupleSnapshot, context: ExperienceContext)
         personalization_label: "parecido com um favorito",
         related_favorite: reference,
         image_fallback_key: item.fallback,
+        image_url: null,
         quality_score: 91,
         price: item.price ?? null,
         tags: [...item.tags, "similar aos favoritos", "descoberta guiada"],
@@ -763,6 +767,7 @@ function buildWatchAnchors(couple: CoupleSnapshot, context: ExperienceContext): 
       personalization_label: atHome ? "parecido com o que vocês assistem" : "cinema com a energia de vocês",
       related_favorite: reference,
       image_fallback_key: "cinema",
+      image_url: null,
       quality_score: atHome ? 90 : 92,
       price: item.price ?? null,
       tags: [...item.tags, "assistir juntos", "personalizado"],

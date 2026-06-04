@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       return jsonFallback(FALLBACK, { revalidate: 900, fallbackMaxAge: 120 });
     }
 
-    const enriched = await enrichRecommendationImagesAsync(merged, { maxOgLookups: 10 });
+    const enriched = await enrichRecommendationImagesAsync(merged, { maxOgLookups: 12 });
     return jsonWithCache(enriched, { revalidate: 1800, stale: 600 });
   } catch {
     return jsonFallback(FALLBACK, { revalidate: 900, fallbackMaxAge: 120 });

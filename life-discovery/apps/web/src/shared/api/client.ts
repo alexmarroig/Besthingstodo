@@ -1,5 +1,5 @@
 import { buildConciergeResponse, buildDateNightPlan, buildFallbackContext, curateRecommendations, refineContext } from "../../features/catalog/curation";
-import { API_ENDPOINTS } from "./config";
+import { API_ENDPOINTS, RECOMMENDATION_POOL_LIMIT } from "./config";
 import { getCoupleProfile, getFeedbackHistory, getUserId } from "../storage";
 import { ConciergeResponse, CoupleSnapshot, DateNightPlan, ExperienceContext, Recommendation } from "@life/shared-types";
 
@@ -293,7 +293,7 @@ export async function fetchRecommendations(
       context: localContext,
       couple: couple || getCoupleProfile(),
       feedback: getFeedbackHistory(),
-      limit: 56,
+      limit: RECOMMENDATION_POOL_LIMIT,
     });
   } catch {
     return [];

@@ -147,7 +147,7 @@ export async function GET(request: Request) {
   const merged = mergePlaces([...snapshotRestaurants, ...localRestaurants], remoteResults, 24);
   const filtered = await enrichRecommendationImagesAsync(
     filterByNeighborhood(merged, neighborhood).map((item) => localizeRecommendation(item)),
-    { maxOgLookups: 16 }
+    { maxOgLookups: 20 }
   );
 
   if (filtered.length === 0) {
@@ -155,7 +155,7 @@ export async function GET(request: Request) {
       filterByNeighborhood([...snapshotRestaurants, ...localRestaurants], neighborhood).map((item) =>
         localizeRecommendation(item)
       ),
-      { maxOgLookups: 12 }
+      { maxOgLookups: 16 }
     );
     return jsonWithCache(fallback, { revalidate: 900, stale: 300 });
   }

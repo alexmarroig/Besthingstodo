@@ -71,7 +71,7 @@ export async function GET(request: Request) {
     const snapshotItems = await loadSnapshot();
     const merged = dedupeRecommendations([...snapshotHubItems, ...liveItems, ...snapshotItems]);
     const filtered = await enrichRecommendationImagesAsync(filterByTopic(merged, topic).slice(0, limit), {
-      maxOgLookups: 10,
+      maxOgLookups: 14,
     });
 
     if (filtered.length === 0) {

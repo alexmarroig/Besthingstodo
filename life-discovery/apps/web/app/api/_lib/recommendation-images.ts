@@ -1,51 +1,46 @@
 import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
+import { resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
 
-import { fetchGooglePlacePhotoForVenue } from "./google-places";
-import { resolveKnownVenueImage } from "./known-venue-images";
-import { fetchOgImageFromUrl, fetchWikipediaThumbnail } from "./og-image";
-import { fetchTmdbPosterByTitle } from "./tmdb-client";
+import {
+  type ImageCandidate,
+  type ImageResolveContext,
+  resolveRecommendationImageCore,
+} from "./image-resolver";
 import type { RecommendationPayload } from "./recommendation-mapper";
 
 export { normalizeRecommendationImageUrl, isGenericPlaceholderImage } from "@/shared/recommendation-images";
 
-type ImageCandidate = RecommendationPayload & {
-  latitude?: number | null;
-  longitude?: number | null;
-};
+function sortByImagePriority<T extends RecommendationPayload>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const scoreA = a.quality_score ?? 0;
+    const scoreB = b.quality_score ?? 0;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    const hasImageA = normalizeRecommendationImageUrl(a.image_url) ? 1 : 0;
+    const hasImageB = normalizeRecommendationImageUrl(b.image_url) ? 1 : 0;
+    return hasImageB - hasImageA;
+  });
+}
 
-export async function resolveRecommendationImageUrlAsync(item: ImageCandidate): Promise<string | null> {
-  const existing = normalizeRecommendationImageUrl(item.image_url);
-  if (existing) return existing;
+function applyKnownImages<T extends RecommendationPayload>(items: T[]): T[] {
+  return items.map((item) => {
+    if (normalizeRecommendationImageUrl(item.image_url)) return item;
+    const known = resolveKnownVenueImageForItem(item.id, item.title);
+    return known ? { ...item, image_url: known } : item;
+  });
+}
 
-  const knownImage = resolveKnownVenueImage(item.id);
-  if (knownImage) return knownImage;
+function needsRemoteLookup(item: RecommendationPayload): boolean {
+  if (normalizeRecommendationImageUrl(item.image_url)) return false;
+  if (resolveKnownVenueImageForItem(item.id, item.title)) return false;
+  return true;
+}
 
-  if (item.domain === "dining_out" || item.domain === "delivery") {
-    const googlePhoto = await fetchGooglePlacePhotoForVenue(item.title, {
-      neighborhood: item.neighborhood,
-      city: item.city || "São Paulo",
-    });
-    if (googlePhoto) return googlePhoto;
-  }
-
-  const pageTarget = item.booking_url || item.url;
-  if (pageTarget) {
-    const ogImage = await fetchOgImageFromUrl(pageTarget);
-    if (ogImage) return ogImage;
-  }
-
-  if (item.domain === "movies_series") {
-    const tmdbImage = await fetchTmdbPosterByTitle(item.title);
-    if (tmdbImage) return tmdbImage;
-  }
-
-  if (item.domain === "dining_out" || item.domain === "events_exhibitions" || item.domain === "delivery") {
-    const wikiQuery = [item.title, item.neighborhood, item.city || "São Paulo"].filter(Boolean).join(" ");
-    const wikiImage = await fetchWikipediaThumbnail(wikiQuery);
-    if (wikiImage) return wikiImage;
-  }
-
-  return null;
+export async function resolveRecommendationImageUrlAsync(
+  item: ImageCandidate,
+  ctx?: ImageResolveContext
+): Promise<string | null> {
+  const resolved = await resolveRecommendationImageCore(item, ctx);
+  return resolved.url;
 }
 
 export function resolveRecommendationImageUrl(item: ImageCandidate): string | null {
@@ -53,7 +48,7 @@ export function resolveRecommendationImageUrl(item: ImageCandidate): string | nu
 }
 
 export function enrichRecommendationImages<T extends RecommendationPayload>(items: T[]): T[] {
-  return items.map((item) => ({
+  return applyKnownImages(items).map((item) => ({
     ...item,
     image_url: resolveRecommendationImageUrl(item),
   }));
@@ -64,22 +59,44 @@ export async function enrichRecommendationImagesAsync<T extends RecommendationPa
   options?: { maxOgLookups?: number }
 ): Promise<T[]> {
   const batchSize = 4;
-  const enriched: T[] = [];
-  let lookupsRemaining = options?.maxOgLookups ?? items.length;
+  const withKnown = applyKnownImages(items);
+  const prioritized = sortByImagePriority(withKnown);
+  const enrichedById = new Map<string, T>();
+  const ctx: ImageResolveContext = {
+    usedUrls: new Map<string, number>(),
+    domainOgUrls: new Map<string, Set<string>>(),
+  };
 
-  for (let index = 0; index < items.length; index += batchSize) {
-    const batch = items.slice(index, index + batchSize);
+  let lookupsRemaining = options?.maxOgLookups ?? prioritized.filter(needsRemoteLookup).length;
+
+  for (let index = 0; index < prioritized.length; index += batchSize) {
+    const batch = prioritized.slice(index, index + batchSize);
     const resolved = await Promise.all(
       batch.map(async (item) => {
-        if (normalizeRecommendationImageUrl(item.image_url)) return item;
+        if (normalizeRecommendationImageUrl(item.image_url)) {
+          const url = item.image_url!;
+          const used = ctx.usedUrls?.get(url) ?? 0;
+          ctx.usedUrls?.set(url, used + 1);
+          return item;
+        }
+
+        if (!needsRemoteLookup(item)) {
+          const known = resolveKnownVenueImageForItem(item.id, item.title);
+          return known ? { ...item, image_url: known } : item;
+        }
+
         if (lookupsRemaining <= 0) return item;
         lookupsRemaining -= 1;
-        const image_url = await resolveRecommendationImageUrlAsync(item);
-        return { ...item, image_url };
+
+        const image_url = await resolveRecommendationImageUrlAsync(item, ctx);
+        return image_url ? { ...item, image_url } : item;
       })
     );
-    enriched.push(...resolved);
+
+    for (const item of resolved) {
+      enrichedById.set(item.id, item);
+    }
   }
 
-  return enriched;
+  return withKnown.map((item) => enrichedById.get(item.id) || item);
 }

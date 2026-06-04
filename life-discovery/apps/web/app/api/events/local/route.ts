@@ -37,7 +37,8 @@ export async function GET(request: Request) {
     }
 
     const enriched = await enrichRecommendationImagesAsync(
-      merged.map((item) => localizeRecommendation(item))
+      merged.map((item) => localizeRecommendation(item)),
+      { maxOgLookups: 14 }
     );
 
     return jsonWithCache(enriched, { revalidate: 1800, stale: 600 });

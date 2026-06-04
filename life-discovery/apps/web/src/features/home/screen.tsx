@@ -11,6 +11,7 @@ import MediaRail from "@/components/discovery/media-rail";
 import QuickActions from "@/components/discovery/quick-actions";
 import { buildDayBrief, buildFallbackContext, buildHomeRails, curateRecommendations } from "@/features/catalog/curation";
 import { fetchCoupleMe, fetchRecommendationSources, fetchUserContext } from "@/shared/api/client";
+import { RECOMMENDATION_POOL_LIMIT } from "@/shared/api/config";
 import { getProfileCompleteness } from "@/shared/profile-completeness";
 import { getFeedbackHistory, getUserId } from "@/shared/storage";
 import Link from "next/link";
@@ -55,7 +56,7 @@ export default function HomeScreen() {
       context: context || buildFallbackContext(city),
       couple: couple || undefined,
       feedback: getFeedbackHistory(),
-      limit: 56,
+      limit: RECOMMENDATION_POOL_LIMIT,
     });
   }, [sources, context, couple, city]);
 
