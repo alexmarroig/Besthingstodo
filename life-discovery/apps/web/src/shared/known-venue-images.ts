@@ -66,6 +66,30 @@ export const KNOWN_VENUE_IMAGES: Record<string, string> = {
     "https://image.tmdb.org/t/p/w780/kSApMl9ASFTruvYOgmuwfbmAqJx.jpg",
   "watch-julie-julia":
     "https://image.tmdb.org/t/p/w780/2E3VAp23qW9m3wdiu7v7QZ5xvGv.jpg",
+
+  // Snapshot local sp-restaurants.json
+  "sp-lellis":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Spaghetti_all%27arrabbiata.jpg/960px-Spaghetti_all%27arrabbiata.jpg",
+  "sp-libertango":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Asado_argentino.jpg/960px-Asado_argentino.jpg",
+  "sp-issho":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sushi_platter.jpg/960px-Sushi_platter.jpg",
+  "sp-pizza-mooca":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Pizza_Margherita_stu_spivack.jpg/960px-Pizza_Margherita_stu_spivack.jpg",
+  "sp-mani":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Pasta_with_pesto.jpg/960px-Pasta_with_pesto.jpg",
+  "sp-evvai":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Japanese_kaiseki_cuisine.jpg/960px-Japanese_kaiseki_cuisine.jpg",
+  "sp-braz":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Margherita_115465.jpg/960px-Margherita_115465.jpg",
+  "sp-zdeli":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Sandwich_%283%29.jpg/960px-Sandwich_%283%29.jpg",
+  "sp-octavio":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/A_small_cup_of_coffee.JPG/960px-A_small_cup_of_coffee.JPG",
+  "sp-travessa":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Livraria_da_Travessa%2C_Rio_de_Janeiro.jpg/960px-Livraria_da_Travessa%2C_Rio_de_Janeiro.jpg",
+  "sp-patties":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Burger_%282%29.jpg/960px-Burger_%282%29.jpg",
 };
 
 const KNOWN_VENUE_IMAGES_BY_TITLE: Record<string, string> = {
@@ -95,6 +119,15 @@ const KNOWN_VENUE_IMAGES_BY_TITLE: Record<string, string> = {
   "past lives": KNOWN_VENUE_IMAGES["watch-past-lives"],
   "anatomy of a fall": KNOWN_VENUE_IMAGES["watch-anatomy-of-a-fall"],
   "julie & julia": KNOWN_VENUE_IMAGES["watch-julie-julia"],
+  "libertango parrilla": KNOWN_VENUE_IMAGES["profile-anchor-libertango"],
+  mani: KNOWN_VENUE_IMAGES["sp-mani"],
+  evvai: KNOWN_VENUE_IMAGES["sp-evvai"],
+  "a casa do porco": KNOWN_VENUE_IMAGES["sp-casa-porco"],
+  "braz elettrica": KNOWN_VENUE_IMAGES["sp-braz"],
+  "z deli sanduiches": KNOWN_VENUE_IMAGES["sp-zdeli"],
+  "cafe octavio": KNOWN_VENUE_IMAGES["sp-octavio"],
+  "livraria da travessa — cafe": KNOWN_VENUE_IMAGES["sp-travessa"],
+  "patties burger": KNOWN_VENUE_IMAGES["sp-patties"],
 };
 
 function normalizeVenueKey(value: string) {

@@ -1,8 +1,12 @@
 import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
-
-import { fetchGooglePlacePhotoForVenue } from "./google-places";
 import { resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
-import { fetchOgImageFromUrl, fetchWikipediaThumbnail } from "./og-image";
+
+import {
+  fetchVenueWebsiteImages,
+  fetchWikipediaVenueImage,
+  isGooglePlacesEnabled,
+} from "./dining-image-fallback";
+import { fetchGooglePlacePhotoForVenue } from "./google-places";
 import type { RecommendationPayload } from "./recommendation-mapper";
 import { buildTmdbPosterUrl, cleanTitleForTmdbSearch, fetchTmdbPosterByTitle } from "./tmdb-client";
 
@@ -12,9 +16,7 @@ export type ImageCandidate = RecommendationPayload & {
 };
 
 export type ImageResolveContext = {
-  /** Contagem de uso por URL — rejeita duplicatas visuais (>= 2 repetições). */
   usedUrls?: Map<string, number>;
-  /** OG por hostname — rejeita mesma capa genérica do portal. */
   domainOgUrls?: Map<string, Set<string>>;
 };
 
@@ -55,6 +57,20 @@ function rejectDomainOgDuplicate(imageUrl: string, pageTarget: string, ctx?: Ima
   return false;
 }
 
+async function tryWebsiteOgImages(item: ImageCandidate, ctx?: ImageResolveContext): Promise<ResolvedImage | null> {
+  const pageTarget = item.booking_url || item.url;
+  if (!pageTarget) return null;
+
+  const images = await fetchVenueWebsiteImages(item);
+  for (const ogImage of images) {
+    if (rejectDomainOgDuplicate(ogImage, pageTarget, ctx)) continue;
+    const accepted = acceptResolvedUrl(ogImage, ctx);
+    if (accepted) return { url: accepted, source: "og" };
+  }
+
+  return null;
+}
+
 export async function resolveRecommendationImageCore(
   item: ImageCandidate,
   ctx?: ImageResolveContext
@@ -71,7 +87,10 @@ export async function resolveRecommendationImageCore(
     if (accepted) return { url: accepted, source: "curated" };
   }
 
-  if (item.domain === "dining_out" || item.domain === "delivery") {
+  const ogResult = await tryWebsiteOgImages(item, ctx);
+  if (ogResult) return ogResult;
+
+  if (isGooglePlacesEnabled() && (item.domain === "dining_out" || item.domain === "delivery")) {
     const googlePhoto = await fetchGooglePlacePhotoForVenue(item.title, {
       neighborhood: item.neighborhood,
       city: item.city || "São Paulo",
@@ -81,15 +100,6 @@ export async function resolveRecommendationImageCore(
     if (googlePhoto) {
       const accepted = acceptResolvedUrl(googlePhoto, ctx);
       if (accepted) return { url: accepted, source: "google_places" };
-    }
-  }
-
-  const pageTarget = item.booking_url || item.url;
-  if (pageTarget) {
-    const ogImage = await fetchOgImageFromUrl(pageTarget);
-    if (ogImage && !rejectDomainOgDuplicate(ogImage, pageTarget, ctx)) {
-      const accepted = acceptResolvedUrl(ogImage, ctx);
-      if (accepted) return { url: accepted, source: "og" };
     }
   }
 
@@ -103,10 +113,7 @@ export async function resolveRecommendationImageCore(
   }
 
   if (item.domain === "dining_out" || item.domain === "events_exhibitions" || item.domain === "delivery") {
-    const wikiImage = await fetchWikipediaThumbnail(item.title, {
-      validateAgainst: item.title,
-      city: item.city || "São Paulo",
-    });
+    const wikiImage = await fetchWikipediaVenueImage(item);
     if (wikiImage) {
       const accepted = acceptResolvedUrl(wikiImage, ctx);
       if (accepted) return { url: accepted, source: "wikipedia" };

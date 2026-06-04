@@ -26,6 +26,7 @@ function mapGeoapifyDelivery(feature: any) {
     tags: ["delivery", ...(p.categories || []).map((c: string) => c.split(".").pop()).filter(Boolean)].slice(0, 5),
     source: "Geoapify",
     url: p.website || null,
+    booking_url: p.website || null,
     availability_kind: "delivery",
     quality_score: 75,
     score: 7.5,
@@ -45,14 +46,18 @@ export async function GET(request: Request) {
     );
 
     let remoteResults: any[] = [];
-    const googleResults = await searchGooglePlaces({
-      textQuery: "restaurante delivery sao paulo",
-      maxResultCount: limit,
-      includedType: "restaurant",
-      servesDelivery: true,
-    });
-    if (googleResults.length > 0) {
-      remoteResults = filterValidPlaces(googleResults);
+    const googleKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (googleKey) {
+      const googleResults = await searchGooglePlaces({
+        textQuery: "restaurante delivery sao paulo",
+        maxResultCount: limit,
+        includedType: "restaurant",
+        servesDelivery: true,
+      });
+      if (googleResults.length > 0) {
+        remoteResults = filterValidPlaces(googleResults);
+      }
     }
 
     const apiKey = process.env.GEOAPIFY_API_KEY;

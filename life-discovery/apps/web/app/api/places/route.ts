@@ -45,6 +45,7 @@ function mapPlace(feature: any): RecommendationPayload | null {
       .slice(0, 4),
     source: "Geoapify",
     url: p.website || null,
+    booking_url: p.website || null,
     score: null,
     price: null,
     latitude: feature.geometry?.coordinates?.[1] ?? null,
@@ -147,7 +148,7 @@ export async function GET(request: Request) {
   const merged = mergePlaces([...snapshotRestaurants, ...localRestaurants], remoteResults, 24);
   const filtered = await enrichRecommendationImagesAsync(
     filterByNeighborhood(merged, neighborhood).map((item) => localizeRecommendation(item)),
-    { maxOgLookups: 20 }
+    { maxOgLookups: 24 }
   );
 
   if (filtered.length === 0) {
