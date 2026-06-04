@@ -2,37 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-import { BRAND } from "@/shared/brand";
+import type { LucideIcon } from "lucide-react";
+import { Bookmark, Clapperboard, Heart, Home, LayoutList, Map, UtensilsCrossed } from "lucide-react";
 
 import BrandMark from "../branding/brand-mark";
+import { BRAND } from "@/shared/brand";
 
-function Icon({ path, active }: { path: string; active: boolean }) {
+function NavIcon({ icon: Icon, active }: { icon: LucideIcon; active: boolean }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={`h-[18px] w-[18px] transition duration-300 ${active ? "text-white" : "text-white/50"}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d={path} />
-    </svg>
+    <Icon
+      aria-hidden
+      strokeWidth={active ? 2.25 : 2}
+      className={`h-[18px] w-[18px] transition duration-300 ${active ? "text-white" : "text-white/48"}`}
+    />
   );
 }
 
-const tabs = [
-  { href: "/home", label: "Hoje", icon: "M3 12L12 4l9 8M5 10v10h14V10" },
-  { href: "/watch", label: "Assistir", icon: "M4 7h16v10H4zM8 7l1-3h6l1 3" },
-  { href: "/food", label: "Comida", icon: "M3 3v18M7 3v8a4 4 0 0 0 8 0V3M21 3v7c0 2-2 4-4 4h-1v7" },
-  { href: "/map", label: "Mapa", icon: "M9 18l-5 2V6l5-2 6 2 5-2v14l-5 2-6-2zM9 4v14M15 6v14" },
-  { href: "/saved", label: "Salvos", icon: "M6 4h12v16l-6-4-6 4z" },
-  { href: "/date-night", label: "Date", icon: "M12 20s-7-4.35-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.65-7 10-7 10z" },
-  { href: "/concierge", label: "Listas", icon: "M4 6h16M4 12h16M4 18h10" },
-] as const;
+const tabs: Array<{ href: string; label: string; icon: LucideIcon }> = [
+  { href: "/home", label: "Hoje", icon: Home },
+  { href: "/watch", label: "Assistir", icon: Clapperboard },
+  { href: "/food", label: "Comida", icon: UtensilsCrossed },
+  { href: "/map", label: "Mapa", icon: Map },
+  { href: "/saved", label: "Salvos", icon: Bookmark },
+  { href: "/date-night", label: "Date", icon: Heart },
+  { href: "/concierge", label: "Listas", icon: LayoutList },
+];
 
 export function Navbar() {
   const pathname = usePathname();
@@ -65,7 +59,7 @@ export function Navbar() {
                     : "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm text-white/55 transition hover:bg-white/[0.06] hover:text-white/90"
                 }
               >
-                <Icon path={tab.icon} active={active} />
+                <NavIcon icon={tab.icon} active={active} />
                 <span>{tab.label}</span>
               </Link>
             );
@@ -99,7 +93,7 @@ export function BottomNav() {
                   : "text-white/45 active:scale-95"
               }`}
             >
-              <Icon path={tab.icon} active={active} />
+              <NavIcon icon={tab.icon} active={active} />
               <span className="truncate">{tab.label}</span>
             </Link>
           );

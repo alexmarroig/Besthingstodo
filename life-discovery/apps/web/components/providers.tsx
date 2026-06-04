@@ -4,17 +4,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import SplashScreen from "./branding/splash-screen";
+import { fetchCoupleMe, fetchRecommendationSources, fetchUserContext } from "@/shared/api/client";
+import { BOOT_SLIDES } from "@/shared/boot-content";
+import { getUserId } from "@/shared/storage";
 
-const MIN_SPLASH_MS = 1100;
+const MIN_SPLASH_MS = 2200;
+const MAX_BOOT_MS = 9000;
 const EXIT_MS = 350;
 
-const BOOT_MESSAGES = [
-  "Preparando suas recomendações...",
-  "Carregando clima e restaurantes...",
-  "Montando a curadoria do casal...",
-] as const;
-
 type BootPhase = "loading" | "exiting" | "ready";
+
+function progressForStep(step: number, total: number) {
+  return Math.min(96, Math.round(12 + (step / total) * 84));
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
@@ -27,7 +29,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   );
 
   const [phase, setPhase] = useState<BootPhase>("loading");
-  const [messageIndex, setMessageIndex] = useState(0);
+  const [slideIndex, setSlideIndex] = useState(0);
   const [progress, setProgress] = useState(8);
 
   useEffect(() => {
@@ -36,49 +38,73 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     async function bootstrap() {
       const startedAt = Date.now();
+      const slideTotal = BOOT_SLIDES.length;
 
-      setMessageIndex(0);
-      setProgress(12);
+      const finishBoot = () => {
+        const elapsed = Date.now() - startedAt;
+        const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
 
-      timers.push(
-        window.setTimeout(() => {
-          if (!mounted) return;
-          setMessageIndex(1);
-          setProgress(48);
-        }, 320)
-      );
+        timers.push(
+          window.setTimeout(() => {
+            if (!mounted) return;
+            setProgress(100);
+            setPhase("exiting");
+          }, remaining)
+        );
+
+        timers.push(
+          window.setTimeout(() => {
+            if (!mounted) return;
+            setPhase("ready");
+          }, remaining + EXIT_MS)
+        );
+      };
+
+      const bootWork = async () => {
+        setSlideIndex(0);
+        setProgress(progressForStep(0, slideTotal));
+
+        const couple = await client.fetchQuery({
+          queryKey: ["couple-me"],
+          queryFn: fetchCoupleMe,
+        });
+
+        const city = couple?.city || "Sao Paulo";
+        const neighborhood = couple?.neighborhood || "";
+        const userId = getUserId();
+
+        setSlideIndex(1);
+        setProgress(progressForStep(1, slideTotal));
+
+        await client.prefetchQuery({
+          queryKey: ["context", city, neighborhood],
+          queryFn: () => fetchUserContext(couple || undefined),
+        });
+
+        setSlideIndex(2);
+        setProgress(progressForStep(2, slideTotal));
+
+        await client.prefetchQuery({
+          queryKey: ["recommendation-sources", userId, city],
+          queryFn: () => fetchRecommendationSources(city),
+        });
+
+        setSlideIndex(slideTotal - 1);
+        setProgress(progressForStep(slideTotal - 1, slideTotal));
+      };
 
       try {
-        await fetch("/api/weather?city=Sao%20Paulo").catch(() => {});
+        await Promise.race([
+          bootWork(),
+          new Promise<void>((resolve) => {
+            timers.push(window.setTimeout(resolve, MAX_BOOT_MS));
+          }),
+        ]);
       } catch {
-        // Boot continues even if pre-fetch fails
+        // Boot continues even if prefetch fails
+      } finally {
+        if (mounted) finishBoot();
       }
-
-      timers.push(
-        window.setTimeout(() => {
-          if (!mounted) return;
-          setMessageIndex(2);
-          setProgress(78);
-        }, 680)
-      );
-
-      const elapsed = Date.now() - startedAt;
-      const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
-
-      timers.push(
-        window.setTimeout(() => {
-          if (!mounted) return;
-          setProgress(100);
-          setPhase("exiting");
-        }, remaining)
-      );
-
-      timers.push(
-        window.setTimeout(() => {
-          if (!mounted) return;
-          setPhase("ready");
-        }, remaining + EXIT_MS)
-      );
     }
 
     bootstrap();
@@ -94,11 +120,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       {phase === "ready" ? (
         children
       ) : (
-        <SplashScreen
-          message={BOOT_MESSAGES[messageIndex]}
-          progress={progress}
-          exiting={phase === "exiting"}
-        />
+        <SplashScreen slide={BOOT_SLIDES[slideIndex] || BOOT_SLIDES[0]} progress={progress} exiting={phase === "exiting"} />
       )}
     </QueryClientProvider>
   );
