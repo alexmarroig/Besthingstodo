@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { BRAND } from "@/shared/brand";
 
+import BrandMark from "../branding/brand-mark";
+
 function Icon({ path, active }: { path: string; active: boolean }) {
   return (
     <svg
@@ -39,12 +41,14 @@ export function Navbar() {
     <header className="sticky top-0 z-40 glass-nav">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4">
         <Link href="/home" className="group flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff7a59]/30 to-[#f4d06f]/10 text-sm font-bold tracking-wider text-[#fff2cf] ring-1 ring-white/10 transition group-hover:ring-[#ff7a59]/30">
-            R2
-          </div>
+          <BrandMark size="sm" />
           <div className="min-w-0">
-            <p className="truncate text-[10px] font-medium uppercase tracking-[0.28em] text-[#f4d06f]/90">{BRAND.eyebrow}</p>
-            <h1 className="truncate font-display text-lg font-semibold text-white md:text-xl">{BRAND.name}</h1>
+            <p className="truncate text-[11px] font-medium uppercase tracking-[0.24em] text-[#f4d06f]/90">
+              {BRAND.eyebrow}
+            </p>
+            <h1 className="truncate font-display text-lg font-semibold tracking-tight text-white md:text-xl">
+              {BRAND.name}
+            </h1>
           </div>
         </Link>
 
@@ -89,7 +93,7 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-1 py-2 text-[10px] font-medium transition ${
+              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-1 py-2 text-[11px] font-medium transition ${
                 active
                   ? "bg-gradient-to-b from-[#ff7a59]/25 to-[#ff7a59]/10 text-white"
                   : "text-white/45 active:scale-95"

@@ -13,8 +13,8 @@ const config: Config = {
         gold: "#f4d06f",
       },
       fontFamily: {
-        sans: ["Inter", "Segoe UI", "Helvetica Neue", "sans-serif"],
-        display: ['"Playfair Display"', "Georgia", "serif"],
+        sans: ["var(--font-poppins)", "system-ui", "sans-serif"],
+        display: ["var(--font-poppins)", "system-ui", "sans-serif"],
       },
       boxShadow: {
         glow: "0 0 48px rgba(255, 122, 89, 0.18)",
