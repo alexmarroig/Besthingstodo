@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "packageManager": "pnpm@9.15.9",
   "engines": {
-    "node": "20.x"
+    "node": "26.x"
   },
   "scripts": {
     "catalog:seed": "python scripts/seed_couple_profile.py",
