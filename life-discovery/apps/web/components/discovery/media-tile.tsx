@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Heart } from "lucide-react";
+import { ArrowUpRight, Bookmark, Heart, UtensilsCrossed } from "lucide-react";
 
 import ExperienceImage from "./experience-image";
 import { MediaTileVariant } from "./media-tile-skeleton";
@@ -33,6 +33,7 @@ export default function MediaTile({
   variant?: MediaTileVariant;
 }) {
   const isPoster = variant === "poster";
+  const isFood = variant === "food";
   const sourceMeta = getRecommendationSourceMeta(item);
   const match = matchLabel(item);
   const location = item.neighborhood || item.location;
@@ -71,25 +72,28 @@ export default function MediaTile({
       tabIndex={0}
       onClick={() => onOpen(item)}
       onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onOpen(item);
         }
       }}
       className={`group shrink-0 cursor-pointer snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a59]/50 ${
-        isPoster ? "w-[134px] sm:w-[148px]" : "w-[210px] sm:w-[236px]"
+        isPoster ? "w-[134px] sm:w-[148px]" : isFood ? "w-[260px] sm:w-[300px]" : "w-[210px] sm:w-[236px]"
       }`}
     >
       <div className={`experience-card relative overflow-hidden ${isPoster ? "aspect-[2/3]" : "aspect-[4/3]"}`}>
         <ExperienceImage item={item} mode="tile" className="absolute inset-0 h-full w-full" />
 
         {/* Quick 1-Tap ML Feedback Overlay */}
-        <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 opacity-90 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+        <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <button
             type="button"
-            title="Curtir e treinar IA"
+            title="Curtir"
+            aria-label={`Curtir ${item.title}`}
+            aria-pressed={liked}
             onClick={(e) => handleQuickFeedback(e, "like")}
-            className={`flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-md transition ${
+            className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f4d06f] ${
               liked
                 ? "bg-[#ff7a59] text-white shadow-md"
                 : "bg-black/60 text-white/80 hover:bg-[#ff7a59]/80 hover:text-white"
@@ -100,8 +104,10 @@ export default function MediaTile({
           <button
             type="button"
             title="Salvar na coleção"
+            aria-label={`Salvar ${item.title}`}
+            aria-pressed={saved}
             onClick={(e) => handleQuickFeedback(e, "save")}
-            className={`flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-md transition ${
+            className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f4d06f] ${
               saved
                 ? "bg-[#f4d06f] text-black shadow-md"
                 : "bg-black/60 text-white/80 hover:bg-[#f4d06f]/85 hover:text-black"
@@ -139,6 +145,9 @@ export default function MediaTile({
           ) : null}
         </div>
       </div>
+      {isFood ? <div className="mt-3 flex min-h-11 items-center justify-between rounded-xl border border-[#ff7a59]/25 bg-[#ff7a59]/10 px-3.5 text-xs font-semibold text-[#ffb89a] transition group-hover:bg-[#ff7a59]/20">
+        <span className="flex items-center gap-2"><UtensilsCrossed className="h-4 w-4" />Ver detalhes</span><ArrowUpRight className="h-4 w-4" />
+      </div> : null}
     </div>
   );
 }

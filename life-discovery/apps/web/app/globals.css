@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .food-filter {
+    @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-xs font-medium text-white/70 transition;
+  }
+  .food-filter:hover { @apply border-white/25 bg-white/[0.07] text-white; }
+  .food-filter-active { @apply border-[#ff7a59]/60 bg-[#ff7a59]/15 text-[#ffb89a]; }
+  .food-filter-active:hover { @apply border-[#ff7a59]/70 bg-[#ff7a59]/20 text-[#ffb89a]; }
+  .food-action {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-semibold transition;
+  }
+  .food-action:hover { @apply border-white/25 bg-white/10; }
+  .food-action-primary { @apply border-[#ff7a59] bg-[#ff7a59] text-[#190b06]; }
+  .food-action-primary:hover { @apply border-[#ff9479] bg-[#ff9479]; }
+  .food-filter:focus-visible, .food-action:focus-visible { @apply outline-none ring-2 ring-[#f4d06f] ring-offset-2 ring-offset-[#060d16]; }
+}
+
 :root {
   color-scheme: dark;
   --bg: #060d16;

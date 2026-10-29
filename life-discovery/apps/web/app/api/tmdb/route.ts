@@ -233,13 +233,15 @@ function mapTmdbItem(item: any, mediaType: string) {
   const knownLocal = resolveKnownVenueImageForItem(id, title, "");
   return {
     id,
+    release_year: Number((item.release_date || item.first_air_date || "").slice(0, 4)) || null,
+    original_title: item.original_title || item.original_name || null,
     title,
     description: item.overview || "",
     category: isMovie ? "movie" : "series",
     domain: "movies_series",
     city: "São Paulo",
     location: isMovie ? "Cinema & Streaming" : "Streaming",
-    image_url: knownLocal || (item.poster_path ? `${IMG_BASE}${item.poster_path}` : "/images/venues/movie-interstellar.svg"),
+    image_url: item.poster_path ? `${IMG_BASE}${item.poster_path}` : knownLocal || "/images/venues/movie-interstellar.svg",
     tags: (item.genre_ids || []).map((gid: number) => GENRE_MAP[gid] || "cinema"),
     source: "TMDB",
     url: `https://www.themoviedb.org/${isMovie ? "movie" : "tv"}/${item.id}`,

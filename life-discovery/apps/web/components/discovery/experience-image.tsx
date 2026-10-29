@@ -41,6 +41,8 @@ export default function ExperienceImage({
   );
 
   const directImage = useMemo(() => {
+    const photo = normalizeRecommendationImageUrl(item.image_url || getCachedImageUrl(item.id));
+    if (photo && !isLocalVenueImage(photo)) return photo;
     const known = resolveKnownVenueImageForItem(item.id, item.title, item.location);
     if (known) return known;
     const explicit = normalizeRecommendationImageUrl(item.image_url || getCachedImageUrl(item.id));
@@ -61,7 +63,7 @@ export default function ExperienceImage({
     const hasExplicitRemote = Boolean(item.image_url && !isLocalVenueImage(item.image_url));
     const target = item.booking_url || item.url;
 
-    if (hasDedicatedKnown || hasExplicitRemote || !target || mode === "tile") {
+    if (hasExplicitRemote || !target || mode === "tile" || (hasDedicatedKnown && item.domain !== "dining_out")) {
       return;
     }
 
@@ -149,12 +151,13 @@ export default function ExperienceImage({
         <div
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${
             isCompact
-              ? "from-black/80 via-black/15 to-transparent"
+              ? "from-black/40 via-transparent to-black/5"
               : isHero
                 ? "from-black/30 via-transparent to-transparent"
                 : "from-[#04101d]/90 via-black/25 to-black/10"
           }`}
         />
+        {(item.domain === "dining_out" || item.domain === "delivery") && isLocalVenueImage(resolvedImage) ? <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-black/55 px-2 py-1 text-[9px] text-white/70">Imagem ilustrativa</span> : null}
         {isHero ? null : !isCompact ? (
           <>
             <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-4 py-4 text-xs text-white/84">

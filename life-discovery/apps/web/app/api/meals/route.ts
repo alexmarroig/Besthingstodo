@@ -1,118 +1,10 @@
 import { NextResponse } from "next/server";
+import recipeFallbacks from "../_lib/recipe-fallbacks.json";
 import { fetchExternalJson, jsonWithCache } from "../_lib/external-api";
 
 const BASE = "https://www.themealdb.com/api/json/v1/1";
 
-const FALLBACK_MEALS = [
-  {
-    id: "meal-it-risotto",
-    title: "Risoto de Funghi Secchi com Parmesão Curado",
-    description:
-      "Hidrate o funghi em caldo quente, refogue echalotes na manteiga, adicione arroz Carnaroli, deglaçe com vinho branco seco e finalize com manteiga gelada e Grana Padano.",
-    category: "recipe",
-    domain: "delivery",
-    city: "São Paulo",
-    location: "Italian",
-    image_url: "/images/venues/lellis-trattoria.jpg",
-    tags: ["Italian", "Risotto", "Romântico", "Jantar em Casa"],
-    source: "Receita do Chef",
-    url: "https://www.themealdb.com",
-    youtube_url: null,
-    score: 9.4,
-    quality_score: 94,
-    price: null,
-    ingredients: [
-      "300g de arroz Carnaroli ou Arbório",
-      "40g de funghi secchi hidratado",
-      "1L de caldo de legumes artesanal",
-      "80g de queijo parmesão ralado na hora",
-      "2 colheres de manteiga sem sal gelada",
-    ],
-    instructions:
-      "Hidrate o funghi por 20 minutos, coe reservando o líquido e incorpore aos poucos ao arroz até atingir textura cremosa al dente.",
-  },
-  {
-    id: "meal-jp-ramen",
-    title: "Shoyu Ramen Artesanal com Ovo Ajitsuke",
-    description:
-      "Caldo aromático de gengibre, dashi e shoyu especial, servido com macarrão alcalino fresco, cogumelos shiitake grelhados e ovo marinado de gema cremosa.",
-    category: "recipe",
-    domain: "delivery",
-    city: "São Paulo",
-    location: "Japanese",
-    image_url: "/images/venues/issho.jpg",
-    tags: ["Japanese", "Ramen", "Conforto", "Noite Fria"],
-    source: "Receita do Chef",
-    url: "https://www.themealdb.com",
-    youtube_url: null,
-    score: 9.2,
-    quality_score: 92,
-    price: null,
-    ingredients: [
-      "2 porções de lámen fresco",
-      "800ml de caldo dashi + legumes",
-      "60ml de tare de shoyu e mirin",
-      "2 ovos cozidos por exatos 6m30s",
-      "150g de cogumelos shiitake fatiados",
-    ],
-    instructions:
-      "Prepare o caldo aromático, salteie os cogumelos no óleo de gergelim, cozinhe a massa por 2 minutos e monte as tigelas bem quentes.",
-  },
-  {
-    id: "meal-it-ravioli",
-    title: "Ravioloni de Queijo na Manteiga de Sálvia",
-    description:
-      "Massa fresca recheada com ricota cremosa e pecorino, envolvida em emulsão dourada de manteiga noisette e folhas crocantes de sálvia fresca.",
-    category: "recipe",
-    domain: "delivery",
-    city: "São Paulo",
-    location: "Italian",
-    image_url: "/images/venues/nino-cucina.jpg",
-    tags: ["Italian", "Massa", "Clássico", "Rápido"],
-    source: "Receita do Chef",
-    url: "https://www.themealdb.com",
-    youtube_url: null,
-    score: 9.5,
-    quality_score: 95,
-    price: null,
-    ingredients: [
-      "400g de ravioloni fresco de queijo",
-      "60g de manteiga de qualidade",
-      "12 folhas de sálvia fresca",
-      "Queijo pecorino ou parmesão a gosto",
-      "Pimenta-do-reino moída na hora",
-    ],
-    instructions:
-      "Cozinhe a massa em água salgada por 3 minutos, transfira direto para a frigideira com a manteiga dourada e sálvia e emulsione com um pouco da água do cozimento.",
-  },
-  {
-    id: "meal-fr-steak",
-    title: "Steak au Poivre com Batatas Rústicas ao Alecrim",
-    description:
-      "Filé alto selado na crosta de pimentas, finalizado com molho aveludado de redução e batatas douradas crocantes por fora e macias por dentro.",
-    category: "recipe",
-    domain: "delivery",
-    city: "São Paulo",
-    location: "French",
-    image_url: "/images/venues/libertango.jpg",
-    tags: ["French", "Carne", "Bistrô", "Encontro"],
-    source: "Receita do Chef",
-    url: "https://www.themealdb.com",
-    youtube_url: null,
-    score: 9.3,
-    quality_score: 93,
-    price: null,
-    ingredients: [
-      "2 medalhões altos (200g cada)",
-      "1 colher de sopa de pimenta-do-reino em grãos quebrados",
-      "150ml de creme de leite fresco",
-      "300g de batatas bolinha com alecrim",
-      "Manteiga e azeite extravirgem",
-    ],
-    instructions:
-      "Sele os medalhões em frigideira bem quente por 3 minutos de cada lado, reserve aquecido e reduza o creme de leite no fundo da frigideira.",
-  },
-];
+const FALLBACK_MEALS = recipeFallbacks.map(mapMeal);
 
 function mapMeal(meal: any) {
   const ingredients: string[] = [];
@@ -132,7 +24,7 @@ function mapMeal(meal: any) {
     domain: "delivery",
     city: "São Paulo",
     location: meal.strArea || "Internacional",
-    image_url: meal.strMealThumb || "/images/venues/mani.jpg",
+    image_url: meal.strMealThumb || null,
     tags: [
       meal.strCategory,
       meal.strArea,
@@ -164,7 +56,7 @@ function mapMealThumb(meal: any, areaLabel = "") {
     domain: "delivery",
     city: "São Paulo",
     location: areaLabel || "Culinária Autoral",
-    image_url: meal.strMealThumb || "/images/venues/mani.jpg",
+    image_url: meal.strMealThumb || null,
     tags: [areaLabel, "receita", "em casa"].filter(Boolean),
     source: "TheMealDB",
     url: `https://www.themealdb.com/meal/${meal.idMeal}`,

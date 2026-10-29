@@ -26,6 +26,8 @@ export type Experience = {
   availability_kind?: AvailabilityKind;
   editorial_source?: string | null;
   booking_url?: string | null;
+  release_year?: number | null;
+  original_title?: string | null;
   price_band?: string | null;
   start_time?: string | null;
   price?: number | null;

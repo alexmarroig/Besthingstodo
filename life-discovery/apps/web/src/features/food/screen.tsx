@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Bookmark, Sparkles, UtensilsCrossed } from "lucide-react";
+import { ArrowUpRight, Bike, BookOpen, Bookmark, ChefHat, ChevronDown, Coffee, Flame, Fish, LayoutGrid, Newspaper, Pizza, Play, Soup, Sparkles, UtensilsCrossed, Wine } from "lucide-react";
 
 import MediaDetailModal from "@/components/discovery/media-detail-modal";
 import MediaRail from "@/components/discovery/media-rail";
@@ -23,14 +23,14 @@ import { attachRecommendationImages } from "@/shared/recommendation-images";
 import { getUserId, isItemSaved, upsertSavedItem } from "@/shared/storage";
 
 const CUISINES = [
-  { key: "Italian", label: "🍝 Italiana", intent: "italian" },
-  { key: "Japanese", label: "🍣 Japonesa", intent: "japanese" },
-  { key: "French", label: "🥐 Francesa & Bistrô", intent: "french" },
-  { key: "Brazilian", label: "🇧🇷 Brasileira & Autoral", intent: "brazilian" },
-  { key: "Mexican", label: "🌮 Mexicana", intent: "mexican" },
-  { key: "Indian", label: "🍛 Indiana", intent: "indian" },
-  { key: "Thai", label: "🍜 Tailandesa", intent: "thai" },
-  { key: "Chinese", label: "🥟 Asiática / Chinesa", intent: "chinese" },
+  { key: "Italian", label: "Italiana", intent: "italian", icon: Pizza },
+  { key: "Japanese", label: "Japonesa", intent: "japanese", icon: Fish },
+  { key: "French", label: "Francesa & Bistrô", intent: "french", icon: Wine },
+  { key: "Brazilian", label: "Brasileira & Autoral", intent: "brazilian", icon: ChefHat },
+  { key: "Mexican", label: "Mexicana", intent: "mexican", icon: Flame },
+  { key: "Indian", label: "Indiana", intent: "indian", icon: Soup },
+  { key: "Thai", label: "Tailandesa", intent: "thai", icon: Soup },
+  { key: "Chinese", label: "Asiática / Chinesa", intent: "chinese", icon: UtensilsCrossed },
 ];
 
 const CUISINE_TAG_KEYWORDS: Record<string, string[]> = {
@@ -45,10 +45,10 @@ const CUISINE_TAG_KEYWORDS: Record<string, string[]> = {
 };
 
 const TABS = [
-  { key: "all", label: "✨ Visão Completa" },
-  { key: "restaurants", label: "🍷 Restaurantes & Cafés" },
-  { key: "editorial", label: "📰 Radar & Crítica" },
-  { key: "delivery", label: "🛵 Delivery & Em Casa" },
+  { key: "all", label: "Tudo para hoje", icon: LayoutGrid },
+  { key: "restaurants", label: "Restaurantes & Cafés", icon: Coffee },
+  { key: "editorial", label: "Radar & Crítica", icon: Newspaper },
+  { key: "delivery", label: "Delivery & Em Casa", icon: Bike },
 ] as const;
 
 function filterRestaurantsByCuisine(items: any[], cuisineKey: string) {
@@ -62,12 +62,12 @@ function filterRestaurantsByCuisine(items: any[], cuisineKey: string) {
 }
 
 function tabClass(active: boolean) {
-  return active ? "btn-primary py-2 px-4 text-xs shadow-none" : "btn-ghost py-2 px-4 text-xs";
+  return `food-filter ${active ? "food-filter-active" : ""}`;
 }
 
 function MealCard({ meal, index, userId }: { meal: any; index: number; userId: string }) {
   const [showIngredients, setShowIngredients] = useState(false);
-  const [imgSrc, setImgSrc] = useState(meal.image_url || "/images/venues/mani.jpg");
+  const [imageFailed, setImageFailed] = useState(false);
   const [saved, setSaved] = useState(() => isItemSaved(meal.id));
 
   const handleSaveRecipe = () => {
@@ -90,18 +90,14 @@ function MealCard({ meal, index, userId }: { meal: any; index: number; userId: s
     >
       <div>
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/25">
-          <img
-            src={imgSrc}
+          {meal.image_url && !imageFailed ? <img
+            src={meal.image_url}
             alt={meal.title}
             className="h-full w-full object-cover transition duration-500 hover:scale-105"
             loading="lazy"
-            onError={() => {
-              if (imgSrc !== "/images/venues/mani.jpg") {
-                setImgSrc("/images/venues/mani.jpg");
-              }
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+            onError={() => setImageFailed(true)}
+          /> : <div className="flex h-full flex-col items-center justify-center gap-2 bg-[#15232a] pb-8 text-white/45"><ChefHat className="h-10 w-10" /><span className="text-xs">Foto do prato indisponível</span></div>}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/10" />
           <div className="absolute left-3 top-3">
             <span className="pill-accent text-[10px] backdrop-blur-md">
               {meal.location || "Receita a Dois"}
@@ -121,9 +117,10 @@ function MealCard({ meal, index, userId }: { meal: any; index: number; userId: s
             <button
               type="button"
               onClick={() => setShowIngredients(!showIngredients)}
-              className="text-xs font-medium text-[#f4d06f] hover:underline"
+              aria-expanded={showIngredients}
+              className="food-action w-full justify-between text-[#f4d06f]"
             >
-              {showIngredients ? "Ocultar" : "Ver"} ingredientes ({meal.ingredients.length})
+              <span>{showIngredients ? "Ocultar" : "Ver"} ingredientes ({meal.ingredients.length})</span><ChevronDown className={`h-4 w-4 transition ${showIngredients ? "rotate-180" : ""}`} />
             </button>
           ) : null}
 
@@ -141,25 +138,26 @@ function MealCard({ meal, index, userId }: { meal: any; index: number; userId: s
         <button
           type="button"
           onClick={handleSaveRecipe}
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+          aria-pressed={saved}
+          className={`food-action ${
             saved
               ? "bg-[#f4d06f] text-black"
               : "bg-white/[0.06] text-white/75 hover:bg-white/[0.12] hover:text-white"
           }`}
         >
-          <Bookmark className="h-3 w-3" fill={saved ? "currentColor" : "none"} />
+          <Bookmark className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
           <span>{saved ? "Salva" : "Salvar receita"}</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {meal.youtube_url ? (
             <a
               href={meal.youtube_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="pill-accent text-[10px]"
+              className="food-action text-[#f4d06f]"
             >
-              ▶ Vídeo
+              <Play className="h-4 w-4" />Vídeo
             </a>
           ) : null}
           {meal.url ? (
@@ -167,9 +165,9 @@ function MealCard({ meal, index, userId }: { meal: any; index: number; userId: s
               href={meal.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-ghost py-1 px-2.5 text-[10px]"
+              className="food-action food-action-primary"
             >
-              Passo a passo ↗
+              <BookOpen className="h-4 w-4" />Ver receita<ArrowUpRight className="h-3.5 w-3.5" />
             </a>
           ) : null}
         </div>
@@ -287,9 +285,10 @@ export default function FoodScreen() {
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
+              aria-pressed={activeTab === tab.key}
               className={tabClass(activeTab === tab.key)}
             >
-              {tab.label}
+              <tab.icon className="h-4 w-4" />{tab.label}
             </button>
           ))}
         </div>
@@ -307,9 +306,10 @@ export default function FoodScreen() {
               key={c.key}
               type="button"
               onClick={() => setSelectedCuisine(c.key)}
+              aria-pressed={selectedCuisine === c.key}
               className={`shrink-0 ${tabClass(selectedCuisine === c.key)}`}
             >
-              {c.label}
+              <c.icon className="h-4 w-4" />{c.label}
             </button>
           ))}
         </div>
@@ -320,6 +320,7 @@ export default function FoodScreen() {
           title={`Restaurantes · ${CUISINES.find((c) => c.key === selectedCuisine)?.label || ""}`}
           subtitle="Ordenados pela afinidade do casal e histórico gastronômico"
           items={restaurantItems.slice(0, 14)}
+          variant="food"
           onOpen={setSelectedItem}
         />
       ) : null}
@@ -329,6 +330,7 @@ export default function FoodScreen() {
           title="Radar Gastronômico SP"
           subtitle="Destaques do Guia Michelin, Paladar Estadão, Guia Folha e aberturas"
           items={editorialItems.slice(0, 14)}
+          variant="food"
           onOpen={setSelectedItem}
         />
       ) : null}
@@ -338,6 +340,7 @@ export default function FoodScreen() {
           title="Cafés, Padarias & Conversa Calma"
           subtitle="Pausas aconchegantes para tarde ou pós-exposição"
           items={cafeItems.slice(0, 14)}
+          variant="food"
           onOpen={setSelectedItem}
         />
       ) : null}
@@ -347,6 +350,7 @@ export default function FoodScreen() {
           title="Delivery Premium em SP"
           subtitle="Os favoritos do casal para pedir em casa sem erro"
           items={deliveryItems.slice(0, 14)}
+          variant="food"
           onOpen={setSelectedItem}
         />
       ) : null}

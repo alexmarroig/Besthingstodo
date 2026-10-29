@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BrainCircuit, Sparkles, Star } from "lucide-react";
 
 import DiscoveryCard from "./discovery-card";
+import WatchAvailability from "./watch-availability";
 import { patchCoupleProfile, sendFeedback } from "@/shared/api/client";
 import { addFavoriteRestaurant } from "@/shared/couple-profile-builder";
 import { getCoupleProfile } from "@/shared/storage";
@@ -138,7 +139,7 @@ export default function MediaDetailModal({
         <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
           <div className="flex items-center gap-2">
             <BrainCircuit className="h-4 w-4 text-[#f4d06f]" />
-            <p className="text-sm font-semibold text-white">Análise da Experiência & Match IA</p>
+            <p className="text-sm font-semibold text-white">{item.category === "movie" || item.category === "series" ? "Filme & onde assistir" : "Detalhes da experiência"}</p>
           </div>
           <button type="button" onClick={onClose} className="btn-ghost px-3 py-1.5 text-xs">
             Fechar
@@ -172,7 +173,8 @@ export default function MediaDetailModal({
             </div>
           ) : null}
 
-          <DiscoveryCard item={item} userId={userId} onAction={handleAction} />
+          <DiscoveryCard key={item.id} item={item} userId={userId} onAction={handleAction} />
+          {item.category === "movie" || item.category === "series" ? <WatchAvailability key={`${item.category}-${item.id}`} item={item} /> : null}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-4">
             <p className="text-xs text-white/60">

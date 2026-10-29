@@ -254,8 +254,8 @@ export default function WatchScreen() {
 
       {movies.length > 0 && (
         <MediaRail
-          title="Filmes em alta & em cartaz"
-          subtitle="Ordenados pelo Match IA do casal"
+          title={nowPlaying?.length ? "Em cartaz em São Paulo" : "Filmes em alta"}
+          subtitle={nowPlaying?.length ? "Abra um filme para ver cinemas, sessões e comprar seu ingresso" : "Abra um filme para conferir onde assistir no Brasil"}
           items={movies}
           onOpen={setSelectedItem}
           variant="poster"

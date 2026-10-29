@@ -14,6 +14,8 @@ const LOW_QUALITY_PATTERNS = [
   "favicon.ico",
   "apple-touch-icon",
   "/logo.",
+  "/logo_",
+  "/logo-",
   "/logos/",
   "logo-catraca",
   "catracalivre.com.br/wp-content/uploads/2020",
@@ -88,6 +90,8 @@ export function resolveThemeImageUrl(item: {
 }
 
 export function attachRecommendationImage<T extends Recommendation>(item: T): T {
+  const photo = normalizeRecommendationImageUrl(item.image_url);
+  if (photo && !isLocalVenueImage(photo)) return item;
   const known = resolveKnownVenueImageForItem(item.id, item.title, item.location);
   if (known) {
     return item.image_url === known ? item : { ...item, image_url: known };

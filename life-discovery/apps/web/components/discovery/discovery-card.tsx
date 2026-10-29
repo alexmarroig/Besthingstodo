@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
+import { ArrowUpRight, Bookmark, Heart, MapPin, X } from "lucide-react";
 
 import ExperienceImage from "./experience-image";
 import { getRecommendationSourceMeta } from "@/shared/source";
@@ -17,13 +18,13 @@ function ActionButton({
   variant,
   active = false,
 }: {
-  icon: string;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
   variant?: string;
   active?: boolean;
 }) {
-  const base = "flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium transition duration-200";
+  const base = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2.5 text-xs font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f4d06f]";
   const styles: Record<string, string> = {
     like: active
       ? `${base} bg-[#f97352] text-white shadow-md`
@@ -35,7 +36,7 @@ function ActionButton({
     skip: `${base} bg-white/8 text-white/50 hover:bg-white/15 hover:text-white/70`,
   };
   return (
-    <button type="button" onClick={onClick} className={styles[variant || "skip"]}>
+    <button type="button" onClick={onClick} aria-pressed={variant === "like" || variant === "save" ? active : undefined} className={styles[variant || "skip"]}>
       <span>{icon}</span>
       <span>{label}</span>
     </button>
@@ -190,29 +191,29 @@ export default function DiscoveryCard({
         {/* Actions */}
         <div className="flex flex-wrap gap-2 border-t border-white/8 pt-3.5">
           <ActionButton
-            icon="✓"
-            label={liked ? "Curtido (IA +)" : "Curtir"}
+            icon={<Heart className="h-4 w-4" fill={liked ? "currentColor" : "none"} />}
+            label={liked ? "Curtido" : "Curtir"}
             onClick={() => handleAction("like")}
             variant="like"
             active={liked}
           />
           <ActionButton
-            icon="♡"
+            icon={<Bookmark className="h-4 w-4" fill={saved ? "currentColor" : "none"} />}
             label={saved ? "Salvo" : "Salvar"}
             onClick={() => handleAction("save")}
             variant="save"
             active={saved}
           />
-          {(item.latitude || item.city) && (
+          {(item.latitude || item.city) && item.category !== "movie" && item.category !== "series" && (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => handleCtaClick("map")}
-              className="flex items-center gap-1.5 rounded-full bg-[#38bdf8]/15 px-3.5 py-2 text-xs font-medium text-[#38bdf8] transition hover:bg-[#38bdf8]/25"
+              className="food-action text-[#38bdf8]"
             >
-              <span>📍</span>
-              <span>Mapa</span>
+              <MapPin className="h-4 w-4" />
+              <span>Como chegar</span>
             </a>
           )}
           {externalUrl && (
@@ -221,13 +222,13 @@ export default function DiscoveryCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => handleCtaClick("external_url")}
-              className="flex items-center gap-1.5 rounded-full bg-white/8 px-3.5 py-2 text-xs font-medium text-white/70 transition hover:bg-white/15 hover:text-white"
+              className={`food-action ${item.domain === "dining_out" || item.domain === "delivery" ? "food-action-primary" : "text-white/75"}`}
             >
-              <span>↗</span>
-              <span>Fonte oficial</span>
+              <ArrowUpRight className="h-4 w-4" />
+              <span>{item.domain === "dining_out" ? "Abrir site" : item.domain === "delivery" ? "Ver opções de pedido" : "Ver fonte"}</span>
             </a>
           )}
-          <ActionButton icon="✕" label="Ocultar" onClick={() => handleAction("dislike")} variant="skip" />
+          <ActionButton icon={<X className="h-4 w-4" />} label="Ocultar" onClick={() => handleAction("dislike")} variant="skip" />
         </div>
       </div>
     </motion.div>

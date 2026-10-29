@@ -91,7 +91,19 @@ export async function resolveRecommendationImageCore(
   item: ImageCandidate,
   ctx?: ImageResolveContext
 ): Promise<ResolvedImage> {
-  // 1. Prioritize local curated images first (0ms latency, guaranteed quality)
+  const nativePhoto = normalizeRecommendationImageUrl(item.image_url);
+  if (nativePhoto && !isLocalVenueImage(nativePhoto)) {
+    const accepted = acceptUniqueImageUrl(nativePhoto, ctx);
+    if (accepted) return { url: accepted, source: "native" };
+  }
+  // Prefer the restaurant's own photography over the generic local fallback.
+  if (item.domain === "dining_out" && (item.booking_url || item.url)) {
+    const photoKey = `dining|${item.id}|${item.booking_url || item.url}`;
+    const cachedPhoto = serverImageCache.get(photoKey);
+    if (cachedPhoto?.url) return cachedPhoto;
+    const websitePhoto = await tryWebsiteOgImages(item, ctx);
+    if (websitePhoto) { setServerCache(photoKey, websitePhoto); return websitePhoto; }
+  }
   const knownImage = resolveKnownVenueImageForItem(item.id, item.title, item.location);
   if (knownImage) {
     return { url: knownImage, source: "local_curated" };

@@ -83,6 +83,8 @@ function mapToRecommendation(row: any, city: string): Recommendation {
     source: row.source || "api",
     url: row.url || null,
     booking_url: row.booking_url || null,
+    release_year: row.release_year || null,
+    original_title: row.original_title || null,
     editorial_source: row.editorial_source || null,
     availability_kind: row.availability_kind || null,
     rating: row.rating ?? null,
@@ -209,7 +211,7 @@ export async function fetchCinemaNews(): Promise<Recommendation[]> {
 }
 
 export async function fetchNowPlayingMovies(): Promise<Recommendation[]> {
-  const data = await fetchJsonSafe<any[]>(`${API_ENDPOINTS.tmdb}?type=now_playing`);
+  const data = await fetchJsonSafe<any[]>("/api/cinema/now-playing");
   return (data || []).map((row: any) => mapToRecommendation(row, ""));
 }
 

@@ -24,6 +24,8 @@ function sortByImagePriority<T extends RecommendationPayload>(items: T[]): T[] {
 
 function applyKnownImages<T extends RecommendationPayload>(items: T[]): T[] {
   return items.map((item) => {
+    const photo = normalizeRecommendationImageUrl(item.image_url);
+    if (photo && !isLocalVenueImage(photo)) return item;
     const known = resolveKnownVenueImageForItem(item.id, item.title, item.location);
     if (known) return item.image_url === known ? item : { ...item, image_url: known };
     if (normalizeRecommendationImageUrl(item.image_url)) return item;
@@ -32,6 +34,7 @@ function applyKnownImages<T extends RecommendationPayload>(items: T[]): T[] {
 }
 
 function needsRemoteLookup(item: RecommendationPayload): boolean {
+  if (item.domain === "dining_out" && (!item.image_url || isLocalVenueImage(item.image_url))) return Boolean(item.booking_url || item.url);
   if (resolveKnownVenueImageForItem(item.id, item.title, item.location)) return false;
   if (normalizeRecommendationImageUrl(item.image_url)) return false;
   return Boolean(item.booking_url || item.url);
@@ -47,8 +50,8 @@ export async function resolveRecommendationImageUrlAsync(
 
 export function resolveRecommendationImageUrl(item: ImageCandidate): string | null {
   return (
-    resolveKnownVenueImageForItem(item.id, item.title, item.location) ||
     normalizeRecommendationImageUrl(item.image_url) ||
+    resolveKnownVenueImageForItem(item.id, item.title, item.location) ||
     resolveContextualLocalImage(item)
   );
 }
@@ -80,6 +83,13 @@ export async function enrichRecommendationImagesAsync<T extends RecommendationPa
     const batch = prioritized.slice(index, index + batchSize);
     const resolved = await Promise.all(
       batch.map(async (item) => {
+        if (needsRemoteLookup(item) && lookupsRemaining > 0) {
+          lookupsRemaining -= 1;
+          const photo = await resolveRecommendationImageUrlAsync(item, ctx);
+          if (photo) return { ...item, image_url: photo };
+        }
+        const native = normalizeRecommendationImageUrl(item.image_url);
+        if (native && !isLocalVenueImage(native)) return { ...item, image_url: acceptUniqueImageUrl(native, ctx) || resolveContextualLocalImage(item) };
         const known = resolveKnownVenueImageForItem(item.id, item.title, item.location);
         if (known) {
           return { ...item, image_url: known };

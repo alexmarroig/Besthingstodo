@@ -1,13 +1,13 @@
 "use client";
 
-export type MediaTileVariant = "landscape" | "poster";
+export type MediaTileVariant = "landscape" | "poster" | "food";
 
 export default function MediaTileSkeleton({ variant = "landscape" }: { variant?: MediaTileVariant }) {
   const isPoster = variant === "poster";
 
   return (
     <div
-      className={`shrink-0 snap-start ${isPoster ? "w-[128px] sm:w-[142px]" : "w-[200px] sm:w-[228px]"}`}
+      className={`shrink-0 snap-start ${isPoster ? "w-[134px] sm:w-[148px]" : variant === "food" ? "w-[260px] sm:w-[300px]" : "w-[210px] sm:w-[236px]"}`}
       aria-hidden
     >
       <div className={`experience-card overflow-hidden ${isPoster ? "aspect-[2/3]" : "aspect-[4/3]"}`}>
