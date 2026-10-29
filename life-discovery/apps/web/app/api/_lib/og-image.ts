@@ -127,7 +127,7 @@ export function extractImageUrlFromHtml(html: string, pageUrl: URL) {
   return null;
 }
 
-export async function fetchOgImageFromUrl(target: string, timeoutMs = 4500): Promise<string | null> {
+export async function fetchOgImageFromUrl(target: string, timeoutMs = 1800): Promise<string | null> {
   let pageUrl: URL;
   try {
     pageUrl = new URL(target);
@@ -204,7 +204,7 @@ export async function fetchWikipediaThumbnail(
   });
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4000);
+  const timeout = setTimeout(() => controller.abort(), 1800);
 
   try {
     const searchRes = await fetch(`https://pt.wikipedia.org/w/api.php?${searchParams}`, {

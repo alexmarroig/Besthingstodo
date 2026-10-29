@@ -1,5 +1,5 @@
-import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
-import { resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
+import { isLocalVenueImage, normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
+import { resolveContextualLocalImage, resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
 
 import {
   fetchVenueWebsiteImages,
@@ -25,6 +25,18 @@ export type ResolvedImage = {
   source: string | null;
 };
 
+const serverImageCache = new Map<string, ResolvedImage>();
+const MAX_CACHE_ENTRIES = 400;
+
+function setServerCache(key: string, value: ResolvedImage) {
+  if (!key || !value.url) return;
+  if (serverImageCache.size >= MAX_CACHE_ENTRIES) {
+    const firstKey = serverImageCache.keys().next().value;
+    if (firstKey) serverImageCache.delete(firstKey);
+  }
+  serverImageCache.set(key, value);
+}
+
 function hostnameFromUrl(value: string | null | undefined): string | null {
   if (!value) return null;
   try {
@@ -34,12 +46,16 @@ function hostnameFromUrl(value: string | null | undefined): string | null {
   }
 }
 
-function acceptResolvedUrl(url: string | null, ctx?: ImageResolveContext): string | null {
+export function acceptUniqueImageUrl(url: string | null, ctx?: ImageResolveContext): string | null {
   const normalized = normalizeRecommendationImageUrl(url);
   if (!normalized) return null;
 
+  if (isLocalVenueImage(normalized)) {
+    return normalized;
+  }
+
   const used = ctx?.usedUrls?.get(normalized) ?? 0;
-  if (used >= 2) return null;
+  if (used >= 1) return null;
 
   ctx?.usedUrls?.set(normalized, used + 1);
   return normalized;
@@ -64,7 +80,7 @@ async function tryWebsiteOgImages(item: ImageCandidate, ctx?: ImageResolveContex
   const images = await fetchVenueWebsiteImages(item);
   for (const ogImage of images) {
     if (rejectDomainOgDuplicate(ogImage, pageTarget, ctx)) continue;
-    const accepted = acceptResolvedUrl(ogImage, ctx);
+    const accepted = acceptUniqueImageUrl(ogImage, ctx);
     if (accepted) return { url: accepted, source: "og" };
   }
 
@@ -75,20 +91,30 @@ export async function resolveRecommendationImageCore(
   item: ImageCandidate,
   ctx?: ImageResolveContext
 ): Promise<ResolvedImage> {
+  // 1. Prioritize local curated images first (0ms latency, guaranteed quality)
+  const knownImage = resolveKnownVenueImageForItem(item.id, item.title, item.location);
+  if (knownImage) {
+    return { url: knownImage, source: "local_curated" };
+  }
+
   const existing = normalizeRecommendationImageUrl(item.image_url);
   if (existing) {
-    const accepted = acceptResolvedUrl(existing, ctx);
+    const accepted = acceptUniqueImageUrl(existing, ctx);
     if (accepted) return { url: accepted, source: "native" };
   }
 
-  const knownImage = resolveKnownVenueImageForItem(item.id, item.title);
-  if (knownImage) {
-    const accepted = acceptResolvedUrl(knownImage, ctx);
-    if (accepted) return { url: accepted, source: "curated" };
+  const cacheKey = `${item.id || ""}|${item.title}|${item.booking_url || item.url || ""}`;
+  const cached = serverImageCache.get(cacheKey);
+  if (cached?.url) {
+    const accepted = acceptUniqueImageUrl(cached.url, ctx);
+    if (accepted) return cached;
   }
 
   const ogResult = await tryWebsiteOgImages(item, ctx);
-  if (ogResult) return ogResult;
+  if (ogResult) {
+    setServerCache(cacheKey, ogResult);
+    return ogResult;
+  }
 
   if (isGooglePlacesEnabled() && (item.domain === "dining_out" || item.domain === "delivery")) {
     const googlePhoto = await fetchGooglePlacePhotoForVenue(item.title, {
@@ -98,8 +124,12 @@ export async function resolveRecommendationImageCore(
       longitude: item.longitude,
     });
     if (googlePhoto) {
-      const accepted = acceptResolvedUrl(googlePhoto, ctx);
-      if (accepted) return { url: accepted, source: "google_places" };
+      const accepted = acceptUniqueImageUrl(googlePhoto, ctx);
+      if (accepted) {
+        const res = { url: accepted, source: "google_places" };
+        setServerCache(cacheKey, res);
+        return res;
+      }
     }
   }
 
@@ -107,20 +137,30 @@ export async function resolveRecommendationImageCore(
     const cleanedTitle = cleanTitleForTmdbSearch(item.title);
     const tmdbImage = cleanedTitle ? await fetchTmdbPosterByTitle(cleanedTitle) : null;
     if (tmdbImage) {
-      const accepted = acceptResolvedUrl(tmdbImage, ctx);
-      if (accepted) return { url: accepted, source: "tmdb" };
+      const accepted = acceptUniqueImageUrl(tmdbImage, ctx);
+      if (accepted) {
+        const res = { url: accepted, source: "tmdb" };
+        setServerCache(cacheKey, res);
+        return res;
+      }
     }
   }
 
   if (item.domain === "dining_out" || item.domain === "events_exhibitions" || item.domain === "delivery") {
     const wikiImage = await fetchWikipediaVenueImage(item);
     if (wikiImage) {
-      const accepted = acceptResolvedUrl(wikiImage, ctx);
-      if (accepted) return { url: accepted, source: "wikipedia" };
+      const accepted = acceptUniqueImageUrl(wikiImage, ctx);
+      if (accepted) {
+        const res = { url: accepted, source: "wikipedia" };
+        setServerCache(cacheKey, res);
+        return res;
+      }
     }
   }
 
-  return { url: null, source: null };
+  // Fallback to contextual local asset so no card is left without an image
+  const contextualLocal = resolveContextualLocalImage(item);
+  return { url: contextualLocal, source: "local_contextual" };
 }
 
 export function buildTmdbPosterFromPath(posterPath?: string | null): string | null {

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T03:20:49.276Z",
+  "generated_at": "2026-10-28T13:43:02.368Z",
   "items": [
     {
       "id": "snapshot-taste-fly-1",
@@ -18,7 +18,7 @@
       ],
       "source": "Taste & Fly",
       "editorial_source": "Taste & Fly",
-      "image_url": null,
+      "image_url": "/images/venues/editorial-omakase.jpg",
       "cta_url": "https://tasteandfly.com.br/",
       "quality_score": 92,
       "payload": {
@@ -31,6 +31,7 @@
         "city": "São Paulo",
         "location": "Pinheiros",
         "neighborhood": "Pinheiros",
+        "image_url": "/images/venues/editorial-omakase.jpg",
         "tags": [
           "japonês",
           "abertura",
@@ -59,7 +60,7 @@
       ],
       "source": "São Paulo Secreto",
       "editorial_source": "São Paulo Secreto",
-      "image_url": null,
+      "image_url": "/images/venues/rooftop-sp.jpg",
       "cta_url": "https://saopaulosecreto.com/",
       "quality_score": 84,
       "payload": {
@@ -72,6 +73,7 @@
         "city": "São Paulo",
         "location": "Centro",
         "neighborhood": "Centro",
+        "image_url": "/images/venues/rooftop-sp.jpg",
         "tags": [
           "rooftop",
           "experiencia",
@@ -99,7 +101,7 @@
       ],
       "source": "Farofa Magazine",
       "editorial_source": "Farofa Magazine",
-      "image_url": null,
+      "image_url": "/images/venues/editorial-chefs.jpg",
       "cta_url": "https://farofa.co/",
       "quality_score": 90,
       "payload": {
@@ -111,6 +113,7 @@
         "content_tier": "signature",
         "city": "São Paulo",
         "location": "Zona Sul",
+        "image_url": "/images/venues/editorial-chefs.jpg",
         "tags": [
           "chefs",
           "tendencias",
@@ -138,7 +141,7 @@
       ],
       "source": "Cumbuca",
       "editorial_source": "Cumbuca",
-      "image_url": null,
+      "image_url": "/images/venues/wine.jpg",
       "cta_url": "https://cumbuca.co/",
       "quality_score": 82,
       "payload": {
@@ -151,6 +154,7 @@
         "city": "São Paulo",
         "location": "Vila Madalena",
         "neighborhood": "Vila Madalena",
+        "image_url": "/images/venues/wine.jpg",
         "tags": [
           "vinho",
           "wine bar",
@@ -179,7 +183,7 @@
       ],
       "source": "Guia SP",
       "editorial_source": "Favorito do casal",
-      "image_url": null,
+      "image_url": "/images/venues/sp-lellis.jpg",
       "cta_url": "https://www.lellistrattoria.com.br/",
       "quality_score": 94,
       "payload": {
@@ -192,6 +196,7 @@
         "city": "São Paulo",
         "location": "Itaim Bibi",
         "neighborhood": "Itaim Bibi",
+        "image_url": "/images/venues/sp-lellis.jpg",
         "tags": [
           "italiana",
           "massas",
@@ -227,7 +232,7 @@
       ],
       "source": "Guia SP",
       "editorial_source": "Favorito do casal",
-      "image_url": null,
+      "image_url": "/images/venues/sp-libertango.jpg",
       "cta_url": "https://www.libertango.com.br/",
       "quality_score": 92,
       "payload": {
@@ -240,6 +245,7 @@
         "city": "São Paulo",
         "location": "Itaim Bibi",
         "neighborhood": "Itaim Bibi",
+        "image_url": "/images/venues/sp-libertango.jpg",
         "tags": [
           "carne",
           "argentina",
@@ -274,7 +280,7 @@
       ],
       "source": "Guia SP",
       "editorial_source": "Favorito do casal",
-      "image_url": null,
+      "image_url": "/images/venues/sp-issho.jpg",
       "cta_url": null,
       "quality_score": 91,
       "payload": {
@@ -287,6 +293,7 @@
         "city": "São Paulo",
         "location": "Vila Olímpia",
         "neighborhood": "Vila Olímpia",
+        "image_url": "/images/venues/sp-issho.jpg",
         "tags": [
           "japonês",
           "sushi",
@@ -319,8 +326,8 @@
       ],
       "source": "Guia SP",
       "editorial_source": null,
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-pizza-mooca.jpg",
+      "cta_url": "https://www.apizzadamooca.com.br/",
       "quality_score": 88,
       "payload": {
         "id": "sp-pizza-mooca",
@@ -332,12 +339,14 @@
         "city": "São Paulo",
         "location": "Mooca",
         "neighborhood": "Mooca",
+        "image_url": "/images/venues/sp-pizza-mooca.jpg",
         "tags": [
           "pizza",
           "italiana",
           "tradicional"
         ],
         "source": "Guia SP",
+        "url": "https://www.apizzadamooca.com.br/",
         "availability_kind": "venue",
         "quality_score": 88,
         "score": 8.8,
@@ -363,8 +372,8 @@
       ],
       "source": "Estadão Paladar",
       "editorial_source": "Estadão Paladar",
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-mani.jpg",
+      "cta_url": "https://mani.com.br/",
       "quality_score": 96,
       "payload": {
         "id": "sp-mani",
@@ -376,6 +385,7 @@
         "city": "São Paulo",
         "location": "Pinheiros",
         "neighborhood": "Pinheiros",
+        "image_url": "/images/venues/sp-mani.jpg",
         "tags": [
           "autoral",
           "brasileira",
@@ -383,6 +393,7 @@
         ],
         "source": "Estadão Paladar",
         "editorial_source": "Estadão Paladar",
+        "url": "https://mani.com.br/",
         "availability_kind": "venue",
         "quality_score": 96,
         "score": 9.6,
@@ -408,8 +419,8 @@
       ],
       "source": "Michelin Guide",
       "editorial_source": "Michelin Guide",
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-evvai.jpg",
+      "cta_url": "https://www.evvai.com.br/",
       "quality_score": 97,
       "payload": {
         "id": "sp-evvai",
@@ -421,6 +432,7 @@
         "city": "São Paulo",
         "location": "Pinheiros",
         "neighborhood": "Pinheiros",
+        "image_url": "/images/venues/sp-evvai.jpg",
         "tags": [
           "fine dining",
           "vinho",
@@ -428,6 +440,7 @@
         ],
         "source": "Michelin Guide",
         "editorial_source": "Michelin Guide",
+        "url": "https://www.evvai.com.br/",
         "availability_kind": "venue",
         "quality_score": 97,
         "score": 9.7,
@@ -453,8 +466,8 @@
       ],
       "source": "Michelin Guide",
       "editorial_source": "Michelin Guide",
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-casa-porco.jpg",
+      "cta_url": "https://casadoporco.com/",
       "quality_score": 95,
       "payload": {
         "id": "sp-casa-porco",
@@ -466,6 +479,7 @@
         "city": "São Paulo",
         "location": "Centro",
         "neighborhood": "Centro",
+        "image_url": "/images/venues/sp-casa-porco.jpg",
         "tags": [
           "autoral",
           "porco",
@@ -473,6 +487,7 @@
         ],
         "source": "Michelin Guide",
         "editorial_source": "Michelin Guide",
+        "url": "https://casadoporco.com/",
         "availability_kind": "venue",
         "quality_score": 95,
         "score": 9.5,
@@ -498,8 +513,8 @@
       ],
       "source": "Guia SP",
       "editorial_source": null,
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-braz.jpg",
+      "cta_url": "https://www.brazpizza.com.br/",
       "quality_score": 89,
       "payload": {
         "id": "sp-braz",
@@ -511,12 +526,14 @@
         "city": "São Paulo",
         "location": "Pinheiros",
         "neighborhood": "Pinheiros",
+        "image_url": "/images/venues/sp-braz.jpg",
         "tags": [
           "pizza",
           "napolitana",
           "forno a lenha"
         ],
         "source": "Guia SP",
+        "url": "https://www.brazpizza.com.br/",
         "availability_kind": "venue",
         "quality_score": 89,
         "score": 8.9,
@@ -542,8 +559,8 @@
       ],
       "source": "Guia SP",
       "editorial_source": null,
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-zdeli.jpg",
+      "cta_url": "https://www.zdeli.com.br/",
       "quality_score": 87,
       "payload": {
         "id": "sp-zdeli",
@@ -555,12 +572,14 @@
         "city": "São Paulo",
         "location": "Itaim Bibi",
         "neighborhood": "Itaim Bibi",
+        "image_url": "/images/venues/sp-zdeli.jpg",
         "tags": [
           "sanduíche",
           "deli",
           "casual"
         ],
         "source": "Guia SP",
+        "url": "https://www.zdeli.com.br/",
         "availability_kind": "venue",
         "quality_score": 87,
         "score": 8.7,
@@ -586,7 +605,7 @@
       ],
       "source": "Guia SP",
       "editorial_source": null,
-      "image_url": null,
+      "image_url": "/images/venues/sp-octavio.jpg",
       "cta_url": null,
       "quality_score": 85,
       "payload": {
@@ -599,6 +618,7 @@
         "city": "São Paulo",
         "location": "Vila Madalena",
         "neighborhood": "Vila Madalena",
+        "image_url": "/images/venues/sp-octavio.jpg",
         "tags": [
           "café",
           "brunch",
@@ -631,8 +651,8 @@
       ],
       "source": "Guia SP",
       "editorial_source": "Favorito do casal",
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-travessa.jpg",
+      "cta_url": "https://www.travessa.com.br/",
       "quality_score": 90,
       "payload": {
         "id": "sp-travessa",
@@ -644,6 +664,7 @@
         "city": "São Paulo",
         "location": "Pinheiros",
         "neighborhood": "Pinheiros",
+        "image_url": "/images/venues/sp-travessa.jpg",
         "tags": [
           "café",
           "livraria",
@@ -652,6 +673,7 @@
         ],
         "source": "Guia SP",
         "editorial_source": "Favorito do casal",
+        "url": "https://www.travessa.com.br/",
         "availability_kind": "venue",
         "quality_score": 90,
         "score": 9,
@@ -675,7 +697,7 @@
       ],
       "source": "Agenda Gastronômica",
       "editorial_source": "Taste São Paulo",
-      "image_url": null,
+      "image_url": "/images/venues/taste-sp.jpg",
       "cta_url": "https://tastesaopaulo.com.br/",
       "quality_score": 90,
       "payload": {
@@ -687,6 +709,7 @@
         "content_tier": "signature",
         "city": "São Paulo",
         "location": "Distrito Anhembi",
+        "image_url": "/images/venues/taste-sp.jpg",
         "tags": [
           "festival",
           "gastronomia",
@@ -715,7 +738,7 @@
       ],
       "source": "Agenda Gastronômica",
       "editorial_source": "Restaurant Week",
-      "image_url": null,
+      "image_url": "/images/venues/restaurant-week.jpg",
       "cta_url": "https://restaurantweek.com.br/",
       "quality_score": 88,
       "payload": {
@@ -727,6 +750,7 @@
         "content_tier": "signature",
         "city": "São Paulo",
         "location": "São Paulo",
+        "image_url": "/images/venues/restaurant-week.jpg",
         "tags": [
           "restaurant week",
           "menu especial",
@@ -755,7 +779,7 @@
       ],
       "source": "Agenda Gastronômica",
       "editorial_source": "CEAGESP",
-      "image_url": null,
+      "image_url": "/images/venues/ceagesp.jpg",
       "cta_url": "https://www.ceagesp.gov.br/",
       "quality_score": 80,
       "payload": {
@@ -767,6 +791,7 @@
         "content_tier": "curated",
         "city": "São Paulo",
         "location": "CEAGESP",
+        "image_url": "/images/venues/ceagesp.jpg",
         "tags": [
           "festival",
           "frutos do mar",
@@ -795,7 +820,7 @@
       ],
       "source": "Sympla",
       "editorial_source": "Sympla",
-      "image_url": null,
+      "image_url": "/images/venues/wine.jpg",
       "cta_url": "https://www.sympla.com.br/",
       "quality_score": 82,
       "payload": {
@@ -808,6 +833,7 @@
         "city": "São Paulo",
         "location": "Itaim Bibi",
         "neighborhood": "Itaim Bibi",
+        "image_url": "/images/venues/wine.jpg",
         "tags": [
           "vinho",
           "degustação",
@@ -818,7 +844,7 @@
         "url": "https://www.sympla.com.br/",
         "availability_kind": "event",
         "quality_score": 82,
-        "start_time": "2026-06-14T19:30:00-03:00"
+        "start_time": "2026-11-14T19:30:00-03:00"
       }
     },
     {
@@ -837,7 +863,7 @@
       ],
       "source": "Sympla",
       "editorial_source": "Sympla",
-      "image_url": null,
+      "image_url": "/images/venues/workshop-massas.jpg",
       "cta_url": "https://www.sympla.com.br/",
       "quality_score": 80,
       "payload": {
@@ -850,6 +876,7 @@
         "city": "São Paulo",
         "location": "Pinheiros",
         "neighborhood": "Pinheiros",
+        "image_url": "/images/venues/workshop-massas.jpg",
         "tags": [
           "massa",
           "workshop",
@@ -860,7 +887,7 @@
         "url": "https://www.sympla.com.br/",
         "availability_kind": "event",
         "quality_score": 80,
-        "start_time": "2026-06-21T18:00:00-03:00"
+        "start_time": "2026-11-21T18:00:00-03:00"
       }
     },
     {
@@ -879,7 +906,7 @@
       ],
       "source": "Sympla",
       "editorial_source": "Sympla",
-      "image_url": null,
+      "image_url": "/images/venues/jazz.svg",
       "cta_url": "https://www.sympla.com.br/",
       "quality_score": 79,
       "payload": {
@@ -892,6 +919,7 @@
         "city": "São Paulo",
         "location": "Jardins",
         "neighborhood": "Jardins",
+        "image_url": "/images/venues/jazz.svg",
         "tags": [
           "jazz",
           "música",
@@ -902,7 +930,7 @@
         "url": "https://www.sympla.com.br/",
         "availability_kind": "event",
         "quality_score": 79,
-        "start_time": "2026-06-07T17:30:00-03:00"
+        "start_time": "2026-11-07T17:30:00-03:00"
       }
     },
     {
@@ -921,7 +949,7 @@
       ],
       "source": "Sympla",
       "editorial_source": "Sympla",
-      "image_url": null,
+      "image_url": "/images/venues/standup.jpg",
       "cta_url": "https://www.sympla.com.br/",
       "quality_score": 78,
       "payload": {
@@ -934,6 +962,7 @@
         "city": "São Paulo",
         "location": "Moema",
         "neighborhood": "Moema",
+        "image_url": "/images/venues/standup.jpg",
         "tags": [
           "comédia",
           "stand-up",
@@ -944,7 +973,7 @@
         "url": "https://www.sympla.com.br/",
         "availability_kind": "event",
         "quality_score": 78,
-        "start_time": "2026-06-12T20:00:00-03:00"
+        "start_time": "2026-11-12T20:00:00-03:00"
       }
     },
     {
@@ -963,8 +992,8 @@
       ],
       "source": "Guia SP",
       "editorial_source": null,
-      "image_url": null,
-      "cta_url": null,
+      "image_url": "/images/venues/sp-patties.jpg",
+      "cta_url": "https://pattiesburger.com/cardapio/",
       "quality_score": 86,
       "payload": {
         "id": "sp-patties",
@@ -976,12 +1005,14 @@
         "city": "São Paulo",
         "location": "Itaim Bibi",
         "neighborhood": "Itaim Bibi",
+        "image_url": "/images/venues/sp-patties.jpg",
         "tags": [
           "delivery",
           "burger",
           "casal"
         ],
         "source": "Guia SP",
+        "url": "https://pattiesburger.com/cardapio/",
         "availability_kind": "delivery",
         "quality_score": 86,
         "score": 8.6,

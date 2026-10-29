@@ -1,17 +1,28 @@
 "use client";
 
-import { CoupleSnapshot, DEFAULT_USER_ID } from "@life/shared-types";
+import { CoupleSnapshot, DEFAULT_USER_ID, Recommendation } from "@life/shared-types";
 
 import { buildCoupleProfileFromForm } from "../couple-profile-builder";
+import type { FeedbackEntry, FeedbackSignalType } from "../../features/catalog/ml/engine";
+
+export type { FeedbackEntry, FeedbackSignalType };
 
 const KEY = "life_user_id";
 const TOKEN_KEY = "life_access_token";
 const CONCIERGE_MEMORY_KEY = "life_concierge_memory";
 const COUPLE_PROFILE_KEY = "life_couple_profile";
+const CUSTOM_ITEMS_KEY = "life_custom_ingested_items";
+const FEEDBACK_KEY = "life_feedback";
+
+export const ML_UPDATE_EVENT = "life-ml-updated";
 
 function getStorage(kind: "local" | "session") {
   if (typeof window === "undefined") return null;
-  return kind === "local" ? window.localStorage : window.sessionStorage;
+  try {
+    return kind === "local" ? window.localStorage : window.sessionStorage;
+  } catch {
+    return null;
+  }
 }
 
 function safeJsonParse<T>(value: string | null, fallback: T): T {
@@ -20,6 +31,15 @@ function safeJsonParse<T>(value: string | null, fallback: T): T {
     return JSON.parse(value) as T;
   } catch {
     return fallback;
+  }
+}
+
+export function notifyMLUpdate(detail?: { type?: string; title?: string; id?: string }) {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(new CustomEvent(ML_UPDATE_EVENT, { detail }));
+  } catch {
+    // ignore in restricted environments
   }
 }
 
@@ -142,6 +162,7 @@ export function getCoupleProfile(): CoupleSnapshot {
 
 export function setCoupleProfile(profile: CoupleSnapshot) {
   getStorage("local")?.setItem(COUPLE_PROFILE_KEY, JSON.stringify(profile));
+  notifyMLUpdate({ type: "profile_update" });
 }
 
 export function patchCoupleProfileLocal(patch: Partial<CoupleSnapshot>) {
@@ -157,12 +178,46 @@ export function getSavedItems(): any[] {
 
 export function setSavedItems(items: any[]) {
   getStorage("local")?.setItem("saved_items", JSON.stringify(items));
+  notifyMLUpdate({ type: "saved_update" });
 }
 
 export function upsertSavedItem(item: any) {
+  if (!item?.id) return;
   const current = getSavedItems();
-  if (current.find((x: any) => x.id === item.id)) return;
-  setSavedItems([item, ...current]);
+  const exists = current.find((x: any) => x.id === item.id);
+  if (exists) return;
+  setSavedItems([{ ...item, saved_at: new Date().toISOString() }, ...current]);
+}
+
+export function removeSavedItem(id: string) {
+  const current = getSavedItems();
+  setSavedItems(current.filter((x: any) => x.id !== id));
+}
+
+export function isItemSaved(id: string): boolean {
+  return getSavedItems().some((x: any) => x.id === id);
+}
+
+// --- Custom Ingested Items (Smart Web / Place Capture) ---
+
+export function getCustomIngestedItems(): Recommendation[] {
+  return safeJsonParse(getStorage("local")?.getItem(CUSTOM_ITEMS_KEY) || null, []);
+}
+
+export function addCustomIngestedItem(item: Recommendation) {
+  if (!item?.id) return;
+  const current = getCustomIngestedItems();
+  const filtered = current.filter((x) => x.id !== item.id && x.title.toLowerCase() !== item.title.toLowerCase());
+  const next = [item, ...filtered].slice(0, 60);
+  getStorage("local")?.setItem(CUSTOM_ITEMS_KEY, JSON.stringify(next));
+  notifyMLUpdate({ type: "ingest", title: item.title, id: item.id });
+}
+
+export function removeCustomIngestedItem(id: string) {
+  const current = getCustomIngestedItems();
+  const next = current.filter((x) => x.id !== id);
+  getStorage("local")?.setItem(CUSTOM_ITEMS_KEY, JSON.stringify(next));
+  notifyMLUpdate({ type: "remove_ingest", id });
 }
 
 // --- Agenda Items ---
@@ -176,6 +231,7 @@ export function setAgendaItems(items: any[]) {
 }
 
 export function upsertAgendaItem(item: any) {
+  if (!item?.id) return;
   const current = getAgendaItems();
   if (current.find((x: any) => x.id === item.id)) return;
   const date =
@@ -185,17 +241,22 @@ export function upsertAgendaItem(item: any) {
   setAgendaItems([{ ...item, date }, ...current]);
 }
 
-export type FeedbackEntry = {
-  user_id: string;
-  experience_id: string;
-  feedback_type: "like" | "dislike" | "save" | "skip";
-  timestamp: string;
-  title?: string;
-  tags?: string[];
-};
+// --- Continual Learning Feedback History ---
 
 export function getFeedbackHistory(): FeedbackEntry[] {
-  return safeJsonParse(getStorage("local")?.getItem("life_feedback") || null, []);
+  return safeJsonParse(getStorage("local")?.getItem(FEEDBACK_KEY) || null, []);
+}
+
+export function removeFeedbackEntry(experienceId: string) {
+  const current = getFeedbackHistory();
+  const next = current.filter((entry) => entry.experience_id !== experienceId);
+  getStorage("local")?.setItem(FEEDBACK_KEY, JSON.stringify(next));
+  notifyMLUpdate({ type: "feedback_removed", id: experienceId });
+}
+
+export function clearFeedbackHistory() {
+  getStorage("local")?.removeItem(FEEDBACK_KEY);
+  notifyMLUpdate({ type: "feedback_reset" });
 }
 
 // --- Concierge Memory ---

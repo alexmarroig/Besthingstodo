@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
+import {
+  isLocalVenueImage,
+  normalizeRecommendationImageUrl,
+  resolveThemeImageUrl,
+} from "@/shared/recommendation-images";
+import { resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
+import { fetchEditorialImageDeduped, getCachedImageUrl } from "@/shared/image-cache";
 import { getRecommendationSourceMeta } from "@/shared/source";
 import { localizeCategory } from "@/shared/labels-pt";
 import { Recommendation } from "@life/shared-types";
@@ -28,84 +34,92 @@ export default function ExperienceImage({
 }) {
   const theme = fallbackThemes[item.image_fallback_key || "editorial"] || fallbackThemes.editorial;
   const sourceMeta = getRecommendationSourceMeta(item);
-  const directImage = normalizeRecommendationImageUrl(item.image_url);
+
+  const localFallback = useMemo(
+    () => resolveKnownVenueImageForItem(item.id, item.title, item.location) || resolveThemeImageUrl(item),
+    [item]
+  );
+
+  const directImage = useMemo(() => {
+    const known = resolveKnownVenueImageForItem(item.id, item.title, item.location);
+    if (known) return known;
+    const explicit = normalizeRecommendationImageUrl(item.image_url || getCachedImageUrl(item.id));
+    if (explicit) return explicit;
+    return localFallback;
+  }, [item.id, item.title, item.location, item.image_url, localFallback]);
+
   const [resolvedImage, setResolvedImage] = useState<string | null>(directImage);
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [resolving, setResolving] = useState(!directImage);
+  const [loaded, setLoaded] = useState(() => isLocalVenueImage(directImage));
 
-  const imageResolverUrl = useMemo(() => {
-    if (directImage) return directImage;
+  useEffect(() => {
+    setFailed(false);
+    setResolvedImage(directImage);
+    setLoaded(isLocalVenueImage(directImage));
 
+    const hasDedicatedKnown = Boolean(resolveKnownVenueImageForItem(item.id, item.title, item.location));
+    const hasExplicitRemote = Boolean(item.image_url && !isLocalVenueImage(item.image_url));
+    const target = item.booking_url || item.url;
+
+    if (hasDedicatedKnown || hasExplicitRemote || !target || mode === "tile") {
+      return;
+    }
+
+    let active = true;
     const params = new URLSearchParams({
       title: item.title,
       location: item.location || item.neighborhood || "",
       city: item.city || "Sao Paulo",
       domain: item.domain || "",
       id: item.id || "",
+      target,
     });
     if (item.neighborhood) params.set("neighborhood", item.neighborhood);
-    const target = item.booking_url || item.url;
-    if (target) params.set("target", target);
-    return `/api/editorial-image?${params.toString()}`;
-  }, [directImage, item.booking_url, item.city, item.domain, item.id, item.location, item.neighborhood, item.title, item.url]);
 
-  useEffect(() => {
-    let active = true;
-    setFailed(false);
-    setLoaded(false);
-
-    if (directImage) {
-      setResolvedImage(directImage);
-      setResolving(false);
-      return () => {
-        active = false;
-      };
-    }
-
-    setResolving(true);
-    fetch(imageResolverUrl, { cache: "force-cache" })
-      .then((res) => (res.ok ? res.json() : { url: null }))
-      .then((payload) => {
-        if (!active) return;
-        setResolvedImage(normalizeRecommendationImageUrl(payload?.url) || null);
-      })
-      .catch(() => {
-        if (!active) return;
-        setResolvedImage(null);
-      })
-      .finally(() => {
-        if (!active) return;
-        setResolving(false);
-      });
+    fetchEditorialImageDeduped(item.id, `/api/editorial-image?${params.toString()}`).then((remoteUrl) => {
+      if (!active || !remoteUrl) return;
+      const valid = normalizeRecommendationImageUrl(remoteUrl);
+      if (valid) setResolvedImage(valid);
+    });
 
     return () => {
       active = false;
     };
-  }, [directImage, imageResolverUrl]);
+  }, [
+    directImage,
+    item.booking_url,
+    item.city,
+    item.domain,
+    item.id,
+    item.image_url,
+    item.location,
+    item.neighborhood,
+    item.title,
+    item.url,
+    mode,
+  ]);
 
   const rootClass = className ? `relative overflow-hidden ${className}` : "relative h-52 overflow-hidden";
   const showImage = Boolean(resolvedImage) && !failed;
   const isCompact = mode === "tile";
-  const showShimmer = resolving || (showImage && !loaded);
+  const isHero = mode === "hero";
+  const showShimmer = showImage && !loaded && !isLocalVenueImage(resolvedImage);
 
   const overlayBadges = (
-    <>
-      <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-        <span className="rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
-          {localizeCategory(item.category)}
+    <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-2.5">
+      <span className="rounded-full bg-black/60 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
+        {localizeCategory(item.category)}
+      </span>
+      {item.quality_score != null && item.quality_score > 0 ? (
+        <span className="ifood-chip rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
+          {Math.round(item.quality_score)}%
         </span>
-        {item.quality_score != null && item.quality_score > 0 ? (
-          <span className="ifood-chip rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur-sm">
-            Match {Math.round(item.quality_score)}%
-          </span>
-        ) : item.score != null && item.score > 0 ? (
-          <span className="rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-            {Number(item.score).toFixed(1)}
-          </span>
-        ) : null}
-      </div>
-    </>
+      ) : item.score != null && item.score > 0 ? (
+        <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+          {Number(item.score).toFixed(1)}
+        </span>
+      ) : null}
+    </div>
   );
 
   if (showImage) {
@@ -118,26 +132,40 @@ export default function ExperienceImage({
           className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] ${
             loaded ? "opacity-100" : "opacity-0"
           }`}
-          loading="lazy"
+          loading={isHero ? "eager" : "lazy"}
           decoding="async"
+          fetchPriority={isHero ? "high" : "auto"}
           onLoad={() => setLoaded(true)}
           onError={() => {
-            setFailed(true);
-            setLoaded(true);
+            if (resolvedImage !== localFallback && localFallback) {
+              setResolvedImage(localFallback);
+              setLoaded(true);
+            } else {
+              setFailed(true);
+              setLoaded(true);
+            }
           }}
         />
         <div
-          className={`absolute inset-0 bg-gradient-to-t ${
-            isCompact ? "from-black/78 via-black/12 to-transparent" : "from-[#04101d]/90 via-black/25 to-black/10"
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${
+            isCompact
+              ? "from-black/80 via-black/15 to-transparent"
+              : isHero
+                ? "from-black/30 via-transparent to-transparent"
+                : "from-[#04101d]/90 via-black/25 to-black/10"
           }`}
         />
-        {!isCompact && mode !== "hero" ? (
+        {isHero ? null : !isCompact ? (
           <>
-            <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 py-4 text-xs text-white/84">
-              <span className="rounded-full border border-white/15 bg-black/30 px-3 py-1 backdrop-blur-md">{sourceMeta.label}</span>
-              <span className="rounded-full border border-white/10 bg-black/22 px-3 py-1 backdrop-blur-md">{sourceMeta.badge}</span>
+            <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-4 py-4 text-xs text-white/84">
+              <span className="rounded-full border border-white/15 bg-black/30 px-3 py-1 backdrop-blur-md">
+                {sourceMeta.label}
+              </span>
+              <span className="rounded-full border border-white/10 bg-black/22 px-3 py-1 backdrop-blur-md">
+                {sourceMeta.badge}
+              </span>
             </div>
-            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-4 py-3 text-xs text-white/80">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between px-4 py-3 text-xs text-white/80">
               <span>{item.neighborhood || item.location || item.city}</span>
             </div>
           </>
@@ -148,44 +176,10 @@ export default function ExperienceImage({
     );
   }
 
-  if (isCompact || mode === "hero") {
-    return (
-      <div className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
-        {resolving ? <div className="absolute inset-0 shimmer opacity-70" aria-hidden /> : null}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]" />
-        {overlayBadges}
-        {mode === "hero" ? (
-          <div className="absolute inset-x-0 bottom-0 p-4">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-white/65">{sourceMeta.eyebrow || theme.eyebrow}</p>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
   return (
     <div className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
-      {resolving ? <div className="absolute inset-0 shimmer opacity-70" aria-hidden /> : null}
-      <div className="absolute inset-0 transition duration-500 group-hover:scale-[1.04]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.12),transparent_22%)]" />
-      </div>
-      <div className="absolute inset-0 flex flex-col justify-between p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-white/70">{sourceMeta.eyebrow || theme.eyebrow}</p>
-            <p className="mt-2 max-w-[80%] text-2xl font-semibold leading-tight text-white">{item.title}</p>
-          </div>
-          <span className="rounded-full border border-white/15 bg-black/15 px-3 py-1 text-xs text-white/86 backdrop-blur-md">
-            {sourceMeta.label}
-          </span>
-        </div>
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-sm text-white/82">{item.neighborhood || item.location || item.city}</p>
-            <p className="mt-1 text-xs text-white/66">{sourceMeta.badge}</p>
-          </div>
-        </div>
-      </div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]" />
+      {isHero ? null : overlayBadges}
     </div>
   );
 }

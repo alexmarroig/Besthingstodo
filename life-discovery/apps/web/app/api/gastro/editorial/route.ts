@@ -23,6 +23,7 @@ const FALLBACK = [
     content_tier: "signature",
     city: "São Paulo",
     location: "São Paulo",
+    image_url: "/images/venues/sp-evvai.jpg",
     tags: ["paladar", "abertura", "critica"],
     source: "Estadão Paladar",
     editorial_source: "Estadão Paladar",
@@ -48,34 +49,35 @@ export async function GET(request: Request) {
   const limit = Math.min(Number(searchParams.get("limit") || "24"), 40);
 
   try {
-    const liveItems = [];
-    const snapshotHubItems = await loadDailySource("gastro", "São Paulo");
+    const feedTasks = GASTRO_EDITORIAL_SOURCES.flatMap((source) =>
+      (source.feeds || []).map(async (feedUrl) => {
+        const feedItems = await fetchRssFeed(feedUrl, 2500);
+        return feedItems.slice(0, 10).map((item) =>
+          mapRssItemToRecommendation(item, {
+            sourceLabel: source.label,
+            domain: source.domain,
+            contentTier: source.contentTier,
+            baseTags: source.tags,
+            qualityScore: source.contentTier === "signature" ? 88 : 78,
+          })
+        );
+      })
+    );
 
-    for (const source of GASTRO_EDITORIAL_SOURCES) {
-      for (const feedUrl of source.feeds || []) {
-        const feedItems = await fetchRssFeed(feedUrl, 12);
-        for (const item of feedItems.slice(0, 12)) {
-          liveItems.push(
-            mapRssItemToRecommendation(item, {
-              sourceLabel: source.label,
-              domain: source.domain,
-              contentTier: source.contentTier,
-              baseTags: source.tags,
-              qualityScore: source.contentTier === "signature" ? 88 : 78,
-            })
-          );
-        }
-      }
-    }
+    const [snapshotHubItems, snapshotItems, ...feedBatches] = await Promise.all([
+      loadDailySource("gastro", "São Paulo"),
+      loadSnapshot(),
+      ...feedTasks,
+    ]);
 
-    const snapshotItems = await loadSnapshot();
+    const liveItems = feedBatches.flat();
     const merged = dedupeRecommendations([...snapshotHubItems, ...liveItems, ...snapshotItems]);
     const filtered = await enrichRecommendationImagesAsync(filterByTopic(merged, topic).slice(0, limit), {
-      maxOgLookups: 14,
+      maxOgLookups: 4,
     });
 
     if (filtered.length === 0) {
-      return jsonFallback(await enrichRecommendationImagesAsync(filterByTopic(FALLBACK, topic)), {
+      return jsonFallback(await enrichRecommendationImagesAsync(filterByTopic(FALLBACK, topic), { maxOgLookups: 0 }), {
         revalidate: 900,
         fallbackMaxAge: 120,
       });

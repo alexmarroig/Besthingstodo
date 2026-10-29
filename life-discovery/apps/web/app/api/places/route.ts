@@ -95,8 +95,12 @@ export async function GET(request: Request) {
   const apiKey = process.env.GEOAPIFY_API_KEY;
   const googleKey = process.env.GOOGLE_PLACES_API_KEY;
 
-  const localRestaurants = filterByCategory(await loadLocalRestaurants(), categories);
-  const snapshotRestaurants = filterByCategory(await loadDailySource("places", city), categories);
+  const [rawLocalRestaurants, rawSnapshotRestaurants] = await Promise.all([
+    loadLocalRestaurants(),
+    loadDailySource("places", city),
+  ]);
+  const localRestaurants = filterByCategory(rawLocalRestaurants, categories);
+  const snapshotRestaurants = filterByCategory(rawSnapshotRestaurants, categories);
   let remoteResults: RecommendationPayload[] = [];
 
   if (googleKey) {
@@ -148,7 +152,7 @@ export async function GET(request: Request) {
   const merged = mergePlaces([...snapshotRestaurants, ...localRestaurants], remoteResults, 24);
   const filtered = await enrichRecommendationImagesAsync(
     filterByNeighborhood(merged, neighborhood).map((item) => localizeRecommendation(item)),
-    { maxOgLookups: 24 }
+    { maxOgLookups: 4 }
   );
 
   if (filtered.length === 0) {
@@ -156,7 +160,7 @@ export async function GET(request: Request) {
       filterByNeighborhood([...snapshotRestaurants, ...localRestaurants], neighborhood).map((item) =>
         localizeRecommendation(item)
       ),
-      { maxOgLookups: 16 }
+      { maxOgLookups: 2 }
     );
     return jsonWithCache(fallback, { revalidate: 900, stale: 300 });
   }

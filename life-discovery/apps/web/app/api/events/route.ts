@@ -16,6 +16,7 @@ const FALLBACK_EVENTS: RecommendationPayload[] = [
     domain: "events_exhibitions",
     city: "São Paulo",
     location: "Parque Ibirapuera",
+    image_url: "/images/venues/ibirapuera.jpg",
     tags: ["jazz", "música", "ao ar livre"],
     source: "Agenda SP",
     quality_score: 82,
@@ -32,6 +33,7 @@ const FALLBACK_EVENTS: RecommendationPayload[] = [
     domain: "events_exhibitions",
     city: "São Paulo",
     location: "MIS Experience",
+    image_url: "/images/venues/vangogh.jpg",
     tags: ["arte", "exposição", "imersivo"],
     source: "Agenda SP",
     quality_score: 85,
@@ -49,6 +51,7 @@ const FALLBACK_EVENTS: RecommendationPayload[] = [
     domain: "events_exhibitions",
     city: "São Paulo",
     location: "Teatro Comedians",
+    image_url: "/images/venues/standup.jpg",
     tags: ["comédia", "stand-up", "casal"],
     source: "Agenda SP",
     quality_score: 80,
@@ -66,6 +69,7 @@ const FALLBACK_EVENTS: RecommendationPayload[] = [
     domain: "events_exhibitions",
     city: "São Paulo",
     location: "CCSP",
+    image_url: "/images/venues/ccsp.jpg",
     tags: ["cinema", "clássico", "ao ar livre"],
     source: "Agenda SP",
     quality_score: 78,
@@ -82,6 +86,7 @@ const FALLBACK_EVENTS: RecommendationPayload[] = [
     domain: "events_exhibitions",
     city: "São Paulo",
     location: "Largo da Batata",
+    image_url: "/images/venues/largo-da-batata.jpg",
     tags: ["gastronomia", "food truck", "feira"],
     source: "Catraca Livre",
     editorial_source: "Catraca Livre",
@@ -99,6 +104,7 @@ const FALLBACK_EVENTS: RecommendationPayload[] = [
     domain: "events_exhibitions",
     city: "São Paulo",
     location: "Sala São Paulo",
+    image_url: "/images/venues/sala-sao-paulo.jpg",
     tags: ["música clássica", "orquestra", "concerto"],
     source: "Agenda SP",
     quality_score: 86,
@@ -190,9 +196,11 @@ export async function GET(request: Request) {
           ? "restaurant week"
           : keyword;
 
-  const localEvents = await loadLocalEvents();
-  const snapshotEvents = await loadDailySource("events", city);
-  const aggregatedLocal = await fetchAllLocalEvents({ limit: 24, gastroOnly: preset === "gastro" });
+  const [localEvents, snapshotEvents, aggregatedLocal] = await Promise.all([
+    loadLocalEvents(),
+    loadDailySource("events", city),
+    fetchAllLocalEvents({ limit: 24, gastroOnly: preset === "gastro" }),
+  ]);
 
   try {
     let ticketmasterEvents: RecommendationPayload[] = [];

@@ -16,6 +16,7 @@ const FALLBACK = [
     content_tier: "curated",
     city: "São Paulo",
     location: "Largo da Batata",
+    image_url: "/images/venues/largo-da-batata.jpg",
     tags: ["gastronomia", "feira", "food truck"],
     source: "Catraca Livre",
     editorial_source: "Catraca Livre",
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
 
     const enriched = await enrichRecommendationImagesAsync(
       merged.map((item) => localizeRecommendation(item)),
-      { maxOgLookups: 14 }
+      { maxOgLookups: 4 }
     );
 
     return jsonWithCache(enriched, { revalidate: 1800, stale: 600 });

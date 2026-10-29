@@ -93,7 +93,7 @@ function parsePrice(text: string): number | null {
   return null;
 }
 
-async function fetchHtml(url: string, timeoutMs = 12000): Promise<string | null> {
+async function fetchHtml(url: string, timeoutMs = 2500): Promise<string | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -244,7 +244,7 @@ export async function fetchSescSpEvents(limit = 18): Promise<RecommendationPaylo
   });
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 2500);
 
   try {
     const res = await fetch(`https://www.sescsp.org.br/wp-json/wp/v2/posts?${params.toString()}`, {
@@ -386,7 +386,7 @@ export async function fetchMisEvents(limit = 16): Promise<RecommendationPayload[
   });
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 2500);
 
   try {
     const res = await fetch(`https://mis-sp.org.br/wp-json/tribe/events/v1/events?${params.toString()}`, {
@@ -459,7 +459,7 @@ async function fetchItauAgendaSchedules(): Promise<ItauSchedule[]> {
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 2500);
   try {
     const res = await fetch(`https://www.itaucultural.org.br/_next/data/${buildId}/agenda.json`, {
       headers: FETCH_HEADERS,
@@ -574,8 +574,14 @@ export async function fetchSescUnitEvents(limit = 14): Promise<RecommendationPay
   const merged: RecommendationPayload[] = [];
   const seen = new Set<string>();
 
-  for (const unit of SESC_UNIT_PAGES) {
-    const html = await fetchHtml(`https://www.sescsp.org.br/unidades/${unit.slug}/`);
+  const unitHtmls = await Promise.all(
+    SESC_UNIT_PAGES.map(async (unit) => ({
+      unit,
+      html: await fetchHtml(`https://www.sescsp.org.br/unidades/${unit.slug}/`),
+    }))
+  );
+
+  for (const { unit, html } of unitHtmls) {
     if (!html) continue;
 
     const anchorRegex = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;

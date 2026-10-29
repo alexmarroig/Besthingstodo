@@ -251,6 +251,8 @@ function ProfileScreenInner() {
     onSuccess: () => {
       refetch();
       queryClient.invalidateQueries({ queryKey: ["home-recos"] });
+      queryClient.invalidateQueries({ queryKey: ["recommendation-sources"] });
+      queryClient.invalidateQueries({ queryKey: ["dna"] });
     },
   });
 
@@ -488,8 +490,8 @@ function ProfileScreenInner() {
           <div className="editorial-card rounded-[2rem] p-5">
             <p className="text-[11px] uppercase tracking-[0.28em] text-[#f4d06f]">DNA cultural</p>
             <div className="mt-4 grid gap-3">
-              {dna
-                ? Object.entries(dna).map(([key, value]) => (
+              {dna?.cultural_dna
+                ? Object.entries(dna.cultural_dna).map(([key, value]) => (
                     <div key={key} className="rounded-xl border border-white/10 bg-white/5 p-3">
                       <p className="text-[10px] uppercase tracking-wide text-white/45">{key.replaceAll("_", " ")}</p>
                       <p className="mt-1 text-sm text-white">{Array.isArray(value) ? value.join(", ") : String(value)}</p>

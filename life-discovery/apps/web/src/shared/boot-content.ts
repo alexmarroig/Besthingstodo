@@ -35,7 +35,7 @@ export const BOOT_SLIDES: BootSlide[] = [
     id: "ready",
     title: "Quase prontos",
     body: "Organizando carrosséis personalizados para a home. Só mais um instante.",
-    status: "Finalizando sugestões...",
+    status: "Finalizando sugestões e fotos...",
     icon: MapPinned,
   },
 ];

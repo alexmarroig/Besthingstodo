@@ -1,35 +1,54 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Clapperboard, Search, Sparkles, X } from "lucide-react";
 
 import CoupleWeatherBadge from "@/components/discovery/couple-weather-badge";
 import MediaDetailModal from "@/components/discovery/media-detail-modal";
 import MediaRail from "@/components/discovery/media-rail";
-import { fetchTrendingMovies, fetchMoviesByGenre, fetchCoupleMe, fetchUserContext, fetchCinemaNews, fetchNowPlayingMovies } from "@/shared/api/client";
-import { buildFallbackContext } from "@/features/catalog/curation";
+import MediaTile from "@/components/discovery/media-tile";
+import {
+  fetchTrendingMovies,
+  fetchMoviesByGenre,
+  fetchCoupleMe,
+  fetchUserContext,
+  fetchCinemaNews,
+  fetchNowPlayingMovies,
+} from "@/shared/api/client";
+import {
+  buildFallbackContext,
+  buildWatchRecommendations,
+  getCoupleSnapshot,
+} from "@/features/catalog/curation";
+import { buildMLState, rankRecommendationsWithML } from "@/features/catalog/ml/engine";
+import { useContinualLearning } from "@/shared/hooks/use-continual-learning";
+import { attachRecommendationImages } from "@/shared/recommendation-images";
 import { getUserId } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
 
 const GENRE_SECTIONS = [
-  { id: "28", key: "action", title: "Ação e aventura", subtitle: "Para noites que pedem adrenalina e visual forte." },
-  { id: "35", key: "comedy", title: "Comédia", subtitle: "Quando a noite pede leveza e risada sem compromisso." },
-  { id: "18", key: "drama", title: "Drama", subtitle: "Filmes que rendem conversa e ficam na cabeça depois." },
-  { id: "10749", key: "romance", title: "Romance", subtitle: "Para noite mais emotiva e intimista a dois." },
-  { id: "53", key: "thriller", title: "Suspense e thriller", subtitle: "Tensão, viradas e filmes para conversar depois." },
-  { id: "878", key: "scifi", title: "Ficção científica", subtitle: "Quando vocês querem algo que expande a imaginação." },
+  { id: "53", key: "thriller", title: "Suspense & Plot Twist", subtitle: "Tensão elegante, viradas inteligentes e conversa longa depois." },
+  { id: "878", key: "scifi", title: "Ficção Científica", subtitle: "Histórias ambiciosas que expandem a imaginação." },
+  { id: "18", key: "drama", title: "Drama Autoral", subtitle: "Filmes que emocionam e ficam na memória do casal." },
+  { id: "10749", key: "romance", title: "Romance & Encontros", subtitle: "Para noites mais emotivas e intimistas a dois." },
+  { id: "35", key: "comedy", title: "Comédia & Leveza", subtitle: "Quando a noite pede descontração sem esforço." },
+  { id: "28", key: "action", title: "Ação & Aventura", subtitle: "Ritmo intenso e experiência visual de cinema." },
 ];
 
 export default function WatchScreen() {
   const userId = getUserId();
   const [selectedGenre, setSelectedGenre] = useState(GENRE_SECTIONS[0]);
   const [selectedItem, setSelectedItem] = useState<Recommendation | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const { data: context } = useQuery({
     queryKey: ["context", couple?.city || "Sao Paulo", couple?.neighborhood || ""],
     queryFn: () => fetchUserContext(couple || undefined),
   });
+
+  const { feedbackHistory, version: mlVersion, insights } = useContinualLearning(couple, context);
 
   const { data: trending, isLoading: loadingTrending } = useQuery({
     queryKey: ["watch-trending"],
@@ -44,9 +63,13 @@ export default function WatchScreen() {
   const { data: trendingTV } = useQuery({
     queryKey: ["watch-tv-trending"],
     queryFn: async () => {
-      const res = await fetch("/api/tmdb?type=trending&media=tv");
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        const res = await fetch("/api/tmdb?type=trending&media=tv");
+        if (!res.ok) return [];
+        return await res.json();
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -60,78 +83,190 @@ export default function WatchScreen() {
     queryFn: fetchCinemaNews,
   });
 
-  const safeContext = context || buildFallbackContext(couple?.city || "Sao Paulo");
+  const { data: searchedMovies = [], isFetching: searching } = useQuery({
+    queryKey: ["watch-search", searchQuery.trim()],
+    queryFn: async () => {
+      const q = searchQuery.trim();
+      if (q.length < 2) return [];
+      try {
+        const res = await fetch(`/api/tmdb?type=search&query=${encodeURIComponent(q)}`);
+        if (!res.ok) return [];
+        return await res.json();
+      } catch {
+        return [];
+      }
+    },
+    enabled: searchQuery.trim().length >= 2,
+  });
 
-  const movies = useMemo(() => (nowPlaying?.length ? nowPlaying : trending || []).filter((i: any) => i.category === "movie").slice(0, 6), [nowPlaying, trending]);
+  const safeContext = context || buildFallbackContext(couple?.city || "Sao Paulo");
+  const snapshot = useMemo(() => getCoupleSnapshot(couple), [couple]);
+  const mlState = useMemo(() => {
+    void mlVersion;
+    return buildMLState(snapshot, safeContext, feedbackHistory);
+  }, [snapshot, safeContext, feedbackHistory, mlVersion]);
+
+  const coupleWatchPicks = useMemo(() => {
+    void mlVersion;
+    return buildWatchRecommendations({
+      recommendations: [...(trending || []), ...(nowPlaying || [])],
+      context: safeContext,
+      couple: snapshot,
+      limit: 12,
+    });
+  }, [trending, nowPlaying, safeContext, snapshot, mlVersion]);
+
+  const movies = useMemo(() => {
+    const raw = (nowPlaying?.length ? nowPlaying : trending || []).filter((i: any) => i.category === "movie");
+    return attachRecommendationImages(rankRecommendationsWithML(raw, mlState)).slice(0, 14);
+  }, [nowPlaying, trending, mlState]);
+
   const series = useMemo(() => {
     const fromTrending = (trending || []).filter((i: any) => i.category === "series");
     const fromTV = (trendingTV || []).filter((i: any) => i.category === "series");
     const all = [...fromTrending, ...fromTV];
     const seen = new Set<string>();
-    return all.filter((i: any) => { if (seen.has(i.id)) return false; seen.add(i.id); return true; }).slice(0, 6);
-  }, [trending, trendingTV]);
-  const genreItems = useMemo(() => (genreMovies || []).slice(0, 6), [genreMovies]);
+    const deduped = all.filter((i: any) => {
+      if (seen.has(i.id)) return false;
+      seen.add(i.id);
+      return true;
+    });
+    return attachRecommendationImages(rankRecommendationsWithML(deduped, mlState)).slice(0, 14);
+  }, [trending, trendingTV, mlState]);
 
-  const favorites = couple?.profile?.couple_profile_json?.interests?.cinema?.favorite_titles || [];
+  const genreItems = useMemo(
+    () => attachRecommendationImages(rankRecommendationsWithML(genreMovies || [], mlState)).slice(0, 14),
+    [genreMovies, mlState]
+  );
+
+  const rankedSearch = useMemo(
+    () => attachRecommendationImages(rankRecommendationsWithML(searchedMovies || [], mlState)),
+    [searchedMovies, mlState]
+  );
+
+  const favorites =
+    couple?.preferences?.favorite_movies ||
+    couple?.profile?.couple_profile_json?.interests?.cinema?.favorite_titles ||
+    [];
 
   return (
-    <section className="space-y-6">
-      <div className="hero-mesh overflow-hidden rounded-[2.5rem] border border-white/8 p-6 md:p-8">
+    <section className="space-y-7">
+      <div className="hero-mesh overflow-hidden rounded-[2.25rem] border border-white/10 p-6 md:p-8">
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.34em] text-[#f4d06f]">Assistir juntos</p>
-              <h2 className="mt-2 max-w-3xl text-4xl font-semibold leading-[1.04] text-white md:text-5xl">
-                Filmes e séries com dados reais do TMDB
+              <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f4d06f]">
+                <Clapperboard className="h-3.5 w-3.5" />
+                <span>Cinema de Rua & Streaming a Dois</span>
+              </p>
+              <h2 className="mt-2 max-w-3xl font-display text-3xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl">
+                Filmes e séries calibrados pelo gosto do casal
               </h2>
-              <p className="mt-3 max-w-2xl text-sm text-white/72">
-                Posters, sinopses, notas e gêneros vindos do The Movie Database. Trending da semana, séries em alta e filmes filtrados por gênero.
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/70">
+                Catálogo enriquecido via TMDB + salas de cinema de rua de São Paulo (Belas Artes, CineSesc, Reserva
+                Cultural), ordenado em tempo real pelo algoritmo de aprendizado contínuo ({insights.confidencePercent}%
+                calibrado).
               </p>
             </div>
 
             {favorites.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {favorites.slice(0, 4).map((item: string) => (
-                  <span key={item} className="rounded-full border border-white/10 bg-white/7 px-4 py-2 text-sm text-white/78">
-                    {item}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-white/45">Referências do casal:</span>
+                {favorites.slice(0, 5).map((item: string) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-[#f4d06f]/25 bg-[#f4d06f]/10 px-3.5 py-1 text-xs font-medium text-[#f4d06f]"
+                  >
+                    ★ {item}
                   </span>
                 ))}
               </div>
             )}
+
+            {/* Search Input */}
+            <div className="relative max-w-xl pt-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar filme, série, diretor ou tema (ex.: Interstellar, suspense, The Bear)..."
+                className="w-full rounded-full border border-white/12 bg-black/35 py-2.5 pl-10 pr-9 text-sm text-white placeholder:text-white/40 focus:border-[#ff7a59]/60 focus:outline-none"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/50 hover:text-white"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Filmes trending</p>
-              <p className="mt-3 text-4xl font-semibold text-white">{movies.length}</p>
-              <p className="mt-2 text-sm text-white/62">Os filmes mais populares desta semana.</p>
+            <div className="rounded-[1.6rem] border border-white/10 bg-black/22 p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#f4d06f]">
+                Curadoria Neural
+              </p>
+              <p className="mt-1.5 text-2xl font-semibold text-white">
+                {coupleWatchPicks.length + movies.length + series.length} títulos
+              </p>
+              <p className="mt-1 text-xs text-white/60">
+                Pontuados por afinidade semântica, gênero e clima de hoje.
+              </p>
             </div>
-            <div className="rounded-[1.8rem] border border-white/10 bg-black/18 p-5">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/48">Séries em alta</p>
-              <p className="mt-3 text-4xl font-semibold text-white">{series.length}</p>
-              <p className="mt-2 text-sm text-white/62">As séries mais assistidas agora.</p>
-            </div>
-            <CoupleWeatherBadge context={safeContext} couple={couple || undefined} />
+            <CoupleWeatherBadge context={safeContext} couple={couple || undefined} compact />
           </div>
         </div>
       </div>
 
-      {loadingTrending && <p className="text-sm text-white/60">Buscando filmes e séries do TMDB...</p>}
+      {/* Live Search Results */}
+      {searchQuery.trim().length >= 2 ? (
+        <div className="surface space-y-4 p-5">
+          <div className="flex items-center justify-between">
+            <h3 className="rail-title">
+              Resultados para &quot;{searchQuery}&quot; ({rankedSearch.length})
+            </h3>
+            {searching ? <span className="text-xs text-white/50">Buscando no TMDB…</span> : null}
+          </div>
+          {rankedSearch.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6">
+              {rankedSearch.map((item) => (
+                <MediaTile key={item.id} item={item} onOpen={setSelectedItem} variant="poster" />
+              ))}
+            </div>
+          ) : !searching ? (
+            <p className="text-sm text-white/55">Nenhum título encontrado para esta busca.</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {coupleWatchPicks.length > 0 && (
+        <MediaRail
+          title="Escolhas sob medida para assistir juntos"
+          subtitle="Circuito de cinema de rua em SP + sessões especiais em casa alinhadas ao repertório de vocês"
+          items={coupleWatchPicks}
+          onOpen={setSelectedItem}
+        />
+      )}
 
       {movies.length > 0 && (
         <MediaRail
-          title="Filmes em cartaz"
-          subtitle="Estreias e filmes em exibição no Brasil"
+          title="Filmes em alta & em cartaz"
+          subtitle="Ordenados pelo Match IA do casal"
           items={movies}
           onOpen={setSelectedItem}
           variant="poster"
+          loading={loadingTrending}
         />
       )}
 
       {series.length > 0 && (
         <MediaRail
-          title="Séries em alta"
-          subtitle="Para maratonar a dois"
+          title="Séries para maratonar a dois"
+          subtitle="Dramas, gastronomia, mistério e sci-fi com alta nota"
           items={series}
           onOpen={setSelectedItem}
           variant="poster"
@@ -141,19 +276,24 @@ export default function WatchScreen() {
       {/* Genre Filter */}
       <div className="space-y-4">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.32em] text-[#f4d06f]">Por gênero</p>
-          <h3 className="mt-2 text-3xl font-semibold">Escolher por tipo ficou fácil</h3>
-          <p className="mt-2 text-sm text-white/66">Filtre por gênero e veja o que combina com a vibe da noite.</p>
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f4d06f]">
+            <Sparkles className="h-3 w-3" />
+            <span>Explorar por atmosfera</span>
+          </p>
+          <h3 className="mt-1 font-display text-2xl font-semibold text-white sm:text-3xl">
+            Escolha pela vibe da noite
+          </h3>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {GENRE_SECTIONS.map((g) => (
             <button
               key={g.id}
+              type="button"
               onClick={() => setSelectedGenre(g)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
+              className={`rounded-full px-4 py-2 text-xs font-medium transition sm:text-sm ${
                 selectedGenre.id === g.id
-                  ? "bg-[#f97352] text-white shadow-[0_12px_28px_rgba(249,115,82,0.24)]"
+                  ? "bg-gradient-to-r from-[#ff7a59] to-[#f97352] text-white shadow-md"
                   : "border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
               }`}
             >
@@ -162,24 +302,20 @@ export default function WatchScreen() {
           ))}
         </div>
 
-        <div>
-          <h4 className="text-2xl font-semibold text-white">{selectedGenre.title}</h4>
-          <p className="mt-1 text-sm text-white/62">{selectedGenre.subtitle}</p>
-        </div>
-
-        {loadingGenre ? (
-          <div className="grid gap-3 md:grid-cols-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="skeleton h-48 rounded-xl" />)}
-          </div>
-        ) : (
-          <MediaRail title={`Gênero: ${selectedGenre.title}`} items={genreItems} onOpen={setSelectedItem} variant="poster" />
-        )}
+        <MediaRail
+          title={selectedGenre.title}
+          subtitle={selectedGenre.subtitle}
+          items={genreItems}
+          onOpen={setSelectedItem}
+          variant="poster"
+          loading={loadingGenre}
+        />
       </div>
 
       {(cinemaNews || []).length > 0 && (
         <MediaRail
-          title="Notícias de cinema e séries"
-          subtitle="Feed editorial de Omelete e AdoroCinema"
+          title="Radar de Cinema & Críticas"
+          subtitle="Destaques editoriais de Omelete e AdoroCinema"
           items={(cinemaNews || []).slice(0, 12)}
           onOpen={setSelectedItem}
         />

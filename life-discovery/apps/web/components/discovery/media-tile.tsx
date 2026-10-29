@@ -1,9 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import { Bookmark, Heart } from "lucide-react";
+
 import ExperienceImage from "./experience-image";
 import { MediaTileVariant } from "./media-tile-skeleton";
+import { sendFeedback } from "@/shared/api/client";
 import { localizeCategory } from "@/shared/labels-pt";
 import { getRecommendationSourceMeta } from "@/shared/source";
+import { getUserId, isItemSaved, upsertAgendaItem, upsertSavedItem } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
 
 export type { MediaTileVariant };
@@ -32,22 +37,87 @@ export default function MediaTile({
   const match = matchLabel(item);
   const location = item.neighborhood || item.location;
 
+  const [saved, setSaved] = useState(() => isItemSaved(item.id));
+  const [liked, setLiked] = useState(false);
+
+  const handleQuickFeedback = (
+    e: React.MouseEvent,
+    type: "like" | "save"
+  ) => {
+    e.stopPropagation();
+    const userId = getUserId();
+    void sendFeedback(userId, item.id, type, {
+      title: item.title,
+      tags: item.tags,
+      domain: item.domain,
+      category: item.category,
+      neighborhood: item.neighborhood || undefined,
+      location: item.location,
+      price: item.price,
+      indoor_outdoor: item.indoor_outdoor,
+    });
+    if (type === "save") {
+      upsertSavedItem(item);
+      setSaved(true);
+    } else {
+      upsertAgendaItem(item);
+      setLiked(true);
+    }
+  };
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onOpen(item)}
-      className={`group shrink-0 snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a59]/50 ${
-        isPoster ? "w-[128px] sm:w-[142px]" : "w-[200px] sm:w-[228px]"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(item);
+        }
+      }}
+      className={`group shrink-0 cursor-pointer snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a59]/50 ${
+        isPoster ? "w-[134px] sm:w-[148px]" : "w-[210px] sm:w-[236px]"
       }`}
     >
       <div className={`experience-card relative overflow-hidden ${isPoster ? "aspect-[2/3]" : "aspect-[4/3]"}`}>
         <ExperienceImage item={item} mode="tile" className="absolute inset-0 h-full w-full" />
+
+        {/* Quick 1-Tap ML Feedback Overlay */}
+        <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 opacity-90 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+          <button
+            type="button"
+            title="Curtir e treinar IA"
+            onClick={(e) => handleQuickFeedback(e, "like")}
+            className={`flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-md transition ${
+              liked
+                ? "bg-[#ff7a59] text-white shadow-md"
+                : "bg-black/60 text-white/80 hover:bg-[#ff7a59]/80 hover:text-white"
+            }`}
+          >
+            <Heart className="h-3.5 w-3.5" fill={liked ? "currentColor" : "none"} />
+          </button>
+          <button
+            type="button"
+            title="Salvar na coleção"
+            onClick={(e) => handleQuickFeedback(e, "save")}
+            className={`flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-md transition ${
+              saved
+                ? "bg-[#f4d06f] text-black shadow-md"
+                : "bg-black/60 text-white/80 hover:bg-[#f4d06f]/85 hover:text-black"
+            }`}
+          >
+            <Bookmark className="h-3.5 w-3.5" fill={saved ? "currentColor" : "none"} />
+          </button>
+        </div>
       </div>
 
       <div className="mt-2.5 space-y-1 px-0.5">
-        <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-white sm:text-[14px]">{item.title}</p>
+        <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-white transition-colors group-hover:text-[#ffb89a] sm:text-[14px]">
+          {item.title}
+        </p>
 
-        <div className="flex items-center gap-1.5 text-[11px] text-white/42">
+        <div className="flex items-center gap-1.5 text-[11px] text-white/45">
           <span className="truncate">{sourceMeta.label}</span>
           {location ? (
             <>
@@ -59,16 +129,16 @@ export default function MediaTile({
 
         <div className="flex flex-wrap items-center gap-1.5">
           {match ? <span className="pill-accent px-2 py-0.5 text-[10px]">{match}</span> : null}
-          <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-white/50">
+          <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-white/55">
             {localizeCategory(item.category)}
           </span>
           {item.personalization_label ? (
-            <span className="rounded-full bg-[#f4d06f]/10 px-2 py-0.5 text-[10px] text-[#f4d06f]">
+            <span className="rounded-full bg-[#f4d06f]/12 px-2 py-0.5 text-[10px] font-medium text-[#f4d06f]">
               {item.personalization_label}
             </span>
           ) : null}
         </div>
       </div>
-    </button>
+    </div>
   );
 }

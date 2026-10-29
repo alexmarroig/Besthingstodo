@@ -1,4 +1,4 @@
-﻿import {
+import {
   ConciergeOption,
   ConciergeResponse,
   CoupleSnapshot,
@@ -6,7 +6,7 @@
   ExperienceContext,
   Recommendation
 } from "./types";
-import { buildMLState, scoreItemWithML, type FeedbackEntry } from "../ml/engine";
+import { buildMLState, diversifyWithMMR, scoreItemWithML, type FeedbackEntry, type MLInsights } from "../ml/engine";
 import { attachRecommendationImages } from "@/shared/recommendation-images";
 
 const DEFAULT_PROFILE = {
@@ -931,11 +931,35 @@ function shouldSuppressGenericItem(item: Recommendation, couple: CoupleSnapshot)
 function uniqueByTitle(items: Recommendation[]) {
   const map = new Map<string, Recommendation>();
   for (const item of items) {
-    const key = normalizeText([item.title, item.location].join(" "));
+    const cleanTitle = normalizeText(item.title.split(/[+—–-]/)[0] || item.title);
+    const key = `${item.domain}:${cleanTitle || normalizeText(item.title)}`;
     const existing = map.get(key);
-    if (!existing || (item.quality_score || 0) > (existing.quality_score || 0)) {
+    if (!existing) {
       map.set(key, item);
+      continue;
     }
+    const primary = (item.quality_score || 0) >= (existing.quality_score || 0) ? item : existing;
+    const secondary = primary === item ? existing : item;
+    map.set(key, {
+      ...secondary,
+      ...primary,
+      image_url: primary.image_url || secondary.image_url || null,
+      url: primary.url || secondary.url || null,
+      booking_url: primary.booking_url || secondary.booking_url || null,
+      latitude: primary.latitude ?? secondary.latitude ?? null,
+      longitude: primary.longitude ?? secondary.longitude ?? null,
+      neighborhood:
+        primary.neighborhood && primary.neighborhood !== primary.title
+          ? primary.neighborhood
+          : secondary.neighborhood || primary.neighborhood,
+      location:
+        primary.location && primary.location !== primary.title
+          ? primary.location
+          : secondary.location || primary.location,
+      personalization_label: primary.personalization_label || secondary.personalization_label,
+      related_favorite: primary.related_favorite || secondary.related_favorite,
+      couple_fit_reason: primary.couple_fit_reason || secondary.couple_fit_reason,
+    });
   }
   return Array.from(map.values());
 }
@@ -959,8 +983,13 @@ export function curateRecommendations(
       const neighborhood = inferNeighborhood(item);
       const indoorOutdoor = inferIndoorOutdoor(item);
       const ruleScore = scoreRecommendation(item, couple, context);
-      const { mlScore, mlReason } = scoreItemWithML(item, mlState);
-      const qualityScore = Math.round(ruleScore * 0.4 + mlScore * 0.6);
+      const { mlScore, mlReason, breakdown } = scoreItemWithML(item, mlState);
+      const baseQuality = item.quality_score ? Math.round(item.quality_score * 0.42 + ruleScore * 0.58) : ruleScore;
+      const mlWeight = 0.48 + 0.24 * mlState.modelConfidence;
+      let qualityScore = Math.round(baseQuality * (1 - mlWeight) + mlScore * mlWeight);
+      if (mlState.likedIds.has(item.id)) qualityScore = Math.min(99, qualityScore + 9);
+      else if (mlState.savedIds.has(item.id)) qualityScore = Math.min(99, qualityScore + 6);
+      if (mlState.dislikedIds.has(item.id)) qualityScore = Math.max(12, qualityScore - 48);
       const avoidReason = buildAvoidReason(item, couple, context);
       const favoriteMatch = favoriteVenueMatches(item, couple)[0];
       const weatherFit = context.isRainy
@@ -982,17 +1011,29 @@ export function curateRecommendations(
         related_favorite: item.related_favorite || favoriteMatch || undefined,
         avoid_reason: item.avoid_reason || avoidReason || undefined,
         image_fallback_key: item.image_fallback_key || inferFallbackKey(item),
-        quality_score: item.quality_score ?? qualityScore,
-        score: (item.quality_score ?? qualityScore) / 10,
-        reason: item.reason || mlReason,
+        quality_score: qualityScore,
+        score: Number((qualityScore / 10).toFixed(1)),
+        reason: mlReason || item.reason,
+        profile_signals: Array.from(new Set([...((item.profile_signals as string[]) || []), ...breakdown.topSignals])),
       };
     })
+    .filter((item) => !mlState.dislikedIds.has(item.id))
     .filter((item) => !shouldSuppressGenericItem(item, couple))
     .filter((item) => (item.quality_score || 0) >= 40)
     .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
 
-  const limited = curated.slice(0, options?.limit || curated.length);
-  return attachRecommendationImages(limited);
+  const diversified = diversifyWithMMR(curated, 0.82, options?.limit || curated.length);
+  return attachRecommendationImages(diversified);
+}
+
+export function computeCoupleMLInsights(
+  couple?: CoupleSnapshot | null,
+  context?: ExperienceContext | null,
+  feedback?: FeedbackEntry[]
+): MLInsights {
+  const snapshot = getCoupleSnapshot(couple);
+  const safeContext = context || buildFallbackContext(snapshot.city);
+  return buildMLState(snapshot, safeContext, feedback || []).insights;
 }
 
 export function buildDayBrief(items: Recommendation[], context: ExperienceContext, couple?: CoupleSnapshot) {

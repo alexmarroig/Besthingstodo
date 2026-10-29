@@ -1,4 +1,5 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { resolveContextualLocalImage, resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
 
 type CommonsPage = {
   title?: string;
@@ -155,6 +156,12 @@ export async function GET(request: NextRequest) {
   const title = request.nextUrl.searchParams.get("title") || "";
   const location = request.nextUrl.searchParams.get("location") || "";
   const city = request.nextUrl.searchParams.get("city") || "Sao Paulo";
+  const id = request.nextUrl.searchParams.get("id") || "";
+
+  const knownLocal = resolveKnownVenueImageForItem(id, title, location);
+  if (knownLocal) {
+    return NextResponse.json({ url: knownLocal, source: "local_curated", title });
+  }
 
   const primaryQuery = [location, city].filter(Boolean).join(" ").trim();
   const secondaryQuery = [title, location, city].filter(Boolean).join(" ").trim();
@@ -182,8 +189,10 @@ export async function GET(request: NextRequest) {
       if (commonsPick) return NextResponse.json(commonsPick);
     }
 
-    return NextResponse.json({ url: null, source: null });
+    const fallbackLocal = resolveContextualLocalImage({ id, title, location });
+    return NextResponse.json({ url: fallbackLocal, source: "local_contextual" });
   } catch {
-    return NextResponse.json({ url: null, source: null });
+    const fallbackLocal = resolveContextualLocalImage({ id, title, location });
+    return NextResponse.json({ url: fallbackLocal, source: "local_contextual" });
   }
 }

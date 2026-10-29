@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#171026"/>
+      <stop offset="55%" stop-color="#3b1d5e"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="80%" cy="20%" r="55%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#171026" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="20%" cy="85%" r="50%">
+      <stop offset="0%" stop-color="#fcd34d" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#171026" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect width="800" height="600" fill="url(#glow1)"/>
+  <rect width="800" height="600" fill="url(#glow2)"/>
+  <circle cx="640" cy="140" r="180" fill="none" stroke="#fcd34d" stroke-opacity="0.12" stroke-width="1.5"/>
+  <circle cx="640" cy="140" r="110" fill="none" stroke="#fcd34d" stroke-opacity="0.18" stroke-width="1"/>
+  <path d="M 60 440 L 740 440" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1"/>
+  <text x="64" y="290" fill="#fcd34d" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="4">NOITE AO VIVO · SÃO PAULO</text>
+  <text x="64" y="355" fill="#ffffff" font-family="Georgia, serif" font-size="52" font-weight="700">Jazz &amp; Drinks</text>
+  <text x="64" y="402" fill="#e2e8f0" fill-opacity="0.82" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="400">Quarteto instrumental, meia-luz e atmosfera intimista</text>
+</svg>

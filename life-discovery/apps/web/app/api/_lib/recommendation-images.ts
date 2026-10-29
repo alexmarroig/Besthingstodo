@@ -1,9 +1,10 @@
-import { normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
-import { resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
+import { isLocalVenueImage, normalizeRecommendationImageUrl } from "@/shared/recommendation-images";
+import { resolveContextualLocalImage, resolveKnownVenueImageForItem } from "@/shared/known-venue-images";
 
 import {
   type ImageCandidate,
   type ImageResolveContext,
+  acceptUniqueImageUrl,
   resolveRecommendationImageCore,
 } from "./image-resolver";
 import type { RecommendationPayload } from "./recommendation-mapper";
@@ -23,16 +24,17 @@ function sortByImagePriority<T extends RecommendationPayload>(items: T[]): T[] {
 
 function applyKnownImages<T extends RecommendationPayload>(items: T[]): T[] {
   return items.map((item) => {
+    const known = resolveKnownVenueImageForItem(item.id, item.title, item.location);
+    if (known) return item.image_url === known ? item : { ...item, image_url: known };
     if (normalizeRecommendationImageUrl(item.image_url)) return item;
-    const known = resolveKnownVenueImageForItem(item.id, item.title);
-    return known ? { ...item, image_url: known } : item;
+    return item;
   });
 }
 
 function needsRemoteLookup(item: RecommendationPayload): boolean {
+  if (resolveKnownVenueImageForItem(item.id, item.title, item.location)) return false;
   if (normalizeRecommendationImageUrl(item.image_url)) return false;
-  if (resolveKnownVenueImageForItem(item.id, item.title)) return false;
-  return true;
+  return Boolean(item.booking_url || item.url);
 }
 
 export async function resolveRecommendationImageUrlAsync(
@@ -44,7 +46,11 @@ export async function resolveRecommendationImageUrlAsync(
 }
 
 export function resolveRecommendationImageUrl(item: ImageCandidate): string | null {
-  return normalizeRecommendationImageUrl(item.image_url);
+  return (
+    resolveKnownVenueImageForItem(item.id, item.title, item.location) ||
+    normalizeRecommendationImageUrl(item.image_url) ||
+    resolveContextualLocalImage(item)
+  );
 }
 
 export function enrichRecommendationImages<T extends RecommendationPayload>(items: T[]): T[] {
@@ -67,29 +73,32 @@ export async function enrichRecommendationImagesAsync<T extends RecommendationPa
     domainOgUrls: new Map<string, Set<string>>(),
   };
 
-  let lookupsRemaining = options?.maxOgLookups ?? prioritized.filter(needsRemoteLookup).length;
+  // Keep remote lookups fast and bounded (max 4 per API call) so endpoints respond in < 1.5s
+  let lookupsRemaining = Math.min(options?.maxOgLookups ?? 4, 4);
 
   for (let index = 0; index < prioritized.length; index += batchSize) {
     const batch = prioritized.slice(index, index + batchSize);
     const resolved = await Promise.all(
       batch.map(async (item) => {
-        if (normalizeRecommendationImageUrl(item.image_url)) {
-          const url = item.image_url!;
-          const used = ctx.usedUrls?.get(url) ?? 0;
-          ctx.usedUrls?.set(url, used + 1);
-          return item;
+        const known = resolveKnownVenueImageForItem(item.id, item.title, item.location);
+        if (known) {
+          return { ...item, image_url: known };
         }
 
-        if (!needsRemoteLookup(item)) {
-          const known = resolveKnownVenueImageForItem(item.id, item.title);
-          return known ? { ...item, image_url: known } : item;
+        const existing = normalizeRecommendationImageUrl(item.image_url);
+        if (existing) {
+          if (isLocalVenueImage(existing)) return { ...item, image_url: existing };
+          const accepted = acceptUniqueImageUrl(existing, ctx);
+          return { ...item, image_url: accepted || resolveContextualLocalImage(item) };
         }
 
-        if (lookupsRemaining <= 0) return item;
+        if (!needsRemoteLookup(item) || lookupsRemaining <= 0) {
+          return { ...item, image_url: resolveContextualLocalImage(item) };
+        }
+
         lookupsRemaining -= 1;
-
         const image_url = await resolveRecommendationImageUrlAsync(item, ctx);
-        return image_url ? { ...item, image_url } : item;
+        return { ...item, image_url: image_url || resolveContextualLocalImage(item) };
       })
     );
 
@@ -98,5 +107,5 @@ export async function enrichRecommendationImagesAsync<T extends RecommendationPa
     }
   }
 
-  return withKnown.map((item) => enrichedById.get(item.id) || item);
+  return withKnown.map((item) => enrichedById.get(item.id) || { ...item, image_url: resolveContextualLocalImage(item) });
 }

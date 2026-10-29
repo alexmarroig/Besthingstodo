@@ -3,21 +3,23 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MapPinned } from "lucide-react";
 
 import { buildFallbackContext, curateRecommendations } from "@/features/catalog/curation";
 import { fetchCoupleMe, fetchRecommendationSources, fetchUserContext } from "@/shared/api/client";
 import { RECOMMENDATION_POOL_LIMIT } from "@/shared/api/config";
-import { getFeedbackHistory, getUserId } from "@/shared/storage";
+import { useContinualLearning } from "@/shared/hooks/use-continual-learning";
+import { getUserId } from "@/shared/storage";
 
 const SOURCE_STALE_MS = 5 * 60_000;
 
 const ExperienceMap = dynamic(() => import("@/components/discovery/experience-map"), {
   ssr: false,
   loading: () => (
-    <div className="surface flex min-h-[320px] items-center justify-center p-6">
+    <div className="surface flex min-h-[340px] items-center justify-center p-6">
       <div className="space-y-3 text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#ff7a59]" />
-        <p className="text-sm text-white/45">Carregando mapa de bairros…</p>
+        <p className="text-sm text-white/45">Carregando radar de bairros e mapa interativo…</p>
       </div>
     </div>
   ),
@@ -48,15 +50,18 @@ export default function MapScreen() {
     staleTime: SOURCE_STALE_MS,
   });
 
+  const { feedbackHistory, version: mlVersion, insights } = useContinualLearning(couple, context);
+
   const items = useMemo(() => {
+    void mlVersion;
     if (!sources.length) return [];
     return curateRecommendations(sources, {
       context: context || buildFallbackContext(city),
       couple: couple || undefined,
-      feedback: getFeedbackHistory(),
+      feedback: feedbackHistory,
       limit: RECOMMENDATION_POOL_LIMIT,
     });
-  }, [sources, context, couple, city]);
+  }, [sources, context, couple, city, feedbackHistory, mlVersion]);
 
   const neighborhoods = useMemo(() => {
     const set = new Set<string>();
@@ -67,26 +72,33 @@ export default function MapScreen() {
   }, [items]);
 
   return (
-    <section className="space-y-8">
-      <header className="animate-fade-up space-y-4">
+    <section className="space-y-7">
+      <header className="hero-mesh animate-fade-up rounded-[2rem] border border-white/10 p-6 sm:p-8">
         <div className="space-y-2">
-          <p className="text-xs text-white/45">Explorar a cidade</p>
-          <h2 className="font-display text-3xl font-semibold text-white sm:text-4xl">Por bairro</h2>
-          <p className="max-w-lg text-sm text-white/55">
-            Sugestões organizadas por distância e tipo de noite — sem mapa genérico.
+          <p className="inline-flex items-center gap-1.5 text-xs font-medium text-[#f4d06f]">
+            <MapPinned className="h-3.5 w-3.5" />
+            <span>Explorar a Cidade & Radar Geográfico IA</span>
+          </p>
+          <h2 className="font-display text-3xl font-semibold text-white sm:text-4xl">
+            São Paulo por Bairro
+          </h2>
+          <p className="max-w-xl text-sm leading-relaxed text-white/65">
+            Experiências agrupadas por região, distância e afinidade aprendida do casal — com mapa interativo embutido e
+            rotas diretas no GPS.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="pill">{items.length} sugestões</span>
-          {neighborhoods > 0 ? <span className="pill">{neighborhoods} bairros</span> : null}
-          {couple?.neighborhood ? <span className="pill-accent">{couple.neighborhood}</span> : null}
+        <div className="mt-5 flex flex-wrap gap-2">
+          <span className="pill">{items.length} sugestões mapeadas</span>
+          {neighborhoods > 0 ? <span className="pill">{neighborhoods} bairros ativos</span> : null}
+          {couple?.neighborhood ? <span className="pill-accent">Base: {couple.neighborhood}</span> : null}
+          <span className="pill">IA {insights.confidencePercent}% calibrada</span>
         </div>
       </header>
 
       {isLoading ? (
-        <div className="surface min-h-[320px] shimmer" />
+        <div className="surface min-h-[340px] shimmer" />
       ) : items.length > 0 ? (
-        <div className="animate-slide-up stagger-2 overflow-hidden rounded-[1.75rem] ring-1 ring-white/[0.06]">
+        <div className="animate-slide-up stagger-2 overflow-hidden rounded-[2rem] ring-1 ring-white/[0.08]">
           <ExperienceMap items={items} focusTitle={focus} />
         </div>
       ) : (

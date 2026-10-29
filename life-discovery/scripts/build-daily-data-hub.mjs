@@ -15,6 +15,20 @@ async function readJson(filePath, fallback) {
   }
 }
 
+function resolveDefaultLocalImage(item, domain) {
+  const hay = [item.title, item.description, item.category, ...(Array.isArray(item.tags) ? item.tags : [])]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (hay.includes("pizza") || hay.includes("braz")) return "/images/venues/braz-pizzaria.jpg";
+  if (hay.includes("sushi") || hay.includes("japon") || hay.includes("omakase")) return "/images/venues/sushi-vaz.jpg";
+  if (hay.includes("vinho") || hay.includes("wine")) return "/images/venues/sede-261.jpg";
+  if (hay.includes("cafe") || hay.includes("café") || hay.includes("padaria")) return "/images/venues/coffee-lab.jpg";
+  if (domain === "events_exhibitions") return "/images/venues/ibirapuera.jpg";
+  if (domain === "delivery") return "/images/venues/z-deli.jpg";
+  return "/images/venues/mani.jpg";
+}
+
 function normalizeItem(item, domain) {
   return {
     id: item.id,
@@ -28,7 +42,7 @@ function normalizeItem(item, domain) {
     tags: Array.isArray(item.tags) ? item.tags : [],
     source: item.source || item.editorial_source || "Data Hub",
     editorial_source: item.editorial_source || null,
-    image_url: item.image_url || null,
+    image_url: item.image_url || resolveDefaultLocalImage(item, domain),
     cta_url: item.booking_url || item.url || null,
     quality_score: item.quality_score ?? 70,
     payload: item,

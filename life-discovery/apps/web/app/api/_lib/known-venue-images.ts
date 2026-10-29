@@ -3,4 +3,5 @@ export {
   resolveKnownVenueImage,
   resolveKnownVenueImageByTitle,
   resolveKnownVenueImageForItem,
+  resolveContextualLocalImage,
 } from "@/shared/known-venue-images";

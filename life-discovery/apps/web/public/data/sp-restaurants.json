@@ -9,6 +9,7 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
+    "image_url": "/images/venues/sp-lellis.jpg",
     "tags": [
       "italiana",
       "massas",
@@ -36,6 +37,7 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
+    "image_url": "/images/venues/sp-libertango.jpg",
     "tags": [
       "carne",
       "argentina",
@@ -63,6 +65,7 @@
     "city": "São Paulo",
     "location": "Vila Olímpia",
     "neighborhood": "Vila Olímpia",
+    "image_url": "/images/venues/sp-issho.jpg",
     "tags": [
       "japonês",
       "sushi",
@@ -88,12 +91,14 @@
     "city": "São Paulo",
     "location": "Mooca",
     "neighborhood": "Mooca",
+    "image_url": "/images/venues/sp-pizza-mooca.jpg",
     "tags": [
       "pizza",
       "italiana",
       "tradicional"
     ],
     "source": "Guia SP",
+    "url": "https://www.apizzadamooca.com.br/",
     "availability_kind": "venue",
     "quality_score": 88,
     "score": 8.8,
@@ -112,6 +117,7 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
+    "image_url": "/images/venues/sp-mani.jpg",
     "tags": [
       "autoral",
       "brasileira",
@@ -138,6 +144,7 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
+    "image_url": "/images/venues/sp-evvai.jpg",
     "tags": [
       "fine dining",
       "vinho",
@@ -164,6 +171,7 @@
     "city": "São Paulo",
     "location": "Centro",
     "neighborhood": "Centro",
+    "image_url": "/images/venues/sp-casa-porco.jpg",
     "tags": [
       "autoral",
       "porco",
@@ -190,6 +198,7 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
+    "image_url": "/images/venues/sp-braz.jpg",
     "tags": [
       "pizza",
       "napolitana",
@@ -215,12 +224,14 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
+    "image_url": "/images/venues/sp-zdeli.jpg",
     "tags": [
       "sanduíche",
       "deli",
       "casual"
     ],
     "source": "Guia SP",
+    "url": "https://www.zdeli.com.br/",
     "availability_kind": "venue",
     "quality_score": 87,
     "score": 8.7,
@@ -239,6 +250,7 @@
     "city": "São Paulo",
     "location": "Vila Madalena",
     "neighborhood": "Vila Madalena",
+    "image_url": "/images/venues/sp-octavio.jpg",
     "tags": [
       "café",
       "brunch",
@@ -263,6 +275,7 @@
     "city": "São Paulo",
     "location": "Pinheiros",
     "neighborhood": "Pinheiros",
+    "image_url": "/images/venues/sp-travessa.jpg",
     "tags": [
       "café",
       "livraria",
@@ -288,12 +301,14 @@
     "city": "São Paulo",
     "location": "Itaim Bibi",
     "neighborhood": "Itaim Bibi",
+    "image_url": "/images/venues/sp-patties.jpg",
     "tags": [
       "delivery",
       "burger",
       "casal"
     ],
     "source": "Guia SP",
+    "url": "https://pattiesburger.com/cardapio/",
     "availability_kind": "delivery",
     "quality_score": 86,
     "score": 8.6,

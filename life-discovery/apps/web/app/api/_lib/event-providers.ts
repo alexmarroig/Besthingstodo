@@ -40,7 +40,7 @@ function enrichTags(title: string, base: string[]) {
   return Array.from(tags);
 }
 
-async function fetchHtml(url: string, timeoutMs = 12000): Promise<string | null> {
+async function fetchHtml(url: string, timeoutMs = 2500): Promise<string | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -204,14 +204,13 @@ function extractLinkCards(
 }
 
 export async function fetchRssLocalEvents(limitPerSource = 12): Promise<RecommendationPayload[]> {
-  const items: RecommendationPayload[] = [];
-
-  for (const source of LOCAL_EVENT_SOURCES) {
-    for (const feedUrl of source.feeds || []) {
-      const feedItems = await fetchRssFeed(feedUrl, 12);
-      for (const item of feedItems.slice(0, limitPerSource)) {
-        if (SKIP_TITLE_KEYWORDS.some((keyword) => item.title.toLowerCase().includes(keyword))) continue;
-        items.push(
+  const tasks = LOCAL_EVENT_SOURCES.flatMap((source) =>
+    (source.feeds || []).map(async (feedUrl) => {
+      const feedItems = await fetchRssFeed(feedUrl, 2500);
+      return feedItems
+        .slice(0, limitPerSource)
+        .filter((item) => !SKIP_TITLE_KEYWORDS.some((keyword) => item.title.toLowerCase().includes(keyword)))
+        .map((item) =>
           mapRssItemToRecommendation(item, {
             sourceLabel: source.label,
             domain: "events_exhibitions",
@@ -221,11 +220,11 @@ export async function fetchRssLocalEvents(limitPerSource = 12): Promise<Recommen
             qualityScore: 74 + Math.floor(source.curationBoost / 3),
           })
         );
-      }
-    }
-  }
+    })
+  );
 
-  return items;
+  const batches = await Promise.all(tasks);
+  return batches.flat();
 }
 
 export async function fetchCatracaLivreAgenda(limit = 18): Promise<RecommendationPayload[]> {

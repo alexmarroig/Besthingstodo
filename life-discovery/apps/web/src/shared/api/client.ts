@@ -1,6 +1,23 @@
-import { buildConciergeResponse, buildDateNightPlan, buildFallbackContext, curateRecommendations, refineContext } from "../../features/catalog/curation";
+import {
+  buildConciergeResponse,
+  buildDateNightPlan,
+  buildFallbackContext,
+  computeCoupleMLInsights,
+  curateRecommendations,
+  refineContext,
+} from "../../features/catalog/curation";
 import { API_ENDPOINTS, RECOMMENDATION_POOL_LIMIT } from "./config";
-import { getCoupleProfile, getFeedbackHistory, getUserId } from "../storage";
+import { attachRecommendationImages } from "../recommendation-images";
+import {
+  addCustomIngestedItem,
+  getCoupleProfile,
+  getCustomIngestedItems,
+  getFeedbackHistory,
+  getUserId,
+  notifyMLUpdate,
+  upsertSavedItem,
+  type FeedbackSignalType,
+} from "../storage";
 import { ConciergeResponse, CoupleSnapshot, DateNightPlan, ExperienceContext, Recommendation } from "@life/shared-types";
 
 type RecommendationDomain = "dining_out" | "delivery" | "movies_series" | "events_exhibitions";
@@ -9,7 +26,37 @@ type CulturalDNAResponse = {
   cultural_dna: Record<string, string | number | string[]> | null;
 };
 
+async function fetchJsonSafe<T>(url: string, timeoutMs = 6500, init?: RequestInit): Promise<T | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function mapToRecommendation(row: any, city: string): Recommendation {
+  if (!row || typeof row !== "object") {
+    return {
+      id: crypto.randomUUID(),
+      title: "Experiência em São Paulo",
+      description: "",
+      category: "event",
+      domain: "events_exhibitions",
+      city,
+      location: city,
+      tags: [],
+      source: "api",
+    };
+  }
   return {
     id: String(row.id || row.title || crypto.randomUUID()),
     title: row.title || "Sem título",
@@ -69,7 +116,7 @@ export async function patchCoupleProfile(payload: Record<string, any>) {
 
   try {
     const userId = updated.user_id || getUserId();
-    await fetch("/api/couple/profile", {
+    await fetchJsonSafe("/api/couple/profile", 3500, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ profile: updated, user_id: userId }),
@@ -95,9 +142,8 @@ export async function fetchUserContext(couple?: CoupleSnapshot | null): Promise<
 
   try {
     const params = new URLSearchParams({ city: String(city) });
-    const res = await fetch(`${API_ENDPOINTS.weather}?${params.toString()}`);
-    if (!res.ok) throw new Error("weather unavailable");
-    const data = await res.json();
+    const data = await fetchJsonSafe<any>(`${API_ENDPOINTS.weather}?${params.toString()}`, 4000);
+    if (!data) throw new Error("weather unavailable");
     return refineContext(
       {
         city,
@@ -122,96 +168,56 @@ export async function fetchUserContext(couple?: CoupleSnapshot | null): Promise<
   }
 }
 
-// --- Recommendations (from free APIs) ---
+// --- Recommendations (from free APIs + resilient local snapshots) ---
 
 export async function fetchTrendingMovies(): Promise<Recommendation[]> {
-  try {
-    const res = await fetch(`${API_ENDPOINTS.tmdb}?type=trending`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, ""));
-  } catch {
-    return [];
-  }
+  const data = await fetchJsonSafe<any[]>(`${API_ENDPOINTS.tmdb}?type=trending`);
+  return (data || []).map((row: any) => mapToRecommendation(row, ""));
 }
 
 export async function fetchMoviesByGenre(genre: string): Promise<Recommendation[]> {
-  try {
-    const res = await fetch(`${API_ENDPOINTS.tmdb}?type=discover&genre=${encodeURIComponent(genre)}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, ""));
-  } catch {
-    return [];
-  }
+  const data = await fetchJsonSafe<any[]>(
+    `${API_ENDPOINTS.tmdb}?type=discover&genre=${encodeURIComponent(genre)}`
+  );
+  return (data || []).map((row: any) => mapToRecommendation(row, ""));
 }
 
 export async function fetchEvents(city = "Sao Paulo", preset?: string): Promise<Recommendation[]> {
-  try {
-    const params = new URLSearchParams({ city });
-    if (preset) params.set("preset", preset);
-    const res = await fetch(`${API_ENDPOINTS.events}?${params.toString()}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, city));
-  } catch {
-    return [];
-  }
+  const params = new URLSearchParams({ city });
+  if (preset) params.set("preset", preset);
+  const data = await fetchJsonSafe<any[]>(`${API_ENDPOINTS.events}?${params.toString()}`);
+  return (data || []).map((row: any) => mapToRecommendation(row, city));
 }
 
 export async function fetchLocalEvents(city = "Sao Paulo"): Promise<Recommendation[]> {
-  try {
-    const res = await fetch(`${API_ENDPOINTS.eventsLocal}?city=${encodeURIComponent(city)}&gastro=true`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, city));
-  } catch {
-    return [];
-  }
+  const data = await fetchJsonSafe<any[]>(
+    `${API_ENDPOINTS.eventsLocal}?city=${encodeURIComponent(city)}&gastro=true`
+  );
+  return (data || []).map((row: any) => mapToRecommendation(row, city));
 }
 
 export async function fetchGastroEditorial(topic = "all"): Promise<Recommendation[]> {
-  try {
-    const res = await fetch(`${API_ENDPOINTS.gastroEditorial}?topic=${encodeURIComponent(topic)}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, "São Paulo"));
-  } catch {
-    return [];
-  }
+  const data = await fetchJsonSafe<any[]>(
+    `${API_ENDPOINTS.gastroEditorial}?topic=${encodeURIComponent(topic)}`
+  );
+  return (data || []).map((row: any) => mapToRecommendation(row, "São Paulo"));
 }
 
 export async function fetchCinemaNews(): Promise<Recommendation[]> {
-  try {
-    const res = await fetch(API_ENDPOINTS.cinemaNews);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, ""));
-  } catch {
-    return [];
-  }
+  const data = await fetchJsonSafe<any[]>(API_ENDPOINTS.cinemaNews);
+  return (data || []).map((row: any) => mapToRecommendation(row, ""));
 }
 
 export async function fetchNowPlayingMovies(): Promise<Recommendation[]> {
-  try {
-    const res = await fetch(`${API_ENDPOINTS.tmdb}?type=now_playing`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, ""));
-  } catch {
-    return [];
-  }
+  const data = await fetchJsonSafe<any[]>(`${API_ENDPOINTS.tmdb}?type=now_playing`);
+  return (data || []).map((row: any) => mapToRecommendation(row, ""));
 }
 
 export async function fetchDeliveryNearby(city = "Sao Paulo"): Promise<Recommendation[]> {
-  try {
-    const res = await fetch(`${API_ENDPOINTS.deliveryNearby}?city=${encodeURIComponent(city)}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation({ ...row, domain: "delivery" }, city));
-  } catch {
-    return [];
-  }
+  const data = await fetchJsonSafe<any[]>(
+    `${API_ENDPOINTS.deliveryNearby}?city=${encodeURIComponent(city)}`
+  );
+  return (data || []).map((row: any) => mapToRecommendation({ ...row, domain: "delivery" }, city));
 }
 
 export async function fetchPlaces(
@@ -219,28 +225,17 @@ export async function fetchPlaces(
   categories = "catering.restaurant",
   options?: { intent?: string; neighborhood?: string }
 ): Promise<Recommendation[]> {
-  try {
-    const params = new URLSearchParams({ city, categories });
-    if (options?.intent) params.set("intent", options.intent);
-    if (options?.neighborhood) params.set("neighborhood", options.neighborhood);
-    const res = await fetch(`${API_ENDPOINTS.places}?${params.toString()}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((row: any) => mapToRecommendation(row, city));
-  } catch {
-    return [];
-  }
+  const params = new URLSearchParams({ city, categories });
+  if (options?.intent) params.set("intent", options.intent);
+  if (options?.neighborhood) params.set("neighborhood", options.neighborhood);
+  const data = await fetchJsonSafe<any[]>(`${API_ENDPOINTS.places}?${params.toString()}`);
+  return (data || []).map((row: any) => mapToRecommendation(row, city));
 }
 
 export async function fetchMealSuggestions(type = "random", params?: Record<string, string>): Promise<any[]> {
-  try {
-    const search = new URLSearchParams({ type, ...params });
-    const res = await fetch(`${API_ENDPOINTS.meals}?${search.toString()}`);
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
+  const search = new URLSearchParams({ type, ...params });
+  const data = await fetchJsonSafe<any[]>(`${API_ENDPOINTS.meals}?${search.toString()}`);
+  return data || [];
 }
 
 export async function fetchRecommendationSources(
@@ -268,10 +263,15 @@ export async function fetchRecommendationSources(
       );
     }
 
-    const allResults = await Promise.all(fetchers);
-    return allResults.flat();
+    const settled = await Promise.allSettled(fetchers);
+    const apiItems = settled.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+    const customItems = getCustomIngestedItems().filter(
+      (item) => !domain || item.domain === domain
+    );
+
+    return attachRecommendationImages([...customItems, ...apiItems]);
   } catch {
-    return [];
+    return attachRecommendationImages(getCustomIngestedItems());
   }
 }
 
@@ -300,12 +300,45 @@ export async function fetchRecommendations(
   }
 }
 
-// --- Feedback (localStorage only) ---
+// --- Smart URL & Place Ingestion ---
+
+export async function ingestExternalExperience(
+  query: string,
+  city = "São Paulo"
+): Promise<{ item?: Recommendation; error?: string }> {
+  try {
+    const res = await fetch("/api/ingest-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, city }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.item) {
+      return { error: data?.error || "Não foi possível capturar este link ou lugar." };
+    }
+    const item = mapToRecommendation(data.item, city);
+    addCustomIngestedItem(item);
+    upsertSavedItem(item);
+    await sendFeedback(getUserId(), item.id, "favorite", {
+      title: item.title,
+      tags: item.tags,
+      domain: item.domain,
+      category: item.category,
+      neighborhood: item.neighborhood || undefined,
+      location: item.location,
+    });
+    return { item };
+  } catch {
+    return { error: "Falha de conexão ao capturar informações externas." };
+  }
+}
+
+// --- Continual Learning Feedback ---
 
 export async function sendFeedback(
   userId: string,
   experienceId: string,
-  feedbackType: "like" | "dislike" | "save" | "skip",
+  feedbackType: FeedbackSignalType,
   extra?: {
     decision?: string;
     post_experience_rating?: number;
@@ -313,23 +346,51 @@ export async function sendFeedback(
     context?: Record<string, any>;
     title?: string;
     tags?: string[];
+    domain?: string;
+    category?: string;
+    neighborhood?: string;
+    location?: string;
+    price?: number | null;
+    indoor_outdoor?: string | null;
+    dwell_ms?: number;
   }
 ) {
   try {
     const key = "life_feedback";
     const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    const now = Date.now();
+
+    // Prevent duplicate view events within 45 seconds for the same experience
+    if (feedbackType === "view") {
+      const recentView = existing.find(
+        (entry: any) =>
+          entry.experience_id === experienceId &&
+          entry.feedback_type === "view" &&
+          now - new Date(entry.timestamp || 0).getTime() < 45_000
+      );
+      if (recentView) return;
+    }
+
     existing.push({
       user_id: userId,
       experience_id: experienceId,
       feedback_type: feedbackType,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(now).toISOString(),
       title: extra?.title,
       tags: extra?.tags,
+      domain: extra?.domain,
+      category: extra?.category,
+      neighborhood: extra?.neighborhood,
+      location: extra?.location,
+      price: extra?.price,
+      indoor_outdoor: extra?.indoor_outdoor,
+      dwell_ms: extra?.dwell_ms,
       ...extra,
     });
-    localStorage.setItem(key, JSON.stringify(existing.slice(-200)));
+    localStorage.setItem(key, JSON.stringify(existing.slice(-300)));
+    notifyMLUpdate({ type: feedbackType, title: extra?.title, id: experienceId });
   } catch {
-    // ignore
+    // ignore storage quota errors
   }
 }
 
@@ -376,16 +437,38 @@ export async function askConcierge(
   });
 }
 
-// --- Cultural DNA (local mock) ---
+// --- Live Cultural DNA (powered by Continual Learning Engine) ---
 
 export async function fetchCulturalDNA(userId: string): Promise<CulturalDNAResponse> {
-  return {
-    user_id: userId,
-    cultural_dna: {
-      cultural_style: "eclético-urbano",
-      strengths: "gastronomia, cinema autoral, museus",
-      growth_areas: "música ao vivo, teatro",
-      match_score: 85,
-    },
-  };
+  try {
+    const couple = getCoupleProfile();
+    const feedback = getFeedbackHistory();
+    const insights = computeCoupleMLInsights(couple, null, feedback);
+
+    return {
+      user_id: userId,
+      cultural_dna: {
+        estilo_dominante: insights.dominantStyle,
+        maturidade_ia: `${insights.confidencePercent}% (${insights.totalSignals} interações analisadas)`,
+        afinidades_aprendidas: insights.topLearnedTags.length
+          ? insights.topLearnedTags.slice(0, 5)
+          : ["trattoria", "cinema autoral", "museus", "café"],
+        bairros_de_maior_match: insights.topNeighborhoods,
+        taxa_de_exploracao: `${insights.explorationRate}% descoberta vs ${100 - insights.explorationRate}% favoritos`,
+        sinais_evitados: insights.avoidedSignals.length
+          ? insights.avoidedSignals
+          : ["lugares lotados", "balada", "barulho alto"],
+      },
+    };
+  } catch {
+    return {
+      user_id: userId,
+      cultural_dna: {
+        estilo_dominante: "Gastronômico & Cultural Intimista",
+        maturidade_ia: "85%",
+        afinidades_aprendidas: ["gastronomia", "cinema autoral", "museus"],
+        bairros_de_maior_match: ["Pinheiros", "Paulista", "Jardins"],
+      },
+    };
+  }
 }
