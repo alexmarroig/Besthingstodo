@@ -1,6 +1,6 @@
 export const BRAND = {
-  name: "Roteiro a Dois",
-  eyebrow: "Recomendações em português",
-  title: "Descobertas pensadas para o casal",
-  subtitle: "Sugestões reais para sair, pedir, assistir e viver melhor a noite em São Paulo.",
+  name: "BestThingsToDo",
+  eyebrow: "Descubra mais. Viva mais.",
+  title: "Seu próximo programa começa aqui",
+  subtitle: "Lugares, experiências, sabores e histórias que valem a pena descobrir.",
 } as const;
