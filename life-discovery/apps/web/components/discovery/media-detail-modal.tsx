@@ -9,6 +9,7 @@ import WatchAvailability from "./watch-availability";
 import { patchCoupleProfile, sendFeedback } from "@/shared/api/client";
 import { addFavoriteRestaurant } from "@/shared/couple-profile-builder";
 import { getCoupleProfile } from "@/shared/storage";
+import { requireAccountForChange } from "@/shared/account-sync";
 import { Recommendation } from "@life/shared-types";
 
 export default function MediaDetailModal({
@@ -85,6 +86,7 @@ export default function MediaDetailModal({
   };
 
   const addAsFavorite = async () => {
+    if (!requireAccountForChange()) return;
     if (pendingFavorite || savedFavorite) return;
     setPendingFavorite(true);
     try {

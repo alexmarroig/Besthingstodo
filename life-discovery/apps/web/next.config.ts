@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  turbopack: { root: path.join(__dirname, "../../") },
   outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@life/shared-types"],
   images: {

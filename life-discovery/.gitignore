@@ -7,3 +7,4 @@ __pycache__
 .playwright-cli
 playwright-report
 .vercel
+.env*

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import SplashScreen from "./branding/splash-screen";
+import { AccountProvider } from "./account/account-provider";
 import { fetchCoupleMe, fetchRecommendationSources, fetchUserContext } from "@/shared/api/client";
 import { BOOT_SLIDES } from "@/shared/boot-content";
 import { prefetchVisibleHomeImages } from "@/shared/home-image-prefetch";
@@ -147,6 +148,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
+      <AccountProvider>
       {phase === "ready" ? (
         children
       ) : (
@@ -156,6 +158,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           exiting={phase === "exiting"}
         />
       )}
+      </AccountProvider>
     </QueryClientProvider>
   );
 }

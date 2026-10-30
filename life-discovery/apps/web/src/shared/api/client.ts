@@ -10,6 +10,7 @@ import { API_ENDPOINTS, RECOMMENDATION_POOL_LIMIT } from "./config";
 import { attachRecommendationImages } from "../recommendation-images";
 import {
   addCustomIngestedItem,
+  addFeedback,
   getCoupleProfile,
   getCustomIngestedItems,
   getFeedbackHistory,
@@ -116,16 +117,6 @@ export async function patchCoupleProfile(payload: Record<string, any>) {
   const updated = buildCoupleProfileFromForm(payload as Partial<import("@life/shared-types").CoupleSnapshot>, current);
   setCoupleProfile(updated);
 
-  try {
-    const userId = updated.user_id || getUserId();
-    await fetchJsonSafe("/api/couple/profile", 3500, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile: updated, user_id: userId }),
-    });
-  } catch {
-    // Supabase sync is optional; local profile remains source of truth offline.
-  }
 
   return updated;
 }
@@ -358,8 +349,7 @@ export async function sendFeedback(
   }
 ) {
   try {
-    const key = "life_feedback";
-    const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    const existing = getFeedbackHistory();
     const now = Date.now();
 
     // Prevent duplicate view events within 45 seconds for the same experience
@@ -373,7 +363,7 @@ export async function sendFeedback(
       if (recentView) return;
     }
 
-    existing.push({
+    addFeedback({
       user_id: userId,
       experience_id: experienceId,
       feedback_type: feedbackType,
@@ -389,7 +379,7 @@ export async function sendFeedback(
       dwell_ms: extra?.dwell_ms,
       ...extra,
     });
-    localStorage.setItem(key, JSON.stringify(existing.slice(-300)));
+
     notifyMLUpdate({ type: feedbackType, title: extra?.title, id: experienceId });
   } catch {
     // ignore storage quota errors

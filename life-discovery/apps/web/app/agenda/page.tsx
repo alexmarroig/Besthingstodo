@@ -1,11 +1,16 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { getAgendaItems, setAgendaItems } from "../../lib/storage";
+import { getAgendaItems, removeAgendaItem, ML_UPDATE_EVENT } from "../../lib/storage";
 
 export default function AgendaPage() {
   const [items, setItems] = useState<any[]>(getAgendaItems());
+  useEffect(() => {
+    const refresh = () => setItems(getAgendaItems());
+    refresh(); window.addEventListener(ML_UPDATE_EVENT, refresh);
+    return () => window.removeEventListener(ML_UPDATE_EVENT, refresh);
+  }, []);
 
   const byDate = useMemo(() => {
     return items.reduce((acc: Record<string, any[]>, item) => {
@@ -17,9 +22,7 @@ export default function AgendaPage() {
   }, [items]);
 
   const removeItem = (id: string) => {
-    const next = items.filter((x) => x.id !== id);
-    setItems(next);
-    setAgendaItems(next);
+    removeAgendaItem(id);
   };
 
   return (

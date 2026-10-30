@@ -1,0 +1,31 @@
+const {test,after}=require('node:test');const assert=require('node:assert/strict');
+const fs=require('node:fs');const path=require('node:path');const Module=require('node:module');const ts=require('typescript');
+if(!process.env.DATABASE_URL?.includes('ep-restless-cloud-b5n35vd1.'))throw Error('Run database tests on the isolated preview branch only.');
+const originalLoad=Module._load;const originalResolve=Module._resolveFilename;
+Module._load=function(request,...args){if(request==='server-only')return {};return originalLoad.call(this,request,...args)};
+Module._resolveFilename=function(request,...args){if(request.startsWith('@/shared/'))request=path.resolve(__dirname,'../src/shared',request.slice(9)+'.ts');return originalResolve.call(this,request,...args)};
+require.extensions['.ts']=(mod,file)=>mod._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,file);
+const {readAccountState,mutateAccountState}=require('../src/server/account-repository.ts');
+const {neon}=require('@neondatabase/serverless');const sql=neon(process.env.DATABASE_URL);
+const accountA='qa-'+crypto.randomUUID(),accountB='qa-'+crypto.randomUUID();
+after(async()=>{await sql`DELETE FROM account_states WHERE account_id IN (${accountA},${accountB})`;});
+test('concurrent devices preserve both changes through version conflicts',async()=>{
+ const initial=await readAccountState(accountA);
+ const opA={id:'first',kind:'upsert',entity:'saved',key:'movie',value:{id:'movie',title:'Duna'}};
+ const opB={id:'second',kind:'upsert',entity:'agenda',key:'date',value:{id:'date',title:'Cinema'}};
+ const results=await Promise.all([mutateAccountState(accountA,initial.version,[opA]),mutateAccountState(accountA,initial.version,[opB])]);
+ assert.equal(results.filter(x=>x.conflict).length,1);
+ const winner=results.find(x=>!x.conflict),loser=results.find(x=>x.conflict);const retryOp=results[0].conflict?opA:opB;
+ const retried=await mutateAccountState(accountA,winner.version,[retryOp]);assert.equal(retried.conflict,false);
+ assert.equal(retried.state.saved.movie.title,'Duna');assert.equal(retried.state.agenda.date.title,'Cinema');
+ const replay=await mutateAccountState(accountA,initial.version,[retryOp]);assert.equal(replay.conflict,false);assert.equal(replay.version,retried.version);
+ const other=await readAccountState(accountB);assert.deepEqual(other.state.saved,{});assert.deepEqual(other.state.agenda,{});
+});
+test('replayed additions cannot resurrect a later deletion',async()=>{
+ const before=await readAccountState(accountA);
+ const added={id:'one-add',kind:'upsert',entity:'saved',key:'to-remove',value:{id:'to-remove',title:'Antigo'}};
+ const first=await mutateAccountState(accountA,before.version,[added]);
+ const removed=await mutateAccountState(accountA,first.version,[{id:'one-remove',kind:'remove',entity:'saved',key:'to-remove'}]);
+ const replay=await mutateAccountState(accountA,before.version,[added]);
+ assert.equal(replay.version,removed.version);assert.equal(replay.state.saved['to-remove'],undefined);
+});

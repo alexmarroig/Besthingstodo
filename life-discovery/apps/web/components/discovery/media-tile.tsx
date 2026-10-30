@@ -10,6 +10,7 @@ import { localizeCategory } from "@/shared/labels-pt";
 import { getRecommendationSourceMeta } from "@/shared/source";
 import { getUserId, isItemSaved, upsertAgendaItem, upsertSavedItem } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
+import { requireAccountForChange } from "@/shared/account-sync";
 
 export type { MediaTileVariant };
 
@@ -46,6 +47,7 @@ export default function MediaTile({
     type: "like" | "save"
   ) => {
     e.stopPropagation();
+    if (!requireAccountForChange()) return;
     const userId = getUserId();
     void sendFeedback(userId, item.id, type, {
       title: item.title,

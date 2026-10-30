@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ChipGroup } from "@/components/profile/chip-group";
@@ -25,6 +25,8 @@ import { StepShell } from "@/components/profile/step-shell";
 import { fetchCoupleMe, patchCoupleProfile } from "@/shared/api/client";
 import { getProfileCompleteness } from "@/shared/profile-completeness";
 import type { CoupleSnapshot } from "@life/shared-types";
+
+import { mergeProfile, profileChanges } from "@/shared/account-state";
 
 const TOTAL_STEPS = 6;
 
@@ -53,14 +55,14 @@ export default function OnboardingScreen() {
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const [form, setForm] = useState<CoupleSnapshot>({
-    account_name: "Alex & Camila",
+    account_name: "Nosso casal",
     city: "São Paulo",
-    neighborhood: "Campo Belo",
+    neighborhood: "",
     max_drive_minutes: 40,
     search_radius_km: 10,
     transport: "car",
     avoid_going_out_when_rain: true,
-    members: [emptyMember("Alex"), emptyMember("Camila")],
+    members: [emptyMember(""), emptyMember("")],
     preferences: {
       preferred_cuisines: [],
       avoided_cuisines: [],
@@ -83,14 +85,12 @@ export default function OnboardingScreen() {
     },
   });
 
+  const baseline = useRef<CoupleSnapshot | null>(null);
   useEffect(() => {
     if (!couple) return;
-    setForm((prev) => ({
-      ...prev,
-      ...couple,
-      members: [couple.members?.[0] || prev.members[0], couple.members?.[1] || prev.members[1]],
-      preferences: { ...prev.preferences, ...(couple.preferences || {}) },
-    }));
+    const previous = baseline.current;
+    setForm(prev => mergeProfile(couple, previous ? profileChanges(previous, prev) : {}) as CoupleSnapshot);
+    baseline.current = couple;
   }, [couple]);
 
   const saveMutation = useMutation({

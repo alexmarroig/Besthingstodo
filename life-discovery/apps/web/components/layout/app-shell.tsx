@@ -3,18 +3,20 @@
 import { motion } from "framer-motion";
 
 import { BottomNav, Navbar } from "./navigation";
+import { AccountBar, AccountGate } from "../account/account-provider";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen pb-28 md:pb-8">
       <Navbar />
+      <AccountBar />
       <main className="mx-auto max-w-6xl px-4 py-5 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
-          {children}
+          <AccountGate>{children}</AccountGate>
         </motion.div>
       </main>
       <BottomNav />

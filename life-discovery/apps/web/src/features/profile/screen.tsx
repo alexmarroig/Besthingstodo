@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { mergeProfile, profileChanges } from "@/shared/account-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ChipGroup } from "@/components/profile/chip-group";
@@ -33,16 +34,16 @@ type TabId = (typeof TABS)[number]["id"];
 
 function defaultForm(): CoupleSnapshot {
   return {
-    account_name: "Alex & Camila",
+    account_name: "Nosso casal",
     city: "São Paulo",
-    neighborhood: "Campo Belo",
+    neighborhood: "",
     max_drive_minutes: 40,
     search_radius_km: 10,
     transport: "car",
     avoid_going_out_when_rain: true,
     members: [
       {
-        full_name: "Alex",
+        full_name: "",
         drinks_alcohol: false,
         smokes: false,
         interests: [],
@@ -57,7 +58,7 @@ function defaultForm(): CoupleSnapshot {
         food_dislikes: [],
       },
       {
-        full_name: "Camila",
+        full_name: "",
         drinks_alcohol: false,
         smokes: false,
         interests: [],
@@ -228,15 +229,13 @@ function ProfileScreenInner() {
   const { data: couple, refetch } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const { data: dna } = useQuery({ queryKey: ["dna", userId], queryFn: () => fetchCulturalDNA(userId) });
   const [form, setForm] = useState<CoupleSnapshot>(defaultForm());
+  const baseline = useRef<CoupleSnapshot | null>(null);
 
   useEffect(() => {
     if (!couple) return;
-    setForm((prev) => ({
-      ...prev,
-      ...couple,
-      members: [couple.members?.[0] || prev.members[0], couple.members?.[1] || prev.members[1]],
-      preferences: { ...prev.preferences, ...(couple.preferences || {}) },
-    }));
+    const previous = baseline.current;
+    setForm(prev => mergeProfile(mergeProfile(defaultForm(), couple), previous ? profileChanges(previous, prev) : {}) as CoupleSnapshot);
+    baseline.current = couple;
   }, [couple]);
 
   const completeness = useMemo(() => getProfileCompleteness(form), [form]);

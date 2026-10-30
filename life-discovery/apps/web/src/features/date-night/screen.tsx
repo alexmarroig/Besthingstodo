@@ -22,6 +22,7 @@ import {
 import { RECOMMENDATION_POOL_LIMIT } from "@/shared/api/config";
 import { useContinualLearning } from "@/shared/hooks/use-continual-learning";
 import { getUserId, upsertAgendaItem, upsertSavedItem } from "@/shared/storage";
+import { requireAccountForChange } from "@/shared/account-sync";
 import { DateNightPlan, Recommendation } from "@life/shared-types";
 
 const SOURCE_STALE_MS = 5 * 60_000;
@@ -192,6 +193,7 @@ export default function DateNightScreen() {
   };
 
   const handleSaveItinerary = (items: Recommendation[]) => {
+    if (!requireAccountForChange()) return;
     for (const item of items) {
       upsertSavedItem({ ...item, collection: "Noite a Dois" });
       upsertAgendaItem(item);

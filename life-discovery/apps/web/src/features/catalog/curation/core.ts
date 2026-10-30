@@ -10,72 +10,16 @@ import { buildMLState, diversifyWithMMR, scoreItemWithML, type FeedbackEntry, ty
 import { attachRecommendationImages } from "@/shared/recommendation-images";
 
 const DEFAULT_PROFILE = {
-  location: {
-    city: "Sao Paulo",
-    neighborhood: "Campo Belo",
-    max_drive_minutes: 40,
-    transport: "car",
-    avoid_going_out_when_rain: true
-  },
-  lifestyle: {
-    avoid_crowded_places: true,
-    avoid_bar: true,
-    avoid_nightclub: true,
-    preferences: ["romantic", "fun", "instagrammable", "small", "cozy"]
-  },
-  interests: {
-    topics: ["technology", "science", "psychology", "astrology"],
-    parks: ["Villa-Lobos"],
-    cinema: {
-      favorite_style: ["suspense", "plot twist", "without nudity", "not horror"],
-      favorite_titles: ["Interstellar", "Titanic", "Parasite", "The Others"]
-    },
-    series: ["This Is Us", "The Bear"]
-  },
-  dining: {
-    dining_out: [
-      { name: "Lellis Trattoria", dishes: ["ravioloni de queijo", "bife a milanesa"] },
-      { name: "Libertango", dishes: ["ojo de bife"] },
-      { name: "Pizzaria Graminha", dishes: ["portuguesa", "pizza de chocolate"] },
-      { name: "Issho", dishes: ["yakissoba"] }
-    ],
-    delivery: ["Patties", "Z-Deli", "Issho"],
-    likes: ["cafes", "bookstores"],
-    favorite_bookstore: "Livraria da Travessa (Pinheiros)",
-    best_time_for_bookstore: "near closing"
-  },
-  culture: {
-    liked_exhibitions: ["Jung", "Nise da Silveira", "Jardim de Luzes", "Dopamine Land"],
-    wishlist: ["Theatro Municipal", "Planetario"]
-  }
+  location: { city: "São Paulo", neighborhood: "", max_drive_minutes: 30, transport: "car", avoid_going_out_when_rain: true },
+  lifestyle: { avoid_crowded_places: false, avoid_bar: false, avoid_nightclub: false, preferences: [] },
+  interests: { topics: [], parks: [], cinema: { favorite_style: [], favorite_titles: [] }, series: [] },
+  dining: { dining_out: [], delivery: [], likes: [], favorite_bookstore: "", best_time_for_bookstore: "" },
+  culture: { liked_exhibitions: [], wishlist: [] }
 };
-
 const DEFAULT_COUPLE: CoupleSnapshot = {
-  account_name: "Alex & Camila",
-  city: "Sao Paulo",
-  neighborhood: "Campo Belo",
-  country: "Brazil",
-  search_radius_km: 10,
-  max_drive_minutes: 40,
-  transport: "car",
-  avoid_going_out_when_rain: true,
-  weekend_wake_time: "10:00",
-  members: [
-    {
-      full_name: "Alex",
-      drinks_alcohol: false,
-      smokes: false,
-      interests: ["technology", "science", "psychology", "astrology"],
-      dislikes: ["crowded places", "nightclubs", "bars", "onion"]
-    },
-    {
-      full_name: "Camila",
-      drinks_alcohol: false,
-      smokes: false,
-      interests: ["psychology", "astrology"],
-      dislikes: ["crowded places", "nightclubs", "bars"]
-    }
-  ],
+  account_name: "Nosso casal", city: "São Paulo", neighborhood: "", country: "Brazil",
+  search_radius_km: 15, max_drive_minutes: 30, transport: "car", avoid_going_out_when_rain: true,
+  members: [{full_name: "", interests: [], dislikes: []}, {full_name: "", interests: [], dislikes: []}],
   profile: { schema_version: "v1", couple_profile_json: DEFAULT_PROFILE }
 };
 

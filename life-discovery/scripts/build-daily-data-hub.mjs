@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createRequire } from "node:module";
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, "apps", "web", "public", "data");
@@ -61,31 +62,18 @@ function dedupe(items) {
   return [...map.values()];
 }
 
-async function pushSnapshotToSupabase(snapshots) {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return { pushed: false, reason: "missing_env" };
-
-  const today = new Date().toISOString().slice(0, 10);
-  const payload = snapshots.map((snapshot) => ({
-    snapshot_date: today,
-    domain: snapshot.domain,
-    city: snapshot.city,
-    item_count: snapshot.items.length,
-    payload: snapshot.items,
-  }));
-
-  const res = await fetch(`${url}/rest/v1/daily_recommendation_snapshots?on_conflict=snapshot_date,domain,city`, {
-    method: "POST",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates",
-    },
-    body: JSON.stringify(payload),
-  });
-  return { pushed: res.ok, status: res.status };
+async function pushSnapshotToNeon(snapshots) {
+  const connection=process.env.DATABASE_URL_POOLED || process.env.DATABASE_URL;
+  if(!connection)return {pushed:false,reason:"missing_env"};
+  const require=createRequire(new URL('../apps/web/package.json',import.meta.url));
+  const {neon}=require('@neondatabase/serverless'); const sql=neon(connection);
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
+  for(const snapshot of snapshots) {
+    const key='manual:'+snapshot.domain+':'+snapshot.city;
+    await sql.query('INSERT INTO catalog_sources(source_key,domain,city,items,last_success_at) VALUES ($1,$2,$3,$4::jsonb,now()) ON CONFLICT(source_key) DO UPDATE SET items=excluded.items,last_success_at=now()', [key,snapshot.domain,snapshot.city,JSON.stringify(snapshot.items)]);
+    await sql.query('INSERT INTO catalog_snapshots(source_key,snapshot_date,domain,city,items) VALUES ($1,$2,$3,$4,$5::jsonb) ON CONFLICT(source_key,snapshot_date) DO UPDATE SET items=excluded.items', [key,today,snapshot.domain,snapshot.city,JSON.stringify(snapshot.items)]);
+  }
+  return {pushed:true};
 }
 
 async function main() {
@@ -137,7 +125,7 @@ async function main() {
     "utf8"
   );
 
-  const supabaseResult = await pushSnapshotToSupabase(snapshots);
+  const neonResult = await pushSnapshotToNeon(snapshots);
   const run = {
     run_date: today,
     status: "ok",
@@ -148,7 +136,7 @@ async function main() {
       events_exhibitions: snapshots[1].items.length,
       delivery: snapshots[2].items.length,
     },
-    supabase: supabaseResult,
+    neon: neonResult,
   };
 
   runs.unshift(run);

@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { database } from "@/server/db";
 
 import { mapSnapshotItem, type RecommendationPayload } from "./recommendation-mapper";
 
@@ -37,32 +38,22 @@ export async function loadDailySnapshot(domain: string, city = "São Paulo") {
     .slice(0, 40);
 }
 
-export async function loadDailySnapshotFromSupabase(domain: string, city = "São Paulo") {
-  const projectUrl = process.env.SUPABASE_URL;
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!projectUrl || !serviceRole) return [];
-
+export async function loadDailySnapshotFromNeon(domain: string, city = "São Paulo") {
+  if (!process.env.DATABASE_URL && !process.env.DATABASE_URL_POOLED) return [];
   const normalizedDomain = normalizeDomain(domain);
   try {
-    const url = `${projectUrl}/rest/v1/daily_recommendation_snapshots?select=payload&domain=eq.${encodeURIComponent(normalizedDomain)}&city=ilike.${encodeURIComponent(city)}&order=snapshot_date.desc&limit=1`;
-    const res = await fetch(url, {
-      headers: {
-        apikey: serviceRole,
-        Authorization: `Bearer ${serviceRole}`,
-      },
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    const rows = (await res.json()) as Array<{ payload?: Array<Record<string, unknown>> }>;
-    if (!rows?.length || !Array.isArray(rows[0]?.payload)) return [];
-    return rows[0].payload.map((item) => mapSnapshotItem(item as Partial<RecommendationPayload>));
+    const sql = database();
+    const rows = await sql`SELECT items FROM catalog_sources WHERE domain=${normalizedDomain} AND lower(city)=lower(${city}) AND jsonb_array_length(items)>0 ORDER BY last_success_at DESC NULLS LAST`;
+    const seen = new Set<string>();
+    return rows.flatMap(row => Array.isArray(row.items) ? row.items : []).map(item => mapSnapshotItem(item))
+      .filter(item => { if (seen.has(item.id)) return false; seen.add(item.id); return true; }).slice(0, 100);
   } catch {
     return [];
   }
 }
 
 export async function loadDailySource(domain: string, city = "São Paulo") {
-  const fromSupabase = await loadDailySnapshotFromSupabase(domain, city);
-  if (fromSupabase.length > 0) return fromSupabase;
+  const fromNeon = await loadDailySnapshotFromNeon(domain, city);
+  if (fromNeon.length > 0) return fromNeon;
   return loadDailySnapshot(domain, city);
 }

@@ -1,24 +1,30 @@
 import { NextResponse } from "next/server";
 
-import { buildCoupleProfileFromForm } from "@/shared/couple-profile-builder";
-import { syncCoupleProfileToSupabase } from "@/shared/couple-profile-sync";
-import type { CoupleSnapshot } from "@life/shared-types";
+import { AccountAccessError, requireAccount } from "@/server/auth";
+import { mutateAccountState } from "@/server/account-repository";
+import { parseStatePatch } from "@/shared/account-state";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { profile: Partial<CoupleSnapshot>; user_id?: string };
-    const profile = buildCoupleProfileFromForm(body.profile || {});
-    const userId = body.user_id || profile.user_id || "local-user";
-
-    const sync = await syncCoupleProfileToSupabase({ ...profile, user_id: userId }, userId);
-
-    return NextResponse.json({ profile, sync }, { status: 200 });
+    const account = await requireAccount();
+    if (request.headers.get("origin") !== new URL(request.url).origin) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
+    const text = await request.text();
+    if (text.length > 64_000) return NextResponse.json({ error: "Perfil muito grande." }, { status: 413 });
+    let patch;
+    try {
+      const body = JSON.parse(text);
+      if (body.expectedAccountId !== account) return NextResponse.json({ error: "A conta mudou." }, { status: 412 });
+      if (Object.keys(body).some(k => !["profile", "baseVersion", "operationId", "expectedAccountId"].includes(k))) throw new Error();
+      patch = parseStatePatch({ baseVersion: body.baseVersion, operations: [{ id: body.operationId, kind: "profile", value: body.profile }] });
+    } catch { return NextResponse.json({ error: "Perfil ou versão inválidos." }, { status: 400 }); }
+    const result = await mutateAccountState(account, patch.baseVersion, patch.operations);
+    return NextResponse.json({ ...result, accountId: account }, { status: result.conflict ? 409 : 200, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "sync_failed" },
-      { status: 500 }
+      { error: error instanceof AccountAccessError ? error.message : "Não foi possível salvar o perfil agora." },
+      { status: error instanceof AccountAccessError ? error.status : 503 }
     );
   }
 }

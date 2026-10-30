@@ -10,6 +10,7 @@ import { localizeCategory, localizeTags } from "@/shared/labels-pt";
 import { sendFeedback } from "@/shared/api/client";
 import { isItemSaved, upsertSavedItem, upsertAgendaItem } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
+import { requireAccountForChange } from "@/shared/account-sync";
 
 function ActionButton({
   icon,
@@ -68,6 +69,7 @@ export default function DiscoveryCard({
   };
 
   const handleAction = (action: "like" | "dislike" | "save" | "skip") => {
+    if (!requireAccountForChange()) return;
     void sendFeedback(userId, item.id, action, feedbackMeta);
     if (action === "save") {
       upsertSavedItem(item);

@@ -15,7 +15,7 @@ import {
   getUserId,
   ML_UPDATE_EVENT,
   removeSavedItem,
-  setSavedItems,
+  assignSavedCollection,
 } from "@/shared/storage";
 import type { Recommendation } from "@life/shared-types";
 
@@ -70,9 +70,7 @@ export default function SavedPage() {
   }, [items, activeCollection]);
 
   const assignCollection = (id: string, collectionName: string) => {
-    const next = items.map((x) => (x.id === id ? { ...x, collection: collectionName } : x));
-    setItems(next);
-    setSavedItems(next);
+    assignSavedCollection(id, collectionName);
   };
 
   const handleRemove = (id: string) => {

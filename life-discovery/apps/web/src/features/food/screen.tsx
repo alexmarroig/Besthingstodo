@@ -21,6 +21,7 @@ import {
 import { useContinualLearning } from "@/shared/hooks/use-continual-learning";
 import { attachRecommendationImages } from "@/shared/recommendation-images";
 import { getUserId, isItemSaved, upsertSavedItem } from "@/shared/storage";
+import { requireAccountForChange } from "@/shared/account-sync";
 
 const CUISINES = [
   { key: "Italian", label: "Italiana", intent: "italian", icon: Pizza },
@@ -71,6 +72,7 @@ function MealCard({ meal, index, userId }: { meal: any; index: number; userId: s
   const [saved, setSaved] = useState(() => isItemSaved(meal.id));
 
   const handleSaveRecipe = () => {
+    if (!requireAccountForChange()) return;
     upsertSavedItem({ ...meal, collection: "Receitas a Dois" });
     void sendFeedback(userId, meal.id, "save", {
       title: meal.title,
