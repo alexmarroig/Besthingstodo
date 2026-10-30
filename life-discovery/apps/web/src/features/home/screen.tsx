@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BrainCircuit, Search, Sparkles, X } from "lucide-react";
+import { BrainCircuit, ArrowRight, Clock3, Search, Sparkles, X } from "lucide-react";
 
 import ProfileNudge from "@/components/profile/profile-nudge";
 import CoupleWeatherBadge from "@/components/discovery/couple-weather-badge";
@@ -58,6 +58,7 @@ export default function HomeScreen() {
   const [captureOpen, setCaptureOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeVibe, setActiveVibe] = useState<VibeFilterKey>("all");
+  const [nowMode, setNowMode] = useState(false);
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const city = couple?.city || "Sao Paulo";
@@ -129,6 +130,17 @@ export default function HomeScreen() {
     return list;
   }, [items, activeVibe, searchQuery]);
 
+  const nowSuggestions = useMemo(() => {
+    const candidates = filteredItems.filter((item) => item.domain !== "movies_series" && item.domain !== "delivery");
+    const seenCategories = new Set<string>();
+    const distinct = candidates.filter((item) => {
+      if (seenCategories.has(item.category)) return false;
+      seenCategories.add(item.category);
+      return true;
+    });
+    return [...distinct, ...candidates.filter((item) => !distinct.includes(item))].slice(0, 3);
+  }, [filteredItems]);
+
   const isFiltering = activeVibe !== "all" || searchQuery.trim().length > 0;
 
   const rails = useMemo(() => buildHomeRails(recommendations, hiddenIds), [recommendations, hiddenIds]);
@@ -186,6 +198,41 @@ export default function HomeScreen() {
           {!railsLoading ? <span className="pill-accent">{items.length} experiências ativas</span> : null}
         </div>
       </header>
+
+      {/* Fast discovery: a short actionable shortlist, never a false open-now promise. */}
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-[#f4d06f]/20 bg-gradient-to-br from-[#202536] via-[#111c29] to-[#0a121c] p-5 shadow-float sm:p-7" aria-label="Descobrir agora">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-xl space-y-2">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#f4d06f]"><Clock3 className="h-4 w-4" /> BestThingsToDo Now</p>
+            <h3 className="font-display text-2xl font-semibold text-white sm:text-3xl">Não sabe o que fazer hoje?</h3>
+            <p className="text-sm leading-relaxed text-white/65">Troque a lista infinita por até três ideias selecionadas conforme suas preferências. Confira horários e disponibilidade antes de sair.</p>
+          </div>
+          <button type="button" onClick={() => setNowMode((previous) => !previous)} aria-expanded={nowMode} className="btn-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 px-5">
+            {nowMode ? "Voltar às descobertas" : "Me dê três ideias"} <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+        {nowMode ? (
+          <div className="mt-6 border-t border-white/10 pt-5" aria-live="polite">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-lg font-semibold text-white">Sua seleção de agora</h4>
+              <span className="text-xs text-white/55">Baseada no catálogo, sem confirmação de funcionamento em tempo real</span>
+            </div>
+            {nowSuggestions.length ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {nowSuggestions.map((item, index) => (
+                  <div key={item.id} className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                    <p className="mb-2 text-xs font-medium text-[#f4d06f]">Ideia {index + 1}</p>
+                    <div className="[&>div]:w-full"><MediaTile item={item} onOpen={setSelectedItem} /></div>
+                    <p className="mt-2 text-xs text-white/60">{item.neighborhood ? `Em ${item.neighborhood} · ` : ""}Abra os detalhes para conferir a fonte e planejar.</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-white/65">Ainda não há experiências compatíveis no catálogo. Tente limpar os filtros ou explorar novas opções.</p>
+            )}
+          </div>
+        ) : null}
+      </section>
 
       {/* Continual Machine Learning Radar & Smart Web Capture */}
       <div className="animate-fade-up stagger-1">
