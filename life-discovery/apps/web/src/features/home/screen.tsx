@@ -44,7 +44,7 @@ type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "to
 
 const VIBE_FILTERS: Array<{ key: VibeFilterKey; label: string }> = [
   { key: "all", label: "✨ Todos" },
-  { key: "top_ml", label: "✨ Boas combinações" },
+  { key: "top_ml", label: "✨ Para você" },
   { key: "romantic", label: "🍷 Romântico & Intimista" },
   { key: "cultural", label: "🏛️ Cultura & Museus" },
   { key: "nearby", label: "📍 Por perto" },
@@ -109,7 +109,7 @@ export default function HomeScreen() {
     else if (activeVibe === "cultural") list = pickForVibe(list, "cultural");
     else if (activeVibe === "nearby") list = pickForVibe(list, "nearby");
     else if (activeVibe === "indoor") list = list.filter((i) => i.indoor_outdoor === "indoor");
-    else if (activeVibe === "top_ml") list = list.filter((i) => (i.quality_score || 0) >= 88);
+    else if (activeVibe === "top_ml") list = list.slice(0, 24);
 
     const q = searchQuery.trim().toLowerCase();
     if (q) {
@@ -358,7 +358,7 @@ export default function HomeScreen() {
             </div>
           ) : (
             <div className="surface p-6 text-center text-sm text-white/60">
-              <p>Nenhum item encontrado para esse filtro local.</p>
+              <p>Não encontramos opções para essa combinação de filtros. Tente outra preferência.</p>
               <button
                 type="button"
                 onClick={() => setCaptureOpen(true)}
