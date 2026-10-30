@@ -8,6 +8,8 @@ docker compose -f infrastructure/docker/docker-compose.yml up --build
 
 O app web usa Next 16.4.3, React 19 e Node 26. O catálogo fica disponível sem login; dados pessoais exigem uma conta compartilhada por casal. O banco e o Neon Auth são acessados pelo servidor.
 
+O desenvolvimento usa Webpack para evitar recarregamentos contínuos do Fast Refresh observados com Turbopack no Windows. O build de produção mantém Turbopack.
+
 Em `apps/web`, copie `.env.example` para `.env.local`. Cadastre as mesmas variáveis em **Vercel → Project → Settings → Environment Variables**, escolhendo o ambiente correto:
 
 | Variável | Uso |

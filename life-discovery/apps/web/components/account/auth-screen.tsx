@@ -70,7 +70,16 @@ export default function AuthScreen({ mode }: { mode: string }) {
       <h2 className="text-2xl font-semibold text-white">{title}</h2>
       <p className="text-sm leading-relaxed text-white/60">Uma conta compartilhada para guardar o perfil, os favoritos e os planos de vocês em qualquer aparelho.</p>
       <p className="rounded-xl bg-[#f4d06f]/10 p-3 text-xs text-[#f4d06f]">Beta gratuito. Os e-mails de teste e a tela do Google podem exibir a marca Neon.</p>
-      {recovery ? <AuthUIProvider authClient={authClient} navigate={router.push} replace={router.replace} basePath="/auth" redirectTo="/home" localization={{ EMAIL: "E-mail", PASSWORD: "Senha", FORGOT_PASSWORD: "Esqueci minha senha", RESET_PASSWORD: "Redefinir senha", GO_BACK: "Voltar" }}>
+      {recovery ? <AuthUIProvider authClient={authClient} navigate={router.push} replace={router.replace} basePath="/auth" redirectTo="/home" localization={{
+        EMAIL: "E-mail", EMAIL_PLACEHOLDER: "voce@exemplo.com", PASSWORD: "Senha", GO_BACK: "Voltar",
+        FORGOT_PASSWORD: "Esqueci minha senha", FORGOT_PASSWORD_ACTION: "Enviar link de recuperação",
+        FORGOT_PASSWORD_EMAIL: "Se houver uma conta com este e-mail, você receberá um link para redefinir sua senha.",
+        RESET_PASSWORD: "Redefinir senha", RESET_PASSWORD_ACTION: "Salvar nova senha", RESET_PASSWORD_SUCCESS: "Senha atualizada. Entre com sua nova senha.",
+        NEW_PASSWORD: "Nova senha", NEW_PASSWORD_PLACEHOLDER: "Digite a nova senha", NEW_PASSWORD_REQUIRED: "Informe a nova senha",
+        CONFIRM_PASSWORD: "Confirme a senha", CONFIRM_PASSWORD_PLACEHOLDER: "Digite a senha novamente", CONFIRM_PASSWORD_REQUIRED: "Confirme a nova senha",
+        PASSWORDS_DO_NOT_MATCH: "As senhas não coincidem", PASSWORD_TOO_SHORT: "A senha precisa ter pelo menos 8 caracteres", PASSWORD_TOO_LONG: "A senha é muito longa",
+        INVALID_PASSWORD: "Senha inválida", INVALID_TOKEN: "O link expirou ou é inválido. Solicite outro link.", IS_INVALID: "inválido", IS_REQUIRED: "obrigatório", REQUEST_FAILED: "Não foi possível concluir. Tente novamente.",
+      }}>
         {mode === "forgot-password" ? <ForgotPasswordForm localization={{}} /> : <ResetPasswordForm localization={{}} />}
       </AuthUIProvider> : <form onSubmit={submit} className="space-y-4">
         {isSignUp ? <label className="block space-y-2 text-sm text-white/75"><span>Nome do casal</span><input value={name} onChange={e => setName(e.target.value)} maxLength={100} autoComplete="name" className={inputClass} required /></label> : null}
