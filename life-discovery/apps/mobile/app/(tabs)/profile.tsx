@@ -6,7 +6,6 @@ import { useRouter } from "expo-router";
 import { fetchCoupleMe, login, patchCoupleProfile, registerCoupleDefault } from "../../src/api";
 import { ActionTile } from "../../src/components/action-tile";
 import { MobileShell } from "../../src/components/shell";
-import { DEMO_SESSION } from "../../src/curation";
 import { useAgendaItems, useOnboardingDraft, useSavedItems } from "../../src/local-data";
 import { useSession } from "../../src/providers";
 import { palette, spacing } from "../../src/theme";
@@ -19,8 +18,8 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const [email, setEmail] = useState(DEMO_SESSION.email);
-  const [password, setPassword] = useState(DEMO_SESSION.password);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [status, setStatus] = useState("Entre para sincronizar preferencias, feedback e contexto real do casal entre aparelho e backend.");
   const [city, setCity] = useState("Sao Paulo");
   const [neighborhood, setNeighborhood] = useState("Campo Belo");

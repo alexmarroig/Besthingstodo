@@ -154,11 +154,11 @@ export default function MediaDetailModal({
               <div className="flex items-center justify-between gap-2">
                 <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f4d06f]">
                   <Sparkles className="h-3 w-3" />
-                  Por que o algoritmo escolheu para vocês
+                  Por que esta experiência apareceu
                 </p>
                 {item.quality_score != null ? (
                   <span className="rounded-full bg-[#f4d06f]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#f4d06f]">
-                    Score Neural: {Math.round(item.quality_score)}/100
+                    Afinidade estimada: {Math.round(item.quality_score)}/100
                   </span>
                 ) : null}
               </div>
@@ -180,7 +180,7 @@ export default function MediaDetailModal({
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-4">
             <p className="text-xs text-white/60">
-              Fixar como referência permanente do casal para calibrar futuras recomendações:
+              Salvar como referência de preferência para melhorar as próximas recomendações:
             </p>
             <button
               type="button"

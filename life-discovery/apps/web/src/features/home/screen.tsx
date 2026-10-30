@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BrainCircuit, Search, Sparkles, X } from "lucide-react";
+import { BrainCircuit, ArrowRight, Clock3, Search, Sparkles, X } from "lucide-react";
 
 import ProfileNudge from "@/components/profile/profile-nudge";
 import CoupleWeatherBadge from "@/components/discovery/couple-weather-badge";
@@ -31,23 +31,23 @@ import { Recommendation } from "@life/shared-types";
 const SOURCE_STALE_MS = 5 * 60_000;
 
 const RAILS = [
-  { key: "forYou", title: "Para vocês (IA)", subtitle: "Priorizado em tempo real pelo aprendizado contínuo", stagger: "stagger-2" },
-  { key: "romantic", title: "Cara de date", subtitle: "Romântico, calmo e com boa conversa", stagger: "stagger-3" },
-  { key: "restaurants", title: "Restaurantes", subtitle: "Jantar alinhado ao perfil e escolhas do casal", stagger: "stagger-4" },
-  { key: "movies", title: "Filmes & séries", subtitle: "Trending com match semântico do casal", variant: "poster" as const, stagger: "stagger-5" },
+  { key: "forYou", title: "Escolhidos para você", subtitle: "Descobertas inspiradas no que você gosta", stagger: "stagger-2" },
+  { key: "romantic", title: "Para viver a dois", subtitle: "Romântico, calmo e com boa conversa", stagger: "stagger-3" },
+  { key: "restaurants", title: "Restaurantes", subtitle: "Lugares para comer bem e descobrir novos sabores", stagger: "stagger-4" },
+  { key: "movies", title: "Filmes & séries", subtitle: "Boas histórias para sua próxima sessão", variant: "poster" as const, stagger: "stagger-5" },
   { key: "events", title: "Cultura & Exposições", subtitle: "Museus, centros culturais e agenda de SP", stagger: "stagger-6" },
   { key: "editorial", title: "Radar SP", subtitle: "Críticas, Michelin, Paladar e aberturas", stagger: "stagger-7" },
-  { key: "nearby", title: "Perto de vocês", subtitle: "Menos deslocamento, mais presença", stagger: "stagger-8" },
+  { key: "nearby", title: "Perto de você", subtitle: "Menos deslocamento, mais presença", stagger: "stagger-8" },
 ] as const;
 
 type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "top_ml";
 
 const VIBE_FILTERS: Array<{ key: VibeFilterKey; label: string }> = [
   { key: "all", label: "✨ Todos" },
-  { key: "top_ml", label: "🧠 Match 90%+" },
+  { key: "top_ml", label: "✨ Boas combinações" },
   { key: "romantic", label: "🍷 Romântico & Intimista" },
   { key: "cultural", label: "🏛️ Cultura & Museus" },
-  { key: "nearby", label: "📍 Perto de Vocês" },
+  { key: "nearby", label: "📍 Por perto" },
   { key: "indoor", label: "☔ Coberto / Conforto" },
 ];
 
@@ -58,10 +58,11 @@ export default function HomeScreen() {
   const [captureOpen, setCaptureOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeVibe, setActiveVibe] = useState<VibeFilterKey>("all");
+  const [nowMode, setNowMode] = useState(false);
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const city = couple?.city || "Sao Paulo";
-  const greetingName = couple?.account_name || couple?.neighborhood || couple?.city || "casal";
+  const greetingName = couple?.account_name || "";
 
   const { data: context } = useQuery({
     queryKey: ["context", city, couple?.neighborhood || ""],
@@ -129,6 +130,17 @@ export default function HomeScreen() {
     return list;
   }, [items, activeVibe, searchQuery]);
 
+  const nowSuggestions = useMemo(() => {
+    const candidates = filteredItems.filter((item) => item.domain !== "movies_series" && item.domain !== "delivery");
+    const seenCategories = new Set<string>();
+    const distinct = candidates.filter((item) => {
+      if (seenCategories.has(item.category)) return false;
+      seenCategories.add(item.category);
+      return true;
+    });
+    return [...distinct, ...candidates.filter((item) => !distinct.includes(item))].slice(0, 3);
+  }, [filteredItems]);
+
   const isFiltering = activeVibe !== "all" || searchQuery.trim().length > 0;
 
   const rails = useMemo(() => buildHomeRails(recommendations, hiddenIds), [recommendations, hiddenIds]);
@@ -167,10 +179,10 @@ export default function HomeScreen() {
           <div className="min-w-0 space-y-1.5">
             <p className="inline-flex items-center gap-1.5 text-xs font-medium text-[#f4d06f]">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Curadoria viva & personalizada</span>
+              <span>BestThingsToDo · Descobertas para a vida real</span>
             </p>
             <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
-              O roteiro de hoje, {greetingName}
+              O que vamos descobrir hoje{greetingName ? `, ${greetingName}` : ""}?
             </h2>
             <p className="max-w-xl text-sm leading-relaxed text-white/60">{brief.headline}</p>
           </div>
@@ -186,6 +198,41 @@ export default function HomeScreen() {
           {!railsLoading ? <span className="pill-accent">{items.length} experiências ativas</span> : null}
         </div>
       </header>
+
+      {/* Fast discovery: a short actionable shortlist, never a false open-now promise. */}
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-[#f4d06f]/20 bg-gradient-to-br from-[#202536] via-[#111c29] to-[#0a121c] p-5 shadow-float sm:p-7" aria-label="Descobrir agora">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-xl space-y-2">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#f4d06f]"><Clock3 className="h-4 w-4" /> BestThingsToDo Now</p>
+            <h3 className="font-display text-2xl font-semibold text-white sm:text-3xl">Não sabe o que fazer hoje?</h3>
+            <p className="text-sm leading-relaxed text-white/65">Troque a lista infinita por até três ideias selecionadas conforme suas preferências. Confira horários e disponibilidade antes de sair.</p>
+          </div>
+          <button type="button" onClick={() => setNowMode((previous) => !previous)} aria-expanded={nowMode} className="btn-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 px-5">
+            {nowMode ? "Voltar às descobertas" : "Me dê três ideias"} <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+        {nowMode ? (
+          <div className="mt-6 border-t border-white/10 pt-5" aria-live="polite">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-lg font-semibold text-white">Sua seleção de agora</h4>
+              <span className="text-xs text-white/55">Baseada no catálogo, sem confirmação de funcionamento em tempo real</span>
+            </div>
+            {nowSuggestions.length ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {nowSuggestions.map((item, index) => (
+                  <div key={item.id} className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                    <p className="mb-2 text-xs font-medium text-[#f4d06f]">Ideia {index + 1}</p>
+                    <div className="[&>div]:w-full"><MediaTile item={item} onOpen={setSelectedItem} /></div>
+                    <p className="mt-2 text-xs text-white/60">{item.neighborhood ? `Em ${item.neighborhood} · ` : ""}Abra os detalhes para conferir a fonte e planejar.</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-white/65">Ainda não há experiências compatíveis no catálogo. Tente limpar os filtros ou explorar novas opções.</p>
+            )}
+          </div>
+        ) : null}
+      </section>
 
       {/* Continual Machine Learning Radar & Smart Web Capture */}
       <div className="animate-fade-up stagger-1">
@@ -256,7 +303,7 @@ export default function HomeScreen() {
           <p className="font-display text-xl font-semibold text-white">2 minutos para sugestões perfeitas</p>
           <p className="mt-2 text-sm text-white/55">Cidade, culinárias e favoritos deixam tudo menos genérico.</p>
           <Link href="/onboarding" className="btn-primary mt-4">
-            Montar perfil do casal
+            Personalizar minhas descobertas
           </Link>
         </div>
       ) : null}
@@ -266,7 +313,7 @@ export default function HomeScreen() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="rail-title">Resultados filtrados ({filteredItems.length})</h3>
-              <p className="text-xs text-white/50">Ordenados pelo score neural do casal</p>
+              <p className="text-xs text-white/50">Ordenados por afinidade e relevância</p>
             </div>
             <button
               type="button"
@@ -330,7 +377,7 @@ export default function HomeScreen() {
 
       {!railsLoading && items.length === 0 ? (
         <div className="surface p-5 text-sm text-white/60">
-          Nenhuma sugestão agora. Complete o perfil do casal ou reinicie os filtros.
+          Nenhuma sugestão agora. Experimente novos filtros ou personalize suas preferências.
         </div>
       ) : null}
 

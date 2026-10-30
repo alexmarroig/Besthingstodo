@@ -10,6 +10,7 @@ import {
   Heart,
   Home,
   LayoutList,
+  CalendarDays,
   Map,
   UserCheck,
   UtensilsCrossed,
@@ -29,13 +30,13 @@ function NavIcon({ icon: Icon, active }: { icon: LucideIcon; active: boolean }) 
 }
 
 const tabs: Array<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: "/home", label: "Hoje", icon: Home },
+  { href: "/home", label: "Descobrir", icon: Home },
   { href: "/watch", label: "Assistir", icon: Clapperboard },
   { href: "/food", label: "Comida", icon: UtensilsCrossed },
-  { href: "/date-night", label: "Date", icon: Heart },
-  { href: "/map", label: "Mapa", icon: Map },
+  { href: "/date-night", label: "A dois", icon: Heart },
+  { href: "/map", label: "Explorar", icon: Map },
   { href: "/saved", label: "Salvos", icon: Bookmark },
-  { href: "/concierge", label: "Listas", icon: LayoutList },
+  { href: "/concierge", label: "Planejar", icon: CalendarDays },
 ];
 
 function isTabActive(pathname: string | null, href: string) {
@@ -104,7 +105,7 @@ export function Navbar() {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const mobileTabs = tabs.slice(0, 6);
+  const mobileTabs = [tabs[0], tabs[4], tabs[6], tabs[5], tabs[3]];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-2 lg:hidden" aria-label="Navegação principal">

@@ -489,15 +489,18 @@ export async function POST(req: NextRequest) {
       indoor_outdoor: classification.indoor_outdoor,
       image_url: finalImage,
       personalization_label: "capturado pelo casal",
-      quality_score: 94,
-      score: 9.4,
+      // An imported URL is not an independently verified recommendation.
+      // Keep quality and ranking neutral until trustworthy evidence is available.
+      quality_score: null,
+      score: null,
       price,
       rating,
       tags: [...classification.tags, "captura inteligente"],
       source: sourceLabel,
       editorial_source: sourceLabel,
       url: finalUrl,
-      booking_url: finalUrl,
+      // Source URLs are not necessarily reservation links.
+      booking_url: undefined,
       latitude,
       longitude,
       profile_signals: [title, ...classification.tags],

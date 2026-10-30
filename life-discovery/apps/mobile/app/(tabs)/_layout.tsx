@@ -27,35 +27,35 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Hoje",
+          title: "Descobrir",
           tabBarIcon: ({ color, size }) => <Ionicons name="sparkles-outline" color={color} size={size} />
         }}
       />
       <Tabs.Screen
         name="watch"
         options={{
-          title: "Ver",
+          title: "Assistir",
           tabBarIcon: ({ color, size }) => <Ionicons name="film-outline" color={color} size={size} />
         }}
       />
       <Tabs.Screen
         name="concierge"
         options={{
-          title: "Guia",
+          title: "Planejar",
           tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-ellipses-outline" color={color} size={size} />
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
-          title: "Mapa",
+          title: "Explorar",
           tabBarIcon: ({ color, size }) => <Ionicons name="map-outline" color={color} size={size} />
         }}
       />
       <Tabs.Screen
         name="plan"
         options={{
-          title: "Plano",
+          title: "A dois",
           tabBarIcon: ({ color, size }) => <Ionicons name="heart-circle-outline" color={color} size={size} />
         }}
       />
