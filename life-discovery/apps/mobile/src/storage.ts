@@ -7,6 +7,14 @@ const SAVED_KEY = "life_mobile_saved_items";
 const AGENDA_KEY = "life_mobile_agenda_items";
 const ONBOARDING_KEY = "life_mobile_onboarding";
 
+// Preserve legacy guest data while isolating signed-in accounts.
+// Never derive a storage namespace from the access token.
+async function accountStorageKey(base: string): Promise<string> {
+  const userId = await AsyncStorage.getItem(USER_ID_KEY);
+  const token = await AsyncStorage.getItem(TOKEN_KEY);
+  return token && userId ? `${base}:account:${encodeURIComponent(userId)}` : base;
+}
+
 export type StoredSavedItem = Recommendation & {
   saved_at: string;
   collection?: string;
@@ -47,12 +55,12 @@ export async function clearSessionStorage() {
 }
 
 export async function getSavedItems(): Promise<StoredSavedItem[]> {
-  const raw = await AsyncStorage.getItem(SAVED_KEY);
+  const raw = await AsyncStorage.getItem(await accountStorageKey(SAVED_KEY));
   return safeParse(raw, []);
 }
 
 export async function setSavedItems(items: StoredSavedItem[]) {
-  await AsyncStorage.setItem(SAVED_KEY, JSON.stringify(items));
+  await AsyncStorage.setItem(await accountStorageKey(SAVED_KEY), JSON.stringify(items));
 }
 
 export async function upsertSavedItem(item: Recommendation, collection = "Favoritos") {
@@ -88,12 +96,12 @@ export async function updateSavedCollection(id: string, collection: string) {
 }
 
 export async function getAgendaItems(): Promise<StoredAgendaItem[]> {
-  const raw = await AsyncStorage.getItem(AGENDA_KEY);
+  const raw = await AsyncStorage.getItem(await accountStorageKey(AGENDA_KEY));
   return safeParse(raw, []);
 }
 
 export async function setAgendaItems(items: StoredAgendaItem[]) {
-  await AsyncStorage.setItem(AGENDA_KEY, JSON.stringify(items));
+  await AsyncStorage.setItem(await accountStorageKey(AGENDA_KEY), JSON.stringify(items));
 }
 
 export async function upsertAgendaItem(item: Recommendation, date?: string) {
@@ -134,14 +142,14 @@ export async function updateAgendaNote(id: string, note: string) {
 }
 
 export async function getOnboardingDraft<T>(fallback: T): Promise<T> {
-  const raw = await AsyncStorage.getItem(ONBOARDING_KEY);
+  const raw = await AsyncStorage.getItem(await accountStorageKey(ONBOARDING_KEY));
   return safeParse(raw, fallback);
 }
 
 export async function setOnboardingDraft<T>(draft: T) {
-  await AsyncStorage.setItem(ONBOARDING_KEY, JSON.stringify(draft));
+  await AsyncStorage.setItem(await accountStorageKey(ONBOARDING_KEY), JSON.stringify(draft));
 }
 
 export async function clearOnboardingDraft() {
-  await AsyncStorage.removeItem(ONBOARDING_KEY);
+  await AsyncStorage.removeItem(await accountStorageKey(ONBOARDING_KEY));
 }
