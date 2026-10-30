@@ -28,7 +28,7 @@ export default function NeuralRadarPanel({
                 IA de Aprendizado Contínuo
               </span>
               <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-emerald-500/30">
-                {insights.confidencePercent}% calibrado
+                {insights.totalSignals > 0 ? `${insights.confidencePercent}% de calibração estimada` : "Aguardando suas preferências"}
               </span>
             </div>
             <p className="mt-0.5 truncate text-xs text-white/65">
@@ -66,7 +66,7 @@ export default function NeuralRadarPanel({
         <span className="text-[11px] text-white/45">Afinidades ativas:</span>
         {(insights.topLearnedTags.length
           ? insights.topLearnedTags
-          : ["trattoria", "cinema", "museu", "intimista"]
+          : []
         )
           .slice(0, 5)
           .map((tag) => (
@@ -117,8 +117,8 @@ export default function NeuralRadarPanel({
               Balanço Contextual Bandit (UCB1)
             </p>
             <p className="text-xs leading-relaxed text-white/70">
-              O algoritmo combina <strong>{100 - insights.explorationRate}% de precisão</strong> nos gostos
-              confirmados com <strong>{insights.explorationRate}% de exploração inteligente</strong> para descobrir
+              O algoritmo combina <strong>{100 - insights.explorationRate}% de priorização</strong> dos gostos
+              confirmados com <strong>{insights.explorationRate}% de exploração</strong> para descobrir
               novos lugares em SP.
             </p>
             <div className="pt-1 text-[11px] text-white/50">
@@ -135,7 +135,7 @@ export default function NeuralRadarPanel({
               <div className="flex flex-wrap gap-1.5">
                 {(insights.avoidedSignals.length
                   ? insights.avoidedSignals
-                  : ["lotação", "balada", "barulho"]
+                  : []
                 ).map((sig) => (
                   <span
                     key={sig}
