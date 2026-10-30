@@ -5,8 +5,8 @@ import type { OnboardingDraft } from "./onboarding";
 export const DEFAULT_CITY = "Sao Paulo";
 
 export const BRAND = {
-  name: "Roteiro a Dois",
-  subtitle: "Sugestoes reais para sair, pedir, assistir e viver melhor a noite em Sao Paulo."
+  name: "BestThingsToDo",
+  subtitle: "Lugares, experiencias, sabores e historias que valem descobrir."
 } as const;
 
 export const DEMO_SESSION = {
