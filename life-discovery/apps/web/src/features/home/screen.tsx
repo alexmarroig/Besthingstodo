@@ -44,7 +44,7 @@ type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "to
 
 const VIBE_FILTERS: Array<{ key: VibeFilterKey; label: string }> = [
   { key: "all", label: "✨ Todos" },
-  { key: "top_ml", label: "✨ Boas combinações" },
+  { key: "top_ml", label: "✨ Para você" },
   { key: "romantic", label: "🍷 Romântico & Intimista" },
   { key: "cultural", label: "🏛️ Cultura & Museus" },
   { key: "nearby", label: "📍 Por perto" },
@@ -59,6 +59,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeVibe, setActiveVibe] = useState<VibeFilterKey>("all");
   const [nowMode, setNowMode] = useState(false);
+  const [nowPreference, setNowPreference] = useState<"all" | "indoor" | "outdoor" | "free">("all");
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const city = couple?.city || "Sao Paulo";
@@ -108,7 +109,7 @@ export default function HomeScreen() {
     else if (activeVibe === "cultural") list = pickForVibe(list, "cultural");
     else if (activeVibe === "nearby") list = pickForVibe(list, "nearby");
     else if (activeVibe === "indoor") list = list.filter((i) => i.indoor_outdoor === "indoor");
-    else if (activeVibe === "top_ml") list = list.filter((i) => (i.quality_score || 0) >= 88);
+    else if (activeVibe === "top_ml") list = list.slice(0, 24);
 
     const q = searchQuery.trim().toLowerCase();
     if (q) {
@@ -131,7 +132,13 @@ export default function HomeScreen() {
   }, [items, activeVibe, searchQuery]);
 
   const nowSuggestions = useMemo(() => {
-    const candidates = filteredItems.filter((item) => item.domain !== "movies_series" && item.domain !== "delivery");
+    const candidates = filteredItems.filter((item) => {
+      if (item.domain === "movies_series" || item.domain === "delivery") return false;
+      if (nowPreference === "indoor") return item.indoor_outdoor === "indoor";
+      if (nowPreference === "outdoor") return item.indoor_outdoor === "outdoor" || item.indoor_outdoor === "mixed";
+      if (nowPreference === "free") return item.price === 0;
+      return true;
+    });
     const seenCategories = new Set<string>();
     const distinct = candidates.filter((item) => {
       if (seenCategories.has(item.category)) return false;
@@ -139,7 +146,7 @@ export default function HomeScreen() {
       return true;
     });
     return [...distinct, ...candidates.filter((item) => !distinct.includes(item))].slice(0, 3);
-  }, [filteredItems]);
+  }, [filteredItems, nowPreference]);
 
   const isFiltering = activeVibe !== "all" || searchQuery.trim().length > 0;
 
@@ -213,6 +220,20 @@ export default function HomeScreen() {
         </div>
         {nowMode ? (
           <div className="mt-6 border-t border-white/10 pt-5" aria-live="polite">
+            <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Preferência para as sugestões">
+              {([
+                ["all", "Tudo"],
+                ["indoor", "Lugar coberto"],
+                ["outdoor", "Ao ar livre"],
+                ["free", "Gratuito"],
+              ] as const).map(([value, label]) => (
+                <button key={value} type="button" onClick={() => setNowPreference(value)}
+                  aria-pressed={nowPreference === value}
+                  className={`rounded-full border px-3.5 py-2 text-xs transition ${nowPreference === value ? "border-[#f4d06f]/60 bg-[#f4d06f]/15 text-[#f4d06f]" : "border-white/10 text-white/65 hover:border-white/30"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-lg font-semibold text-white">Sua seleção de agora</h4>
               <span className="text-xs text-white/55">Baseada no catálogo, sem confirmação de funcionamento em tempo real</span>
@@ -337,7 +358,7 @@ export default function HomeScreen() {
             </div>
           ) : (
             <div className="surface p-6 text-center text-sm text-white/60">
-              <p>Nenhum item encontrado para esse filtro local.</p>
+              <p>Não encontramos opções para essa combinação de filtros. Tente outra preferência.</p>
               <button
                 type="button"
                 onClick={() => setCaptureOpen(true)}

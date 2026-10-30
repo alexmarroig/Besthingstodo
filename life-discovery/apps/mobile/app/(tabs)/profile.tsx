@@ -20,7 +20,7 @@ export default function ProfileScreen() {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState("Entre para sincronizar preferencias, feedback e contexto real do casal entre aparelho e backend.");
+  const [status, setStatus] = useState("Entre para usar os recursos da API mobile. A sincronização com a conta web ainda não está disponível.");
   const [city, setCity] = useState("Sao Paulo");
   const [neighborhood, setNeighborhood] = useState("Campo Belo");
   const [transport, setTransport] = useState("car");
@@ -56,7 +56,7 @@ export default function ProfileScreen() {
     mutationFn: () => login(email, password),
     onSuccess: async (payload) => {
       await session.setSession(payload.userId, payload.token);
-      setStatus("Login concluido. A conta do casal agora pode usar preferencias, feedback e recomendacoes autenticadas.");
+      setStatus("Login concluído na API mobile. Seus dados ainda não estão sincronizados com a conta web.");
       queryClient.invalidateQueries();
     },
     onError: (error: Error) =>
@@ -67,7 +67,7 @@ export default function ProfileScreen() {
     mutationFn: () => registerCoupleDefault(email, password),
     onSuccess: async (payload) => {
       await session.setSession(payload.userId, payload.token);
-      setStatus("Conta criada. O proximo passo ideal e sincronizar o onboarding para personalizar o feed desde o primeiro uso.");
+      setStatus("Conta criada na API mobile. A sincronização com o webapp ainda não está disponível.");
       queryClient.invalidateQueries();
     },
     onError: (error: Error) =>
@@ -92,7 +92,7 @@ export default function ProfileScreen() {
   const authBusy = loginMutation.isPending || registerMutation.isPending;
   const onboardingStatus = onboardingDraft?.onboardingComplete ? "completo" : "pendente";
   const authHeadline = useMemo(
-    () => (session.token ? "Conta conectada ao casal" : authMode === "login" ? "Entrar para sincronizar" : "Criar conta compartilhada"),
+    () => (session.token ? "Conta mobile conectada" : authMode === "login" ? "Entrar no mobile" : "Criar conta compartilhada"),
     [authMode, session.token]
   );
 
@@ -108,8 +108,8 @@ export default function ProfileScreen() {
           <Text style={styles.dashboardTitle}>{authHeadline}</Text>
           <Text style={styles.dashboardBody}>
             {session.token
-              ? "Voce ja pode salvar feedback real, editar o profile do casal e levar onboarding e favoritos para a conta."
-              : "Sem login o app continua util: onboarding, favoritos e agenda ficam no aparelho ate a sincronizacao."}
+              ? "Você pode usar os recursos da API mobile. Favoritos e agenda permanecem locais neste estágio."
+              : "Sem login, onboarding, favoritos e agenda ficam neste aparelho. Não são enviados automaticamente para a web."}
           </Text>
           <View style={styles.metricsRow}>
             <View style={styles.metric}>
@@ -149,7 +149,7 @@ export default function ProfileScreen() {
             {session.token
               ? "Se quiser trocar de conta, saia da sessao e entre com outro email."
               : authMode === "login"
-                ? "Entre para sincronizar tudo o que ja foi salvo no celular."
+                ? "Entre na API mobile. Seus itens locais não serão importados automaticamente para a web."
                 : "Crie a conta primeiro e depois sincronize onboarding e contexto base."}
           </Text>
 

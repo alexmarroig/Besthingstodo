@@ -18,6 +18,7 @@ import { palette, spacing } from "../../src/theme";
 export default function TodayScreen() {
   const session = useSession();
   const [showNow, setShowNow] = useState(false);
+  const [nowPreference, setNowPreference] = useState<"all" | "indoor" | "outdoor" | "free">("all");
 
   const coupleQuery = useQuery({
     queryKey: ["mobile-couple", session.token],
@@ -49,14 +50,20 @@ export default function TodayScreen() {
   const spotlight = items.slice(0, 4);
   const nowSuggestions = useMemo(() => {
     const categories = new Set<string>();
-    const candidates = items.filter(item => item.domain !== "movies_series" && item.domain !== "delivery");
+    const candidates = items.filter(item => {
+      if (item.domain === "movies_series" || item.domain === "delivery") return false;
+      if (nowPreference === "indoor") return item.indoor_outdoor === "indoor";
+      if (nowPreference === "outdoor") return item.indoor_outdoor === "outdoor" || item.indoor_outdoor === "mixed";
+      if (nowPreference === "free") return item.price === 0;
+      return true;
+    });
     const distinct = candidates.filter(item => {
       if (categories.has(item.category)) return false;
       categories.add(item.category);
       return true;
     });
     return [...distinct, ...candidates.filter(item => !distinct.includes(item))].slice(0, 3);
-  }, [items]);
+  }, [items, nowPreference]);
   const atHome = items.filter((item) => item.domain === "delivery" || item.category === "movie" || item.category === "series").slice(0, 3);
   const cultural = items.filter((item) => item.domain === "events_exhibitions").slice(0, 3);
   const modeLabel = recommendationsQuery.data?.isFallback ? "modo curado" : "modo personalizado";
@@ -114,6 +121,13 @@ export default function TodayScreen() {
           <Pressable accessibilityRole="button" accessibilityState={{ expanded: showNow }} onPress={() => setShowNow(value => !value)} style={styles.nowButton}>
             <Text style={styles.nowButtonText}>{showNow ? "Ocultar ideias" : "Me dê três ideias"}</Text>
           </Pressable>
+          {showNow ? <View style={styles.nowFilters} accessibilityRole="radiogroup">
+            {([["all", "Tudo"], ["indoor", "Coberto"], ["outdoor", "Ao ar livre"], ["free", "Gratuito"]] as const).map(([key, label]) => (
+              <Pressable key={key} accessibilityRole="radio" accessibilityState={{ selected: nowPreference === key }} onPress={() => setNowPreference(key)} style={[styles.filterChip, nowPreference === key && styles.filterChipActive]}>
+                <Text style={[styles.filterText, nowPreference === key && styles.filterTextActive]}>{label}</Text>
+              </Pressable>
+            ))}
+          </View> : null}
           {showNow ? <View style={styles.nowResults}>
             {nowSuggestions.length ? nowSuggestions.map(item => <RecommendationCard key={item.id} item={item} compact />) : <Text style={styles.heroBody}>Nenhuma sugestão disponível no catálogo neste momento.</Text>}
           </View> : null}
@@ -230,6 +244,11 @@ const styles = StyleSheet.create({
   nowButton: { backgroundColor: palette.primary, paddingVertical: 14, paddingHorizontal: 18, borderRadius: 16, alignItems: "center", marginTop: spacing.sm },
   nowButtonText: { color: "#ffffff", fontSize: 15, fontWeight: "700" },
   nowResults: { gap: spacing.md, marginTop: spacing.md },
+  nowFilters: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: spacing.sm },
+  filterChip: { borderRadius: 999, borderWidth: 1, borderColor: palette.border, paddingHorizontal: 13, paddingVertical: 10 },
+  filterChipActive: { backgroundColor: "rgba(244,208,111,0.12)", borderColor: palette.accent },
+  filterText: { color: palette.textMuted, fontSize: 12 },
+  filterTextActive: { color: palette.accent, fontWeight: "700" },
   quickGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

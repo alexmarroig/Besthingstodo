@@ -42,12 +42,14 @@ function SessionProvider({ children }: { children: ReactNode }) {
       userId,
       token,
       setSession: async (nextUserId: string, nextToken: string) => {
+        await writeSession(nextUserId, nextToken);
+        queryClient.clear();
         setUserId(nextUserId);
         setToken(nextToken);
-        await writeSession(nextUserId, nextToken);
       },
       clearSession: async () => {
         await clearSessionStorage();
+        queryClient.clear();
         const session = await readSession();
         setUserId(session.userId);
         setToken("");

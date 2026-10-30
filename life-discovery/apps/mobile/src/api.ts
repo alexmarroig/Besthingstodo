@@ -50,7 +50,8 @@ function mapRecommendation(row: any, city: string): Recommendation {
     personalization_label: row.personalization_label || null,
     related_favorite: row.related_favorite || null,
     image_fallback_key: row.image_fallback_key || null,
-    quality_score: row.quality_score ?? row.score ?? null,
+    // A generic source rating is not a personalized affinity percentage.
+    quality_score: row.quality_score ?? null,
     availability_kind: row.availability_kind || null,
     editorial_source: row.editorial_source || null,
     booking_url: row.booking_url || null,
