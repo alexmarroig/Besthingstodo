@@ -9,11 +9,6 @@ export const BRAND = {
   subtitle: "Lugares, experiencias, sabores e historias que valem descobrir."
 } as const;
 
-export const DEMO_SESSION = {
-  email: "alex.c.marroig@gmail.com",
-  password: "alexcamila123"
-} as const;
-
 function normalizeText(value: string) {
   return value
     .toLowerCase()
