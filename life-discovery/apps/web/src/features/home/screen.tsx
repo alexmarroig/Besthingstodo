@@ -31,23 +31,23 @@ import { Recommendation } from "@life/shared-types";
 const SOURCE_STALE_MS = 5 * 60_000;
 
 const RAILS = [
-  { key: "forYou", title: "Para vocês (IA)", subtitle: "Priorizado em tempo real pelo aprendizado contínuo", stagger: "stagger-2" },
-  { key: "romantic", title: "Cara de date", subtitle: "Romântico, calmo e com boa conversa", stagger: "stagger-3" },
-  { key: "restaurants", title: "Restaurantes", subtitle: "Jantar alinhado ao perfil e escolhas do casal", stagger: "stagger-4" },
-  { key: "movies", title: "Filmes & séries", subtitle: "Trending com match semântico do casal", variant: "poster" as const, stagger: "stagger-5" },
+  { key: "forYou", title: "Escolhidos para você", subtitle: "Descobertas inspiradas no que você gosta", stagger: "stagger-2" },
+  { key: "romantic", title: "Para viver a dois", subtitle: "Romântico, calmo e com boa conversa", stagger: "stagger-3" },
+  { key: "restaurants", title: "Restaurantes", subtitle: "Lugares para comer bem e descobrir novos sabores", stagger: "stagger-4" },
+  { key: "movies", title: "Filmes & séries", subtitle: "Boas histórias para sua próxima sessão", variant: "poster" as const, stagger: "stagger-5" },
   { key: "events", title: "Cultura & Exposições", subtitle: "Museus, centros culturais e agenda de SP", stagger: "stagger-6" },
   { key: "editorial", title: "Radar SP", subtitle: "Críticas, Michelin, Paladar e aberturas", stagger: "stagger-7" },
-  { key: "nearby", title: "Perto de vocês", subtitle: "Menos deslocamento, mais presença", stagger: "stagger-8" },
+  { key: "nearby", title: "Perto de você", subtitle: "Menos deslocamento, mais presença", stagger: "stagger-8" },
 ] as const;
 
 type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "top_ml";
 
 const VIBE_FILTERS: Array<{ key: VibeFilterKey; label: string }> = [
   { key: "all", label: "✨ Todos" },
-  { key: "top_ml", label: "🧠 Match 90%+" },
+  { key: "top_ml", label: "✨ Boas combinações" },
   { key: "romantic", label: "🍷 Romântico & Intimista" },
   { key: "cultural", label: "🏛️ Cultura & Museus" },
-  { key: "nearby", label: "📍 Perto de Vocês" },
+  { key: "nearby", label: "📍 Por perto" },
   { key: "indoor", label: "☔ Coberto / Conforto" },
 ];
 
@@ -61,7 +61,7 @@ export default function HomeScreen() {
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const city = couple?.city || "Sao Paulo";
-  const greetingName = couple?.account_name || couple?.neighborhood || couple?.city || "casal";
+  const greetingName = couple?.account_name || "";
 
   const { data: context } = useQuery({
     queryKey: ["context", city, couple?.neighborhood || ""],
@@ -167,10 +167,10 @@ export default function HomeScreen() {
           <div className="min-w-0 space-y-1.5">
             <p className="inline-flex items-center gap-1.5 text-xs font-medium text-[#f4d06f]">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Curadoria viva & personalizada</span>
+              <span>BestThingsToDo · Descobertas para a vida real</span>
             </p>
             <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
-              O roteiro de hoje, {greetingName}
+              O que vamos descobrir hoje{greetingName ? `, ${greetingName}` : ""}?
             </h2>
             <p className="max-w-xl text-sm leading-relaxed text-white/60">{brief.headline}</p>
           </div>
@@ -256,7 +256,7 @@ export default function HomeScreen() {
           <p className="font-display text-xl font-semibold text-white">2 minutos para sugestões perfeitas</p>
           <p className="mt-2 text-sm text-white/55">Cidade, culinárias e favoritos deixam tudo menos genérico.</p>
           <Link href="/onboarding" className="btn-primary mt-4">
-            Montar perfil do casal
+            Personalizar minhas descobertas
           </Link>
         </div>
       ) : null}
@@ -266,7 +266,7 @@ export default function HomeScreen() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="rail-title">Resultados filtrados ({filteredItems.length})</h3>
-              <p className="text-xs text-white/50">Ordenados pelo score neural do casal</p>
+              <p className="text-xs text-white/50">Ordenados por afinidade e relevância</p>
             </div>
             <button
               type="button"
@@ -330,7 +330,7 @@ export default function HomeScreen() {
 
       {!railsLoading && items.length === 0 ? (
         <div className="surface p-5 text-sm text-white/60">
-          Nenhuma sugestão agora. Complete o perfil do casal ou reinicie os filtros.
+          Nenhuma sugestão agora. Experimente novos filtros ou personalize suas preferências.
         </div>
       ) : null}
 
