@@ -90,17 +90,15 @@ export default function DiscoveryCard({
   };
 
   const externalUrl = item.booking_url || item.url;
+  const hasVerifiedBooking = Boolean(item.booking_url && item.booking_url !== item.url);
   const mapQuery =
     item.latitude && item.longitude
       ? `${item.latitude},${item.longitude}`
       : encodeURIComponent(`${item.title} ${item.neighborhood || ""} ${item.city || "São Paulo"}`);
 
-  const matchPercent =
-    item.quality_score != null && item.quality_score > 0
-      ? Math.round(item.quality_score)
-      : item.score != null && item.score > 0
-        ? Math.round(item.score * 10)
-        : null;
+  const matchPercent = item.quality_score != null && item.quality_score > 0
+    ? Math.round(item.quality_score)
+    : null;
 
   return (
     <motion.div
@@ -117,7 +115,7 @@ export default function DiscoveryCard({
         {/* Score badge */}
         {matchPercent != null && (
           <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-black/65 px-3 py-1 backdrop-blur-md ring-1 ring-white/15">
-            <span className="text-xs font-semibold text-[#f4d06f]">{matchPercent}% match</span>
+            <span className="text-xs font-semibold text-[#f4d06f]">{matchPercent}% afinidade estimada</span>
           </div>
         )}
 
@@ -173,8 +171,9 @@ export default function DiscoveryCard({
             </span>
           )}
           <span className="rounded-full bg-white/6 px-2.5 py-1 text-[11px] text-white/55">
-            {source.badge}
+            Fonte: {source.label}
           </span>
+          <span className="rounded-full bg-white/6 px-2.5 py-1 text-[11px] text-white/55">Horários não verificados em tempo real</span>
         </div>
 
         {/* Tags */}
@@ -227,7 +226,7 @@ export default function DiscoveryCard({
               className={`food-action ${item.domain === "dining_out" || item.domain === "delivery" ? "food-action-primary" : "text-white/75"}`}
             >
               <ArrowUpRight className="h-4 w-4" />
-              <span>{item.domain === "dining_out" ? "Abrir site" : item.domain === "delivery" ? "Ver opções de pedido" : "Ver fonte"}</span>
+              <span>{hasVerifiedBooking ? "Ver reserva" : "Consultar fonte"}</span>
             </a>
           )}
           <ActionButton icon={<X className="h-4 w-4" />} label="Ocultar" onClick={() => handleAction("dislike")} variant="skip" />
