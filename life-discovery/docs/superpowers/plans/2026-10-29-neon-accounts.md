@@ -16,7 +16,7 @@ Plano aprovado pelo usuário em 29/10/2026 nesta conversa. Executar inline com s
 - [x] APIs privadas: GET/PATCH /api/me/state e perfil autenticado.
 - [x] Cliente: cache/fila por conta, importação, sincronização e bloqueio de gravação anônima.
 - [x] Catálogo: substituir Supabase, cron protegido, ingestão independente e retenção.
-- [ ] Verificação: testes, build, browser, isolamento de contas, preview e deploy.
+- [x] Verificação automatizada: testes, build, browser, isolamento de contas, preview e deploy.
 
 ## Registro de execução
 - Base: fae61ea. Worktree limpo existente reutilizado; branch codex/neon-accounts.
@@ -29,3 +29,7 @@ Plano aprovado pelo usuário em 29/10/2026 nesta conversa. Executar inline com s
 - Build Next 16.4.3 e tipos passaram. Testes de reducer (7), cinema (3), imagens (4), concorrência/isolamento/replay (2) e coleta tolerante a falhas (1) passaram.
 - Browser em build de produção local validou login por senha, bloqueio de usuário não verificado, duas sessões da mesma conta, fila offline, atualização de agenda e logout. Fixture descartável confirmada apenas na branch de testes; entrega real de email/OTP e consentimento Google requerem validação humana.
 - Revisão independente corrigiu vínculo da fila à conta antes do commit, remoção por item da agenda, proteção de perfil editado na importação e igualdade independente da ordem JSONB.
+- Preview final 205208a passou em desktop e celular, incluindo login, API privada, cinema, comida, Mapbox, agenda e recuperação de senha. O mapa carregou o estilo externo sem bloqueios de CSP.
+- Produção publicada em besthingstodo-plum.vercel.app. As conexões de produção foram substituídas pelas conexões verificadas da branch correta do Neon. Cron confirmado na API da Vercel: /api/internal/catalog-refresh, 0 9 * * *.
+- Primeira coleta de produção: HTTP 200, resultado parcial esperado, 13 fontes atualizadas de 26 consultadas. TMDB retornou 20 itens e Geoapify 33. Fontes indisponíveis preservaram os últimos dados válidos. A conta descartável de QA foi removida do preview.
+- Pendente de validação humana: recebimento real do código e do link de recuperação por e-mail e conclusão do consentimento Google. O início do OAuth e a solicitação de recuperação foram aceitos pelo provedor; a confirmação da solicitação apareceu no formulário oficial.
