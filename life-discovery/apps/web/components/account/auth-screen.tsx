@@ -17,7 +17,9 @@ export default function AuthScreen({ mode }: { mode: string }) {
   const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(params.get("notice") === "reset-requested"
+    ? "Se houver uma conta com este e-mail, você receberá um link para redefinir sua senha."
+    : params.get("notice") === "reset-complete" ? "Senha atualizada. Entre com sua nova senha." : "");
   const [error, setError] = useState("");
   const isSignUp = mode === "sign-up";
   const isVerify = mode === "verify-email";
@@ -70,7 +72,10 @@ export default function AuthScreen({ mode }: { mode: string }) {
       <h2 className="text-2xl font-semibold text-white">{title}</h2>
       <p className="text-sm leading-relaxed text-white/60">Uma conta compartilhada para guardar o perfil, os favoritos e os planos de vocês em qualquer aparelho.</p>
       <p className="rounded-xl bg-[#f4d06f]/10 p-3 text-xs text-[#f4d06f]">Beta gratuito. Os e-mails de teste e a tela do Google podem exibir a marca Neon.</p>
-      {recovery ? <AuthUIProvider authClient={authClient} navigate={router.push} replace={router.replace} basePath="/auth" redirectTo="/home" localization={{
+      {recovery ? <AuthUIProvider authClient={authClient} navigate={path => router.push(path.startsWith("/auth/sign-in")
+        ? `/auth/sign-in?notice=${mode === "forgot-password" ? "reset-requested" : "reset-complete"}` : path)}
+        toast={({ message, variant }) => variant === "error" ? setError(String(message)) : setMessage(String(message))}
+        replace={router.replace} basePath="/auth" redirectTo="/home" localization={{
         EMAIL: "E-mail", EMAIL_PLACEHOLDER: "voce@exemplo.com", PASSWORD: "Senha", GO_BACK: "Voltar",
         FORGOT_PASSWORD: "Esqueci minha senha", FORGOT_PASSWORD_ACTION: "Enviar link de recuperação",
         FORGOT_PASSWORD_EMAIL: "Se houver uma conta com este e-mail, você receberá um link para redefinir sua senha.",
