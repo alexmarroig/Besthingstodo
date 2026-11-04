@@ -28,15 +28,15 @@ import { Recommendation } from "@life/shared-types";
 const SOURCE_STALE_MS = 5 * 60_000;
 
 const RAILS = [
-  { key: "forYou", title: "Sua seleção", subtitle: "Ideias a partir do seu repertório", stagger: "stagger-2" },
-  { key: "romantic", title: "A dois", subtitle: "Lugares para compartilhar", stagger: "stagger-3" },
-  { key: "restaurants", title: "À mesa", subtitle: "Restaurantes para conhecer", stagger: "stagger-4" },
-  { key: "cafes", title: "Pausa para um café", subtitle: "Boas mesas, outros ritmos", stagger: "stagger-5" },
-  { key: "movies", title: "Na tela", subtitle: "Histórias que merecem atenção", variant: "poster" as const, stagger: "stagger-5" },
-  { key: "events", title: "Arte & cultura", subtitle: "Museus, exposições e descobertas", stagger: "stagger-6" },
-  { key: "editorial", title: "Nosso olhar", subtitle: "Descobertas de diferentes fontes", stagger: "stagger-7" },
-  { key: "nearby", title: "Por perto", subtitle: "O que existe ao redor", stagger: "stagger-8" },
-  { key: "outdoor", title: "Lá fora", subtitle: "Passeios em espaços abertos", stagger: "stagger-8" },
+  { key: "forYou", title: "Recomendados para você", subtitle: "Sugestões a partir das suas preferências", stagger: "stagger-2" },
+  { key: "romantic", title: "Passeios a dois", subtitle: "Experiências para fazer juntos", stagger: "stagger-3" },
+  { key: "restaurants", title: "Restaurantes", subtitle: "Onde comer e descobrir novos sabores", stagger: "stagger-4" },
+  { key: "cafes", title: "Cafeterias", subtitle: "Cafés e lugares para uma pausa", stagger: "stagger-5" },
+  { key: "movies", title: "Filmes e séries", subtitle: "Histórias para assistir", variant: "poster" as const, stagger: "stagger-5" },
+  { key: "events", title: "Eventos e cultura", subtitle: "Exposições, eventos e lugares culturais", stagger: "stagger-6" },
+  { key: "editorial", title: "Destaques da cidade", subtitle: "Seleções de fontes e guias culturais", stagger: "stagger-7" },
+  { key: "nearby", title: "Perto de você", subtitle: "Experiências nos arredores", stagger: "stagger-8" },
+  { key: "outdoor", title: "Passeios ao ar livre", subtitle: "Parques e experiências em espaços abertos", stagger: "stagger-8" },
 ] as const;
 
 type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "top_ml";
@@ -44,10 +44,10 @@ type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "to
 const VIBE_FILTERS: Array<{ key: VibeFilterKey; label: string }> = [
   { key: "all", label: "Tudo" },
   { key: "top_ml", label: "Para você" },
-  { key: "romantic", label: "A dois" },
-  { key: "cultural", label: "Cultura" },
+  { key: "romantic", label: "Para dois" },
+  { key: "cultural", label: "Arte e cultura" },
   { key: "nearby", label: "Por perto" },
-  { key: "indoor", label: "Ambientes internos" },
+  { key: "indoor", label: "Lugares cobertos" },
 ];
 
 export default function HomeScreen() {
