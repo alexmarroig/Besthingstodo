@@ -81,7 +81,7 @@ export default function MediaTile({
         }
       }}
       className={`group shrink-0 cursor-pointer snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a59]/50 ${
-        isPoster ? "w-[158px] sm:w-[190px] lg:w-[205px]" : isFood ? "w-[260px] sm:w-[310px] lg:w-[332px]" : "w-[252px] sm:w-[302px] lg:w-[326px]"
+        isPoster ? "w-[min(38vw,168px)] sm:w-[174px] lg:w-[186px]" : isFood ? "w-[min(74vw,272px)] sm:w-[286px] lg:w-[306px]" : "w-[min(69vw,248px)] sm:w-[264px] lg:w-[288px]"
       }`}
     >
       <div className={`experience-card relative overflow-hidden rounded-[1.25rem] sm:rounded-[1.5rem] ${isPoster ? "aspect-[2/3]" : isFood ? "aspect-[5/4]" : "aspect-[4/3]"}`}>
