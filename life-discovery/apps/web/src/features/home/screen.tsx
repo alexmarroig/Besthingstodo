@@ -380,7 +380,10 @@ export default function HomeScreen() {
         open={captureOpen}
         onClose={() => setCaptureOpen(false)}
         city={city}
-        onCaptured={(newItem) => setSelectedItem(newItem)}
+        onCaptured={(newItem) => {
+          setCaptureOpen(false);
+          setSelectedItem(newItem);
+        }}
       />
 
       {/* Live Continual Learning Toast */}
