@@ -7,10 +7,10 @@ export default function MediaTileSkeleton({ variant = "landscape" }: { variant?:
 
   return (
     <div
-      className={`shrink-0 snap-start ${isPoster ? "w-[134px] sm:w-[148px]" : variant === "food" ? "w-[260px] sm:w-[300px]" : "w-[210px] sm:w-[236px]"}`}
+      className={`shrink-0 snap-start ${isPoster ? "w-[min(38vw,168px)] sm:w-[174px] lg:w-[186px]" : variant === "food" ? "w-[min(74vw,272px)] sm:w-[286px] lg:w-[306px]" : "w-[min(69vw,248px)] sm:w-[264px] lg:w-[288px]"}`}
       aria-hidden
     >
-      <div className={`experience-card overflow-hidden ${isPoster ? "aspect-[2/3]" : "aspect-[4/3]"}`}>
+      <div className={`experience-card overflow-hidden ${isPoster ? "aspect-[2/3]" : variant === "food" ? "aspect-[5/4]" : "aspect-[4/3]"}`}>
         <div className="shimmer h-full w-full" />
       </div>
       <div className="mt-2.5 space-y-1.5">

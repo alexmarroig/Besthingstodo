@@ -80,12 +80,21 @@ export default function MediaTile({
           onOpen(item);
         }
       }}
-      className={`group shrink-0 cursor-pointer snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a59]/50 ${
-        isPoster ? "w-[134px] sm:w-[148px]" : isFood ? "w-[260px] sm:w-[300px]" : "w-[210px] sm:w-[236px]"
+      className={`group shrink-0 cursor-pointer snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d7bc88]/50 ${
+        isPoster ? "w-[min(38vw,168px)] sm:w-[174px] lg:w-[186px]" : isFood ? "w-[min(74vw,272px)] sm:w-[286px] lg:w-[306px]" : "w-[min(69vw,248px)] sm:w-[264px] lg:w-[288px]"
       }`}
     >
-      <div className={`experience-card relative overflow-hidden ${isPoster ? "aspect-[2/3]" : "aspect-[4/3]"}`}>
-        <ExperienceImage item={item} mode="tile" className="absolute inset-0 h-full w-full" />
+      <div className={`experience-card relative overflow-hidden rounded-[1.25rem] sm:rounded-[1.5rem] ${isPoster ? "aspect-[2/3]" : isFood ? "aspect-[5/4]" : "aspect-[4/3]"}`}>
+        <ExperienceImage
+          item={item}
+          mode="tile"
+          sizes={isPoster
+            ? "(max-width: 640px) 38vw, (max-width: 1024px) 174px, 186px"
+            : isFood
+              ? "(max-width: 640px) 74vw, (max-width: 1024px) 286px, 306px"
+              : "(max-width: 640px) 69vw, (max-width: 1024px) 264px, 288px"}
+          className="absolute inset-0 h-full w-full"
+        />
 
         {/* Quick 1-Tap ML Feedback Overlay */}
         <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
@@ -120,8 +129,8 @@ export default function MediaTile({
         </div>
       </div>
 
-      <div className="mt-2.5 space-y-1 px-0.5">
-        <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-white transition-colors group-hover:text-[#ffb89a] sm:text-[14px]">
+      <div className="mt-3 space-y-1.5 px-1">
+        <p className="line-clamp-2 min-h-[2.6em] text-[14px] font-semibold leading-snug text-white transition-colors group-hover:text-[#e7c994] sm:text-[15px]">
           {item.title}
         </p>
 
@@ -136,7 +145,7 @@ export default function MediaTile({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {match ? <span className="pill-accent px-2 py-0.5 text-[10px]">{match}</span> : null}
+          {match ? <span className="text-[10px] text-[#d7bc88]">{match}</span> : null}
           <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-white/55">
             {localizeCategory(item.category)}
           </span>
@@ -148,7 +157,7 @@ export default function MediaTile({
         </div>
       </div>
       {isFood ? <div className="mt-3 flex min-h-11 items-center justify-between rounded-xl border border-[#ff7a59]/25 bg-[#ff7a59]/10 px-3.5 text-xs font-semibold text-[#ffb89a] transition group-hover:bg-[#ff7a59]/20">
-        <span className="flex items-center gap-2"><UtensilsCrossed className="h-4 w-4" />Ver detalhes</span><ArrowUpRight className="h-4 w-4" />
+        <span className="flex items-center gap-2"><UtensilsCrossed className="h-4 w-4" />Conhecer</span><ArrowUpRight className="h-4 w-4" />
       </div> : null}
     </div>
   );

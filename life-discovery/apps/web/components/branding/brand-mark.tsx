@@ -1,46 +1,29 @@
 type BrandMarkSize = "sm" | "md" | "lg";
 
-const sizeStyles: Record<BrandMarkSize, { outer: string; inner: string }> = {
-  sm: {
-    outer: "h-10 w-10",
-    inner: "h-8 w-8 rounded-[0.85rem] text-xs",
-  },
-  md: {
-    outer: "h-[4.5rem] w-[4.5rem]",
-    inner: "h-[3.35rem] w-[3.35rem] rounded-[1.15rem] text-lg",
-  },
-  lg: {
-    outer: "h-24 w-24",
-    inner: "h-[4.5rem] w-[4.5rem] rounded-[1.35rem] text-2xl",
-  },
+const dimensions: Record<BrandMarkSize, string> = {
+  sm: "h-9 w-9",
+  md: "h-14 w-14",
+  lg: "h-20 w-20",
 };
 
 export default function BrandMark({
   size = "md",
-  glow = false,
+  glow: _glow = false,
 }: {
   size?: BrandMarkSize;
   glow?: boolean;
 }) {
-  const styles = sizeStyles[size];
-
+  void _glow;
   return (
-    <div className={`relative flex items-center justify-center ${styles.outer}`}>
-      <div
-        className={`absolute inset-0 rounded-full bg-gradient-to-br from-[#ff7a59]/25 via-transparent to-[#f4d06f]/15 ${
-          glow ? "animate-pulse-glow" : ""
-        }`}
-        aria-hidden
-      />
-      <div
-        className="absolute inset-[3px] rounded-full border border-white/10"
-        aria-hidden
-      />
-      <div
-        className={`relative flex items-center justify-center bg-gradient-to-br from-[#ff7a59]/35 via-[#1a2433]/80 to-[#f4d06f]/15 font-bold tracking-[0.18em] text-[#fff2cf] ring-1 ring-white/12 shadow-glow-sm ${styles.inner}`}
-      >
-        R2
-      </div>
-    </div>
+    <span
+      className={`inline-flex shrink-0 items-center justify-center rounded-[13px] border border-[#d4b47a]/35 bg-[#171d22] text-[#e7c98e] ${dimensions[size]}`}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 40 40" fill="none" className="h-[64%] w-[64%]">
+        <circle cx="20" cy="20" r="15.5" stroke="currentColor" strokeWidth="1" opacity=".5" />
+        <path d="M11 28L20 10L29 28L20 24L11 28Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <circle cx="20" cy="20" r="2.1" fill="currentColor" />
+      </svg>
+    </span>
   );
 }

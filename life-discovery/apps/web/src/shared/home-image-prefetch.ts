@@ -5,7 +5,7 @@ import { getFeedbackHistory } from "@/shared/storage";
 import { RECOMMENDATION_POOL_LIMIT } from "@/shared/api/config";
 import { dedupeImageAssignments } from "@/shared/known-venue-images";
 import { normalizeRecommendationImageUrl, attachRecommendationImage } from "@/shared/recommendation-images";
-import { preloadImageUrls, setCachedImageUrls } from "@/shared/image-cache";
+import { setCachedImageUrls } from "@/shared/image-cache";
 import type { CoupleSnapshot, ExperienceContext, Recommendation } from "@life/shared-types";
 
 const VISIBLE_PER_RAIL = 6;
@@ -86,8 +86,6 @@ export async function prefetchVisibleHomeImages(
   setCachedImageUrls(allImages);
   queryClient.setQueryData(queryKey, mergeImagesIntoSources(sources, allImages));
 
-  preloadImageUrls(
-    visible.slice(0, 8).map((item) => allImages[item.id] || item.image_url),
-    8
-  );
+  // The hero image is prioritized by next/image. Avoid downloading eight
+  // full-size originals before the visitor reaches their carousels.
 }

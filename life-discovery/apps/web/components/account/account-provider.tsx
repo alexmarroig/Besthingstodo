@@ -56,6 +56,9 @@ export function AccountBar() {
   const snapshot = useSyncExternalStore(subscribeAccount, getAccountSnapshot, getAccountServerSnapshot);
   const pathname = usePathname();
   if (pathname.startsWith("/auth/")) return null;
+  // A healthy sync is an expected state, not an announcement on every page.
+  // Keep the sign-out action discoverable on the account/profile screen.
+  if (!account.loading && snapshot.status === "saved" && pathname !== "/profile") return null;
   const labels = { guest: "Salve seus planos em qualquer aparelho", syncing: `Sincronizando${snapshot.pending ? ` · ${snapshot.pending} alterações` : "…"}`, saved: "Dados do casal sincronizados", offline: "Sem conexão · alterações guardadas neste aparelho", error: "Sincronização pendente · seus dados continuam neste aparelho", verify: "Confirme seu e-mail para sincronizar" };
   async function signOut() {
     activateAccount(null);
@@ -63,7 +66,7 @@ export function AccountBar() {
     if (result.error) { window.location.reload(); return; }
     window.location.assign("/home");
   }
-  return <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 pt-4 text-xs md:px-6">
+  return <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 pt-3 text-xs md:px-6">
     <span role="status" className="flex items-center gap-2 text-white/60">{snapshot.status === "saved" ? <CloudCheck className="h-4 w-4 text-emerald-300" /> : snapshot.status === "offline" || snapshot.status === "error" ? <CloudOff className="h-4 w-4 text-[#f4d06f]" /> : null}{account.loading ? "Verificando sua conta…" : labels[snapshot.status]}</span>
     <div className="flex items-center gap-2">
       {snapshot.accountId ? <>

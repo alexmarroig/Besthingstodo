@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 
 import {
   isLocalVenueImage,
@@ -12,6 +13,19 @@ import { fetchEditorialImageDeduped, getCachedImageUrl } from "@/shared/image-ca
 import { getRecommendationSourceMeta } from "@/shared/source";
 import { localizeCategory } from "@/shared/labels-pt";
 import { Recommendation } from "@life/shared-types";
+
+// Only hosts explicitly configured in next.config.ts may use the image optimizer.
+function canOptimizeImage(src: string): boolean {
+  if (src.startsWith("/images/")) return true;
+  try {
+    const url = new URL(src);
+    if (url.protocol !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    return ["image.tmdb.org", "www.themealdb.com", "openweathermap.org", "s1.ticketm.net"].includes(host)
+      || host === "wikipedia.org" || host.endsWith(".wikipedia.org")
+      || host === "wikimedia.org" || host.endsWith(".wikimedia.org");
+  } catch { return false; }
+}
 
 const fallbackThemes: Record<string, { gradient: string; eyebrow: string }> = {
   museum: { gradient: "from-[#4338ca] via-[#0f172a] to-[#f97316]", eyebrow: "Cultura em foco" },
@@ -27,10 +41,12 @@ export default function ExperienceImage({
   item,
   className = "",
   mode = "full",
+  sizes,
 }: {
   item: Recommendation;
   className?: string;
   mode?: "full" | "tile" | "hero";
+  sizes?: string;
 }) {
   const theme = fallbackThemes[item.image_fallback_key || "editorial"] || fallbackThemes.editorial;
   const sourceMeta = getRecommendationSourceMeta(item);
@@ -50,14 +66,33 @@ export default function ExperienceImage({
     return localFallback;
   }, [item.id, item.title, item.location, item.image_url, localFallback]);
 
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [nearViewport, setNearViewport] = useState(mode === "hero");
   const [resolvedImage, setResolvedImage] = useState<string | null>(directImage);
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(() => isLocalVenueImage(directImage));
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (mode === "hero" || typeof IntersectionObserver === "undefined") {
+      setNearViewport(true);
+      return;
+    }
+    const node = imageContainerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setNearViewport(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: "180px 120px" });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [mode]);
 
   useEffect(() => {
     setFailed(false);
     setResolvedImage(directImage);
-    setLoaded(isLocalVenueImage(directImage));
+    setLoaded(false);
 
     const hasDedicatedKnown = Boolean(resolveKnownVenueImageForItem(item.id, item.title, item.location));
     const hasExplicitRemote = Boolean(item.image_url && !isLocalVenueImage(item.image_url));
@@ -81,7 +116,10 @@ export default function ExperienceImage({
     fetchEditorialImageDeduped(item.id, `/api/editorial-image?${params.toString()}`).then((remoteUrl) => {
       if (!active || !remoteUrl) return;
       const valid = normalizeRecommendationImageUrl(remoteUrl);
-      if (valid) setResolvedImage(valid);
+      if (valid) {
+        setLoaded(false);
+        setResolvedImage(valid);
+      }
     });
 
     return () => {
@@ -101,11 +139,36 @@ export default function ExperienceImage({
     mode,
   ]);
 
+  useEffect(() => {
+    if (!nearViewport || !resolvedImage || loaded || failed || isLocalVenueImage(resolvedImage)) return;
+    // A stalled remote image should never leave a card shimmering indefinitely.
+    const timeout = window.setTimeout(() => {
+      setResolvedImage(localFallback);
+      setLoaded(false);
+    }, 12_000);
+    return () => window.clearTimeout(timeout);
+  }, [nearViewport, resolvedImage, loaded, failed, localFallback]);
+
   const rootClass = className ? `relative overflow-hidden ${className}` : "relative h-52 overflow-hidden";
   const showImage = Boolean(resolvedImage) && !failed;
   const isCompact = mode === "tile";
   const isHero = mode === "hero";
-  const showShimmer = showImage && !loaded && !isLocalVenueImage(resolvedImage);
+  const showShimmer = showImage && !loaded;
+  const imageSizes = sizes || (isHero
+    ? "(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 1152px"
+    : isCompact
+      ? "(max-width: 640px) 70vw, (max-width: 1024px) 264px, 288px"
+      : "(max-width: 640px) 100vw, 680px");
+  const imageClass = `absolute inset-0 h-full w-full object-cover transition-opacity duration-300 motion-safe:group-hover:scale-[1.035] ${loaded ? "opacity-100" : "opacity-0"}`;
+  const handleImageError = () => {
+    if (resolvedImage !== localFallback && localFallback) {
+      setResolvedImage(localFallback);
+      setLoaded(false);
+    } else {
+      setFailed(true);
+      setLoaded(true);
+    }
+  };
 
   const overlayBadges = (
     <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-2.5">
@@ -124,34 +187,40 @@ export default function ExperienceImage({
     </div>
   );
 
-  if (showImage) {
+  if (showImage && nearViewport) {
     return (
-      <div className={rootClass}>
+      <div ref={imageContainerRef} className={rootClass}>
         {showShimmer ? <div className="absolute inset-0 shimmer" aria-hidden /> : null}
-        <img
-          src={resolvedImage!}
-          alt={item.title}
-          className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] ${
-            loaded ? "opacity-100" : "opacity-0"
-          }`}
-          loading={isHero ? "eager" : "lazy"}
-          decoding="async"
-          fetchPriority={isHero ? "high" : "auto"}
-          onLoad={() => setLoaded(true)}
-          onError={() => {
-            if (resolvedImage !== localFallback && localFallback) {
-              setResolvedImage(localFallback);
-              setLoaded(true);
-            } else {
-              setFailed(true);
-              setLoaded(true);
-            }
-          }}
-        />
+        {canOptimizeImage(resolvedImage!) ? (
+          <Image
+            key={resolvedImage}
+            src={resolvedImage!}
+            alt={`Imagem de ${item.title}`}
+            fill
+            sizes={imageSizes}
+            quality={75}
+            loading={isHero ? "eager" : "lazy"}
+            className={imageClass}
+            onLoad={() => setLoaded(true)}
+            onError={handleImageError}
+          />
+        ) : (
+          <img
+            key={resolvedImage}
+            src={resolvedImage!}
+            alt={`Imagem de ${item.title}`}
+            className={imageClass}
+            loading={isHero ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={isHero ? "high" : undefined}
+            onLoad={() => setLoaded(true)}
+            onError={handleImageError}
+          />
+        )}
         <div
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${
             isCompact
-              ? "from-black/40 via-transparent to-black/5"
+              ? "from-black/55 via-black/5 to-black/10"
               : isHero
                 ? "from-black/30 via-transparent to-transparent"
                 : "from-[#04101d]/90 via-black/25 to-black/10"
@@ -180,7 +249,7 @@ export default function ExperienceImage({
   }
 
   return (
-    <div className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
+    <div ref={imageContainerRef} className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]" />
       {isHero ? null : overlayBadges}
     </div>

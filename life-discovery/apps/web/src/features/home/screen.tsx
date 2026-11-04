@@ -2,10 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BrainCircuit, ArrowRight, Clock3, Search, Sparkles, X } from "lucide-react";
+import { BrainCircuit, ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
 
-import ProfileNudge from "@/components/profile/profile-nudge";
-import CoupleWeatherBadge from "@/components/discovery/couple-weather-badge";
 import HeroBanner from "@/components/discovery/hero-banner";
 import MediaDetailModal from "@/components/discovery/media-detail-modal";
 import MediaRail from "@/components/discovery/media-rail";
@@ -14,7 +12,6 @@ import NeuralRadarPanel from "@/components/discovery/neural-radar-panel";
 import QuickActions from "@/components/discovery/quick-actions";
 import SmartCaptureModal from "@/components/discovery/smart-capture-modal";
 import {
-  buildDayBrief,
   buildFallbackContext,
   buildHomeRails,
   curateRecommendations,
@@ -34,21 +31,23 @@ const RAILS = [
   { key: "forYou", title: "Escolhidos para você", subtitle: "Descobertas inspiradas no que você gosta", stagger: "stagger-2" },
   { key: "romantic", title: "Para viver a dois", subtitle: "Romântico, calmo e com boa conversa", stagger: "stagger-3" },
   { key: "restaurants", title: "Restaurantes", subtitle: "Lugares para comer bem e descobrir novos sabores", stagger: "stagger-4" },
+  { key: "cafes", title: "Cafés & boas pausas", subtitle: "Cafeterias para descobrir, conversar ou desacelerar", stagger: "stagger-5" },
   { key: "movies", title: "Filmes & séries", subtitle: "Boas histórias para sua próxima sessão", variant: "poster" as const, stagger: "stagger-5" },
   { key: "events", title: "Cultura & Exposições", subtitle: "Museus, centros culturais e agenda de SP", stagger: "stagger-6" },
   { key: "editorial", title: "Radar SP", subtitle: "Críticas, Michelin, Paladar e aberturas", stagger: "stagger-7" },
   { key: "nearby", title: "Perto de você", subtitle: "Menos deslocamento, mais presença", stagger: "stagger-8" },
+  { key: "outdoor", title: "Ao ar livre", subtitle: "Ideias para aproveitar a cidade do lado de fora", stagger: "stagger-8" },
 ] as const;
 
 type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "top_ml";
 
 const VIBE_FILTERS: Array<{ key: VibeFilterKey; label: string }> = [
-  { key: "all", label: "✨ Todos" },
-  { key: "top_ml", label: "✨ Boas combinações" },
-  { key: "romantic", label: "🍷 Romântico & Intimista" },
-  { key: "cultural", label: "🏛️ Cultura & Museus" },
-  { key: "nearby", label: "📍 Por perto" },
-  { key: "indoor", label: "☔ Coberto / Conforto" },
+  { key: "all", label: "Tudo" },
+  { key: "top_ml", label: "Para você" },
+  { key: "romantic", label: "A dois" },
+  { key: "cultural", label: "Cultura" },
+  { key: "nearby", label: "Por perto" },
+  { key: "indoor", label: "Ambientes internos" },
 ];
 
 export default function HomeScreen() {
@@ -59,10 +58,12 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeVibe, setActiveVibe] = useState<VibeFilterKey>("all");
   const [nowMode, setNowMode] = useState(false);
+  const [showAllRails, setShowAllRails] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const city = couple?.city || "Sao Paulo";
-  const greetingName = couple?.account_name || "";
+  const neighborhood = couple?.neighborhood || city;
 
   const { data: context } = useQuery({
     queryKey: ["context", city, couple?.neighborhood || ""],
@@ -108,7 +109,7 @@ export default function HomeScreen() {
     else if (activeVibe === "cultural") list = pickForVibe(list, "cultural");
     else if (activeVibe === "nearby") list = pickForVibe(list, "nearby");
     else if (activeVibe === "indoor") list = list.filter((i) => i.indoor_outdoor === "indoor");
-    else if (activeVibe === "top_ml") list = list.filter((i) => (i.quality_score || 0) >= 88);
+    else if (activeVibe === "top_ml") list = list.slice(0, 24);
 
     const q = searchQuery.trim().toLowerCase();
     if (q) {
@@ -150,16 +151,13 @@ export default function HomeScreen() {
     forYou: forYou.length ? forYou : items.slice(0, 10),
     romantic,
     restaurants,
+    cafes: items.filter((item) => item.category === "cafe" || item.tags?.some((tag) => /caf[eé]|coffee/i.test(tag))).slice(0, 16),
     movies,
     events,
     editorial,
     nearby,
+    outdoor: items.filter((item) => item.indoor_outdoor === "outdoor" || item.indoor_outdoor === "mixed").slice(0, 16),
   };
-
-  const brief = useMemo(
-    () => buildDayBrief(items, context || buildFallbackContext(city), couple || undefined),
-    [items, context, couple, city]
-  );
 
   const profileCompleteness = useMemo(() => getProfileCompleteness(couple), [couple]);
   const railsLoading = sourcesLoading && recommendations.length === 0;
@@ -173,81 +171,44 @@ export default function HomeScreen() {
 
   return (
     <section className="space-y-7 md:space-y-9">
-      {/* Header & Live Context */}
-      <header className="animate-fade-up space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 space-y-1.5">
-            <p className="inline-flex items-center gap-1.5 text-xs font-medium text-[#f4d06f]">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>BestThingsToDo · Descobertas para a vida real</span>
-            </p>
-            <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
-              O que vamos descobrir hoje{greetingName ? `, ${greetingName}` : ""}?
-            </h2>
-            <p className="max-w-xl text-sm leading-relaxed text-white/60">{brief.headline}</p>
+      <header className="space-y-4 pt-3 md:pt-6">
+        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#d5bd8b]">
+          {neighborhood}{context?.temperature != null ? ` · ${Math.round(context.temperature)}°` : ""} · uma cidade para descobrir
+        </p>
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="max-w-[790px]">
+            <h2 className="font-serif text-[clamp(2.4rem,5vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.045em] text-[#f4f0e8]">Descubra algo que vale a pena.</h2>
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/55 sm:text-base">Lugares, encontros e histórias para sair do habitual.</p>
           </div>
-          <CoupleWeatherBadge context={context} couple={couple || undefined} compact />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {brief.chips.slice(0, 4).map((chip) => (
-            <span key={chip} className="pill">
-              {chip}
-            </span>
-          ))}
-          {!railsLoading ? <span className="pill-accent">{items.length} experiências ativas</span> : null}
+          <Link href="/map" className="inline-flex min-h-11 items-center gap-2 border-b border-[#d7bc88]/55 pb-1 text-sm font-medium text-[#e7d5af] hover:text-white">Explorar no mapa <ArrowRight className="h-4 w-4" strokeWidth={1.5}/></Link>
         </div>
       </header>
-
-      {/* Fast discovery: a short actionable shortlist, never a false open-now promise. */}
-      <section className="relative overflow-hidden rounded-[1.75rem] border border-[#f4d06f]/20 bg-gradient-to-br from-[#202536] via-[#111c29] to-[#0a121c] p-5 shadow-float sm:p-7" aria-label="Descobrir agora">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="max-w-xl space-y-2">
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#f4d06f]"><Clock3 className="h-4 w-4" /> BestThingsToDo Now</p>
-            <h3 className="font-display text-2xl font-semibold text-white sm:text-3xl">Não sabe o que fazer hoje?</h3>
-            <p className="text-sm leading-relaxed text-white/65">Troque a lista infinita por até três ideias selecionadas conforme suas preferências. Confira horários e disponibilidade antes de sair.</p>
+      <section className="relative overflow-hidden rounded-[24px] border border-white/[0.09] bg-[#151c23] px-5 py-6 sm:px-8 sm:py-8" aria-label="Sua seleção do momento">
+        <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
+          <div className="max-w-xl">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">ESCOLHAS DE HOJE</p>
+            <h3 className="font-serif text-[clamp(1.9rem,3vw,2.7rem)] font-normal leading-tight tracking-[-0.025em] text-white">Três ideias. Um bom dia.</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/55">Uma seleção curta para você decidir sem perder tempo.</p>
           </div>
-          <button type="button" onClick={() => setNowMode((previous) => !previous)} aria-expanded={nowMode} className="btn-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 px-5">
-            {nowMode ? "Voltar às descobertas" : "Me dê três ideias"} <ArrowRight className="h-4 w-4" />
+          <button type="button" onClick={() => setNowMode((value) => !value)} aria-expanded={nowMode}
+            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-[#e7c994] px-5 py-3 text-[13px] font-semibold text-[#161b20] transition-colors hover:bg-[#f3dbae] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7c994]">
+            {nowMode ? "Fechar seleção" : "Ver três ideias"} <ArrowRight className="h-4 w-4" strokeWidth={1.7}/>
           </button>
         </div>
         {nowMode ? (
-          <div className="mt-6 border-t border-white/10 pt-5" aria-live="polite">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h4 className="text-lg font-semibold text-white">Sua seleção de agora</h4>
-              <span className="text-xs text-white/55">Baseada no catálogo, sem confirmação de funcionamento em tempo real</span>
-            </div>
+          <div className="mt-6 border-t border-white/10 pt-6" aria-live="polite">
             {nowSuggestions.length ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {nowSuggestions.map((item, index) => (
-                  <div key={item.id} className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                    <p className="mb-2 text-xs font-medium text-[#f4d06f]">Ideia {index + 1}</p>
-                    <div className="[&>div]:w-full"><MediaTile item={item} onOpen={setSelectedItem} /></div>
-                    <p className="mt-2 text-xs text-white/60">{item.neighborhood ? `Em ${item.neighborhood} · ` : ""}Abra os detalhes para conferir a fonte e planejar.</p>
-                  </div>
-                ))}
+              <div className="grid gap-5 sm:grid-cols-3">
+                {nowSuggestions.map((item) => <div key={item.id} className="min-w-0 [&>div]:w-full"><MediaTile item={item} onOpen={setSelectedItem} /></div>)}
               </div>
-            ) : (
-              <p className="text-sm text-white/65">Ainda não há experiências compatíveis no catálogo. Tente limpar os filtros ou explorar novas opções.</p>
-            )}
+            ) : <p className="text-sm text-white/65">Ainda não encontramos opções para estes filtros. Experimente outra seleção.</p>}
+            <p className="mt-5 text-[11px] text-white/40">Confira horários e disponibilidade diretamente com o estabelecimento.</p>
           </div>
         ) : null}
       </section>
 
-      {/* Continual Machine Learning Radar & Smart Web Capture */}
-      <div className="animate-fade-up stagger-1">
-        <NeuralRadarPanel
-          insights={insights}
-          onOpenCapture={() => setCaptureOpen(true)}
-          onResetLearning={() => {
-            resetLearning();
-            setHiddenIds([]);
-          }}
-        />
-      </div>
-
       {/* Instant Search & Vibe Filter Bar */}
-      <div className="animate-fade-up stagger-1 space-y-3">
+      <div id="explorar" className="space-y-3 scroll-mt-24">
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
@@ -255,8 +216,8 @@ export default function HomeScreen() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filtrar por restaurante, museu, bairro (ex.: Pinheiros, MASP, pizza)..."
-              className="w-full rounded-full border border-white/10 bg-white/[0.04] py-2.5 pl-10 pr-9 text-sm text-white placeholder:text-white/38 focus:border-[#ff7a59]/50 focus:bg-white/[0.06] focus:outline-none"
+              placeholder="O que você gostaria de descobrir?"
+              className="w-full min-h-[52px] rounded-xl border border-white/10 bg-[#131b23] py-3 pl-11 pr-11 text-sm text-white placeholder:text-white/40 focus:border-[#d7bc88]/55 focus:outline-none"
             />
             {searchQuery ? (
               <button
@@ -279,10 +240,11 @@ export default function HomeScreen() {
                 key={vibe.key}
                 type="button"
                 onClick={() => setActiveVibe(vibe.key)}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
+                aria-pressed={active}
+                className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-medium transition ${
                   active
-                    ? "bg-gradient-to-r from-[#ff7a59] to-[#f97352] text-white shadow-md"
-                    : "border border-white/10 bg-white/[0.04] text-white/70 hover:border-white/20 hover:text-white"
+                    ? "border border-[#d7bc88]/50 bg-[#d7bc88]/10 text-[#f2ddb6]"
+                    : "border border-white/10 text-white/55 hover:border-white/25 hover:text-white"
                 }`}
               >
                 {vibe.label}
@@ -292,21 +254,25 @@ export default function HomeScreen() {
         </div>
       </div>
 
-      <div className="animate-fade-up stagger-1">
-        <QuickActions />
-      </div>
-
-      <ProfileNudge couple={couple} />
-
+      <QuickActions />
       {profileCompleteness.percent < 40 && !railsLoading ? (
-        <div className="surface animate-fade-up p-5 text-center sm:p-6">
-          <p className="font-display text-xl font-semibold text-white">2 minutos para sugestões perfeitas</p>
-          <p className="mt-2 text-sm text-white/55">Cidade, culinárias e favoritos deixam tudo menos genérico.</p>
-          <Link href="/onboarding" className="btn-primary mt-4">
-            Personalizar minhas descobertas
-          </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 py-4">
+          <p className="text-sm text-white/60">Ajuste suas preferências para encontrar mais do que você gosta.</p>
+          <Link href="/onboarding" className="text-sm font-medium text-[#e7c994] underline decoration-[#e7c994]/30 underline-offset-4 hover:decoration-[#e7c994]">Personalizar</Link>
         </div>
       ) : null}
+      <div>
+        <button type="button" onClick={() => setShowPreferences((value) => !value)} aria-expanded={showPreferences}
+          className="inline-flex min-h-11 items-center gap-2 text-xs text-white/45 transition hover:text-white/85">
+          <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.5}/> Preferências da curadoria
+        </button>
+        {showPreferences ? (
+          <div className="mt-2">
+            <NeuralRadarPanel insights={insights} onOpenCapture={() => setCaptureOpen(true)}
+              onResetLearning={() => { resetLearning(); setHiddenIds([]); }}/>
+          </div>
+        ) : null}
+      </div>
 
       {isFiltering ? (
         <div className="space-y-4">
@@ -337,30 +303,30 @@ export default function HomeScreen() {
             </div>
           ) : (
             <div className="surface p-6 text-center text-sm text-white/60">
-              <p>Nenhum item encontrado para esse filtro local.</p>
+              <p>Nenhum resultado por aqui. Tente outro termo ou categoria.</p>
               <button
                 type="button"
                 onClick={() => setCaptureOpen(true)}
                 className="btn-primary mt-3 text-xs"
               >
-                Capturar &quot;{searchQuery || "novo lugar"}&quot; da web com IA
+                Adicionar um lugar
               </button>
             </div>
           )}
         </div>
       ) : (
         <>
-          <div className="animate-fade-up stagger-1">
+          <div className="">
             {railsLoading ? (
               <div className="experience-card overflow-hidden rounded-[1.75rem] sm:rounded-[2rem]">
-                <div className="aspect-[16/10] min-h-[240px] w-full shimmer sm:aspect-[21/9]" />
+                <div className="aspect-[4/5] min-h-[350px] w-full shimmer sm:aspect-[16/9] lg:aspect-[21/9]" />
               </div>
             ) : heroItem ? (
               <HeroBanner item={heroItem} onOpen={setSelectedItem} />
             ) : null}
           </div>
 
-          {RAILS.map((rail) => (
+          {RAILS.slice(0, railsLoading ? 2 : showAllRails ? RAILS.length : 6).map((rail) => (
             <MediaRail
               key={rail.key}
               title={rail.title}
@@ -372,6 +338,18 @@ export default function HomeScreen() {
               className={`animate-slide-up ${rail.stagger}`}
             />
           ))}
+          {RAILS.length > 6 ? (
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                aria-expanded={showAllRails}
+                onClick={() => setShowAllRails((previous) => !previous)}
+                className="btn-ghost min-h-11 border-white/15 px-6 text-sm hover:border-[#f4d06f]/40"
+              >
+                {showAllRails ? "Ver menos" : "Ver mais coleções"}
+              </button>
+            </div>
+          ) : null}
         </>
       )}
 
