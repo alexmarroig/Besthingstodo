@@ -164,7 +164,7 @@ export default function ExperienceImage({
             alt={`Imagem de ${item.title}`}
             fill
             sizes={imageSizes}
-            quality={72}
+            quality={75}
             preload={isHero}
             loading={isHero ? undefined : "lazy"}
             className={imageClass}
