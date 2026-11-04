@@ -22,7 +22,7 @@ export default function HeroBanner({
     <button
       type="button"
       onClick={() => onOpen(item)}
-      className="group relative block w-full overflow-hidden rounded-[1.75rem] text-left shadow-[0_28px_70px_rgba(0,0,0,0.32)] ring-1 ring-white/[0.08] transition active:scale-[0.995] sm:rounded-[2rem]"
+      className="group relative block w-full overflow-hidden rounded-[20px] text-left ring-1 ring-white/[0.08] transition-colors hover:ring-[#d7bc88]/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d7bc88]"
     >
       <div className="relative aspect-[4/5] min-h-[350px] w-full bg-black/20 sm:aspect-[16/9] sm:min-h-[350px] lg:aspect-[21/9] lg:min-h-[390px]">
         <ExperienceImage item={item} mode="hero" className="h-full w-full" />
@@ -30,10 +30,10 @@ export default function HeroBanner({
         <div className="absolute inset-0 bg-gradient-to-r from-[#040810]/80 via-transparent to-transparent" />
 
         <div className="absolute inset-x-0 top-0 flex items-start justify-between p-4 sm:p-6">
-          <span className="pill-accent backdrop-blur-md">Destaque do dia</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#edd2a4]">Em destaque</span>
           {match != null ? (
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
-              {match}% afinidade estimada
+              {match}% de afinidade estimada
             </span>
           ) : null}
         </div>
@@ -52,8 +52,8 @@ export default function HeroBanner({
             {item.location || item.neighborhood ? (
               <span className="pill">{item.neighborhood || item.location}</span>
             ) : null}
-            <span className="btn-primary ml-auto gap-1.5 py-2 pl-4 pr-3 text-xs sm:text-sm">
-              Ver agora
+            <span className="ml-auto inline-flex items-center gap-2 rounded-[9px] bg-[#e7c994] px-4 py-3 text-xs font-semibold text-[#161b20] transition-colors group-hover:bg-[#f2d7aa] sm:text-sm">
+              Conhecer
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
