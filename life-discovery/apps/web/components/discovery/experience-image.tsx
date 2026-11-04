@@ -116,7 +116,10 @@ export default function ExperienceImage({
     fetchEditorialImageDeduped(item.id, `/api/editorial-image?${params.toString()}`).then((remoteUrl) => {
       if (!active || !remoteUrl) return;
       const valid = normalizeRecommendationImageUrl(remoteUrl);
-      if (valid) setResolvedImage(valid);
+      if (valid) {
+        setLoaded(false);
+        setResolvedImage(valid);
+      }
     });
 
     return () => {
@@ -186,8 +189,7 @@ export default function ExperienceImage({
             fill
             sizes={imageSizes}
             quality={75}
-            preload={isHero}
-            loading={isHero ? undefined : "lazy"}
+            loading={isHero ? "eager" : "lazy"}
             className={imageClass}
             onLoad={() => setLoaded(true)}
             onError={handleImageError}
@@ -200,7 +202,7 @@ export default function ExperienceImage({
             className={imageClass}
             loading={isHero ? "eager" : "lazy"}
             decoding="async"
-            fetchPriority={isHero ? "high" : "low"}
+            fetchPriority={isHero ? "high" : undefined}
             onLoad={() => setLoaded(true)}
             onError={handleImageError}
           />
