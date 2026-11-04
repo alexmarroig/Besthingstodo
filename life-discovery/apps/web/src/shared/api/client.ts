@@ -77,7 +77,7 @@ function mapToRecommendation(row: any, city: string): Recommendation {
     personalization_label: row.personalization_label || null,
     related_favorite: row.related_favorite || null,
     image_fallback_key: row.image_fallback_key || null,
-    quality_score: row.quality_score ?? row.score ?? null,
+    quality_score: row.quality_score ?? null,
     start_time: row.start_time || null,
     price: row.price ?? null,
     tags: Array.isArray(row.tags) ? row.tags : [],
@@ -242,7 +242,7 @@ export async function fetchRecommendationSources(
       fetchers.push(fetchTrendingMovies(), fetchNowPlayingMovies(), fetchCinemaNews());
     }
     if (!domain || domain === "dining_out") {
-      fetchers.push(fetchPlaces(city, "catering.restaurant"), fetchGastroEditorial("all"));
+      fetchers.push(fetchPlaces(city, "catering.restaurant"), fetchPlaces(city, "catering.cafe"), fetchGastroEditorial("all"));
     }
     if (!domain || domain === "events_exhibitions") {
       fetchers.push(fetchEvents(city), fetchLocalEvents(city));
