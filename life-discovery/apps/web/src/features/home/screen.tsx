@@ -178,7 +178,7 @@ export default function HomeScreen() {
         </p>
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-[790px]">
-            <h2 className="font-serif text-[clamp(2.4rem,5vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.045em] text-[#f4f0e8]">O próximo lugar pode surpreender.</h2>
+            <h2 className="font-serif text-[clamp(2.4rem,5vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.045em] text-[#f4f0e8]">Vá além do de sempre.</h2>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/55 sm:text-base">Ideias para conhecer, provar e viver mais a cidade.</p>
           </div>
           <Link href="/map" className="inline-flex min-h-11 items-center gap-2 border-b border-[#d7bc88]/55 pb-1 text-sm font-medium text-[#e7d5af] hover:text-white">Explorar no mapa <ArrowRight className="h-4 w-4" strokeWidth={1.5}/></Link>
@@ -187,7 +187,7 @@ export default function HomeScreen() {
       <section className="relative overflow-hidden rounded-[24px] border border-white/[0.09] bg-[#151c23] px-5 py-6 sm:px-8 sm:py-8" aria-label="Sua seleção do momento">
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
           <div className="max-w-xl">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">PARA AGORA</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">SELEÇÃO DO DIA</p>
             <h3 className="font-serif text-[clamp(1.9rem,3vw,2.7rem)] font-normal leading-tight tracking-[-0.025em] text-white">Seu próximo programa.</h3>
             <p className="mt-3 text-sm leading-relaxed text-white/55">Três sugestões, sem a lista interminável.</p>
           </div>
