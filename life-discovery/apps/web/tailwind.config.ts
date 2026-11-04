@@ -13,8 +13,8 @@ const config: Config = {
         gold: "#f4d06f",
       },
       fontFamily: {
-        sans: ["var(--font-poppins)", "system-ui", "sans-serif"],
-        display: ["var(--font-poppins)", "system-ui", "sans-serif"],
+        sans: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
+        display: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
       },
       boxShadow: {
         glow: "0 0 48px rgba(255, 122, 89, 0.18)",
