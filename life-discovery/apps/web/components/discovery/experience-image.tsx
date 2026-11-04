@@ -130,8 +130,9 @@ export default function ExperienceImage({
         {showShimmer ? <div className="absolute inset-0 shimmer" aria-hidden /> : null}
         <img
           src={resolvedImage!}
-          alt={item.title}
-          className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] ${
+          alt={`Imagem de ${item.title}`}
+          sizes={isHero ? "(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 1152px" : isCompact ? "(max-width: 640px) 252px, (max-width: 1024px) 302px, 326px" : "(max-width: 640px) 100vw, 680px"}
+          className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.055] ${
             loaded ? "opacity-100" : "opacity-0"
           }`}
           loading={isHero ? "eager" : "lazy"}
@@ -151,7 +152,7 @@ export default function ExperienceImage({
         <div
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${
             isCompact
-              ? "from-black/40 via-transparent to-black/5"
+              ? "from-black/55 via-black/5 to-black/10"
               : isHero
                 ? "from-black/30 via-transparent to-transparent"
                 : "from-[#04101d]/90 via-black/25 to-black/10"
