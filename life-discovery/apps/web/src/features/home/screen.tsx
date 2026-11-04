@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BrainCircuit, ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
 
-import ProfileNudge from "@/components/profile/profile-nudge";
 import HeroBanner from "@/components/discovery/hero-banner";
 import MediaDetailModal from "@/components/discovery/media-detail-modal";
 import MediaRail from "@/components/discovery/media-rail";
@@ -13,7 +12,6 @@ import NeuralRadarPanel from "@/components/discovery/neural-radar-panel";
 import QuickActions from "@/components/discovery/quick-actions";
 import SmartCaptureModal from "@/components/discovery/smart-capture-modal";
 import {
-  buildDayBrief,
   buildFallbackContext,
   buildHomeRails,
   curateRecommendations,
@@ -160,11 +158,6 @@ export default function HomeScreen() {
     nearby,
     outdoor: items.filter((item) => item.indoor_outdoor === "outdoor" || item.indoor_outdoor === "mixed").slice(0, 16),
   };
-
-  const brief = useMemo(
-    () => buildDayBrief(items, context || buildFallbackContext(city), couple || undefined),
-    [items, context, couple, city]
-  );
 
   const profileCompleteness = useMemo(() => getProfileCompleteness(couple), [couple]);
   const railsLoading = sourcesLoading && recommendations.length === 0;
@@ -323,7 +316,7 @@ export default function HomeScreen() {
         </div>
       ) : (
         <>
-          <div className="animate-fade-up stagger-1">
+          <div className="">
             {railsLoading ? (
               <div className="experience-card overflow-hidden rounded-[1.75rem] sm:rounded-[2rem]">
                 <div className="aspect-[16/10] min-h-[240px] w-full shimmer sm:aspect-[21/9]" />
