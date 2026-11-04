@@ -34,10 +34,12 @@ const RAILS = [
   { key: "forYou", title: "Escolhidos para você", subtitle: "Descobertas inspiradas no que você gosta", stagger: "stagger-2" },
   { key: "romantic", title: "Para viver a dois", subtitle: "Romântico, calmo e com boa conversa", stagger: "stagger-3" },
   { key: "restaurants", title: "Restaurantes", subtitle: "Lugares para comer bem e descobrir novos sabores", stagger: "stagger-4" },
+  { key: "cafes", title: "Cafés & boas pausas", subtitle: "Cafeterias para descobrir, conversar ou desacelerar", stagger: "stagger-5" },
   { key: "movies", title: "Filmes & séries", subtitle: "Boas histórias para sua próxima sessão", variant: "poster" as const, stagger: "stagger-5" },
   { key: "events", title: "Cultura & Exposições", subtitle: "Museus, centros culturais e agenda de SP", stagger: "stagger-6" },
   { key: "editorial", title: "Radar SP", subtitle: "Críticas, Michelin, Paladar e aberturas", stagger: "stagger-7" },
   { key: "nearby", title: "Perto de você", subtitle: "Menos deslocamento, mais presença", stagger: "stagger-8" },
+  { key: "outdoor", title: "Ao ar livre", subtitle: "Ideias para aproveitar a cidade do lado de fora", stagger: "stagger-8" },
 ] as const;
 
 type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "top_ml";
@@ -150,10 +152,12 @@ export default function HomeScreen() {
     forYou: forYou.length ? forYou : items.slice(0, 10),
     romantic,
     restaurants,
+    cafes: items.filter((item) => item.category === "cafe" || item.tags?.some((tag) => /caf[eé]|coffee/i.test(tag))).slice(0, 16),
     movies,
     events,
     editorial,
     nearby,
+    outdoor: items.filter((item) => item.indoor_outdoor === "outdoor" || item.indoor_outdoor === "mixed").slice(0, 16),
   };
 
   const brief = useMemo(
