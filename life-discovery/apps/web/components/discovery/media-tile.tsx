@@ -85,7 +85,16 @@ export default function MediaTile({
       }`}
     >
       <div className={`experience-card relative overflow-hidden rounded-[1.25rem] sm:rounded-[1.5rem] ${isPoster ? "aspect-[2/3]" : isFood ? "aspect-[5/4]" : "aspect-[4/3]"}`}>
-        <ExperienceImage item={item} mode="tile" className="absolute inset-0 h-full w-full" />
+        <ExperienceImage
+          item={item}
+          mode="tile"
+          sizes={isPoster
+            ? "(max-width: 640px) 38vw, (max-width: 1024px) 174px, 186px"
+            : isFood
+              ? "(max-width: 640px) 74vw, (max-width: 1024px) 286px, 306px"
+              : "(max-width: 640px) 69vw, (max-width: 1024px) 264px, 288px"}
+          className="absolute inset-0 h-full w-full"
+        />
 
         {/* Quick 1-Tap ML Feedback Overlay */}
         <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
