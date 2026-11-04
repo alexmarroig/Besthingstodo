@@ -7,22 +7,22 @@
     @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-xs font-medium text-white/70 transition;
   }
   .food-filter:hover { @apply border-white/25 bg-white/[0.07] text-white; }
-  .food-filter-active { @apply border-[#ff7a59]/60 bg-[#ff7a59]/15 text-[#ffb89a]; }
-  .food-filter-active:hover { @apply border-[#ff7a59]/70 bg-[#ff7a59]/20 text-[#ffb89a]; }
+  .food-filter-active { @apply border-[#d9b879]/60 bg-[#d9b879]/15 text-[#f1dab1]; }
+  .food-filter-active:hover { @apply border-[#d9b879]/70 bg-[#d9b879]/20 text-[#f1dab1]; }
   .food-action {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-semibold transition;
   }
   .food-action:hover { @apply border-white/25 bg-white/10; }
-  .food-action-primary { @apply border-[#ff7a59] bg-[#ff7a59] text-[#190b06]; }
-  .food-action-primary:hover { @apply border-[#ff9479] bg-[#ff9479]; }
-  .food-filter:focus-visible, .food-action:focus-visible { @apply outline-none ring-2 ring-[#f4d06f] ring-offset-2 ring-offset-[#060d16]; }
+  .food-action-primary { @apply border-[#e7c994] bg-[#e7c994] text-[#101820]; }
+  .food-action-primary:hover { @apply border-[#f4daae] bg-[#f4daae]; }
+  .food-filter:focus-visible, .food-action:focus-visible { @apply outline-none ring-2 ring-[#e7c994] ring-offset-2 ring-offset-[#090e14]; }
 }
 
 :root {
   color-scheme: dark;
   --bg: #090e14;
   --bg-soft: #101820;
-  --surface: rgba(12, 22, 36, 0.72);
+  --surface: rgba(19, 27, 35, 0.92);
   --primary: #d9b879;
   --accent: #e7c994;
   --text: #f8f4ee;
@@ -50,28 +50,24 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(255, 122, 89, 0.14), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 95% 5%, rgba(244, 208, 111, 0.08), transparent 50%),
-    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(56, 189, 248, 0.06), transparent 55%),
-    linear-gradient(180deg, #050a12 0%, #060d16 45%, #071018 100%);
+  background: linear-gradient(180deg, #090e14 0%, #0c131a 54%, #101821 100%);
 }
 
 h1,
 h2,
 h3 {
-  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   letter-spacing: -0.02em;
 }
 
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: rgba(244, 208, 111, 0.4) transparent;
+  scrollbar-color: rgba(217, 184, 121, 0.38) transparent;
 }
 
 ::selection {
-  background: rgba(255, 122, 89, 0.28);
+  background: rgba(217, 184, 121, 0.3);
 }
 
 @layer components {
@@ -100,8 +96,8 @@ h3 {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff7a59] to-[#f97352] px-5 py-2.5 text-sm font-semibold text-white transition;
-    box-shadow: 0 12px 32px rgba(249, 115, 82, 0.28);
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] bg-[#e7c994] px-5 py-2.5 text-sm font-semibold text-[#101820] transition-colors hover:bg-[#f4daae];
+    box-shadow: none;
   }
 
   .btn-primary:active {
@@ -117,10 +113,10 @@ h3 {
   }
 
   .pill-accent {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold;
-    background: rgba(255, 122, 89, 0.14);
-    border: 1px solid rgba(255, 122, 89, 0.28);
-    color: #ffb89a;
+    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-[11px] font-semibold;
+    background: rgba(217, 184, 121, 0.12);
+    border: 1px solid rgba(217, 184, 121, 0.25);
+    color: #e7c994;
   }
 
   .experience-card {
@@ -137,7 +133,7 @@ h3 {
     .experience-card:hover {
       transform: translateY(-3px);
       border-color: rgba(217, 184, 121, 0.32);
-      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(255, 122, 89, 0.08);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
     }
   }
 
@@ -146,7 +142,7 @@ h3 {
   }
 
   .rail-accent {
-    @apply h-1 w-8 rounded-full bg-gradient-to-r from-[#ff7a59] to-[#f4d06f];
+    @apply h-[18px] w-[2px] rounded-sm bg-[#d9b879];
   }
 }
 
@@ -158,8 +154,8 @@ h3 {
 .hero-mesh {
   @apply surface-strong;
   background:
-    radial-gradient(circle at 12% 18%, rgba(255, 122, 89, 0.16), transparent 22%),
-    radial-gradient(circle at 88% 12%, rgba(244, 208, 111, 0.1), transparent 18%),
+    radial-gradient(circle at 12% 18%, rgba(217, 184, 121, 0.08), transparent 22%),
+    radial-gradient(circle at 88% 12%, rgba(217, 184, 121, 0.05), transparent 18%),
     linear-gradient(165deg, rgba(14, 26, 42, 0.9) 0%, rgba(7, 13, 22, 0.96) 100%);
 }
 
@@ -184,7 +180,7 @@ h3 {
 
 .weather-badge {
   @apply surface;
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(255, 122, 89, 0.06));
+  background: linear-gradient(135deg, rgba(217, 184, 121, 0.06), rgba(255,255,255,0.02));
 }
 
 .carousel-track {
