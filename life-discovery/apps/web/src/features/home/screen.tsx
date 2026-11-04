@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BrainCircuit, ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
 
@@ -56,6 +56,7 @@ export default function HomeScreen() {
   const [selectedItem, setSelectedItem] = useState<Recommendation | null>(null);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearch = useDeferredValue(searchQuery);
   const [activeVibe, setActiveVibe] = useState<VibeFilterKey>("all");
   const [nowMode, setNowMode] = useState(false);
   const [showAllRails, setShowAllRails] = useState(false);
@@ -71,7 +72,7 @@ export default function HomeScreen() {
     staleTime: SOURCE_STALE_MS,
   });
 
-  const { data: sources = [], isLoading: sourcesLoading } = useQuery({
+  const { data: sources = [], isLoading: sourcesLoading, isFetching: sourcesRefreshing, refetch: reloadSources } = useQuery({
     queryKey: ["recommendation-sources", userId, city],
     queryFn: () => fetchRecommendationSources(city),
     staleTime: SOURCE_STALE_MS,
@@ -111,7 +112,7 @@ export default function HomeScreen() {
     else if (activeVibe === "indoor") list = list.filter((i) => i.indoor_outdoor === "indoor");
     else if (activeVibe === "top_ml") list = list.slice(0, 24);
 
-    const q = searchQuery.trim().toLowerCase();
+    const q = deferredSearch.trim().toLocaleLowerCase("pt-BR");
     if (q) {
       list = list.filter((item) => {
         const hay = [
@@ -129,7 +130,7 @@ export default function HomeScreen() {
       });
     }
     return list;
-  }, [items, activeVibe, searchQuery]);
+  }, [items, activeVibe, deferredSearch]);
 
   const nowSuggestions = useMemo(() => {
     const candidates = filteredItems.filter((item) => item.domain !== "movies_series" && item.domain !== "delivery");
@@ -142,7 +143,7 @@ export default function HomeScreen() {
     return [...distinct, ...candidates.filter((item) => !distinct.includes(item))].slice(0, 3);
   }, [filteredItems]);
 
-  const isFiltering = activeVibe !== "all" || searchQuery.trim().length > 0;
+  const isFiltering = activeVibe !== "all" || deferredSearch.trim().length > 0;
 
   const rails = useMemo(() => buildHomeRails(recommendations, hiddenIds), [recommendations, hiddenIds]);
   const { hero: heroItem, forYou, romantic, restaurants, movies, events, editorial, nearby } = rails;
@@ -190,13 +191,13 @@ export default function HomeScreen() {
             <h3 className="font-serif text-[clamp(1.9rem,3vw,2.7rem)] font-normal leading-tight tracking-[-0.025em] text-white">Três ideias. Um bom dia.</h3>
             <p className="mt-3 text-sm leading-relaxed text-white/55">Uma seleção curta para você decidir sem perder tempo.</p>
           </div>
-          <button type="button" onClick={() => setNowMode((value) => !value)} aria-expanded={nowMode}
+          <button type="button" onClick={() => setNowMode((value) => !value)} aria-expanded={nowMode} aria-controls="now-selecao"
             className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-[#e7c994] px-5 py-3 text-[13px] font-semibold text-[#161b20] transition-colors hover:bg-[#f3dbae] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7c994]">
             {nowMode ? "Fechar seleção" : "Ver três ideias"} <ArrowRight className="h-4 w-4" strokeWidth={1.7}/>
           </button>
         </div>
         {nowMode ? (
-          <div className="mt-6 border-t border-white/10 pt-6" aria-live="polite">
+          <div id="now-selecao" className="mt-6 border-t border-white/10 pt-6" aria-live="polite">
             {nowSuggestions.length ? (
               <div className="grid gap-5 sm:grid-cols-3">
                 {nowSuggestions.map((item) => <div key={item.id} className="min-w-0 [&>div]:w-full"><MediaTile item={item} onOpen={setSelectedItem} /></div>)}
@@ -211,9 +212,13 @@ export default function HomeScreen() {
       <div id="explorar" className="space-y-3 scroll-mt-24">
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
           <div className="relative flex-1">
+            <label htmlFor="busca-experiencias" className="sr-only">Buscar lugares, experiências e atividades</label>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <input
-              type="text"
+              type="search"
+              id="busca-experiencias"
+              aria-label="Buscar experiências por nome, bairro ou categoria"
+              autoComplete="off"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="O que você gostaria de descobrir?"
@@ -223,7 +228,7 @@ export default function HomeScreen() {
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/45 hover:text-white"
+                className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/55 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e7c994]"
                 aria-label="Limpar busca"
               >
                 <X className="h-3.5 w-3.5" />
@@ -232,7 +237,7 @@ export default function HomeScreen() {
           </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div role="group" aria-label="Filtrar experiências por interesse" className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {VIBE_FILTERS.map((vibe) => {
             const active = activeVibe === vibe.key;
             return (
@@ -279,7 +284,7 @@ export default function HomeScreen() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="rail-title">Resultados filtrados ({filteredItems.length})</h3>
-              <p className="text-xs text-white/50">Ordenados por afinidade e relevância</p>
+              <p className="text-xs text-white/60">Seleção de experiências do catálogo</p>
             </div>
             <button
               type="button"
@@ -338,7 +343,7 @@ export default function HomeScreen() {
               className={`animate-slide-up ${rail.stagger}`}
             />
           ))}
-          {RAILS.length > 6 ? (
+          {!railsLoading && RAILS.length > 6 ? (
             <div className="flex justify-center pt-2">
               <button
                 type="button"
@@ -354,9 +359,14 @@ export default function HomeScreen() {
       )}
 
       {!railsLoading && items.length === 0 ? (
-        <div className="surface p-5 text-sm text-white/60">
-          Nenhuma sugestão agora. Experimente novos filtros ou personalize suas preferências.
-        </div>
+        <section role="status" className="rounded-[18px] border border-white/10 bg-[#141c24] p-6 sm:p-8">
+          <h3 className="font-serif text-2xl text-white">Vamos tentar outra vez?</h3>
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/65">Não encontramos sugestões disponíveis para esta seleção. Você pode atualizar o catálogo ou adicionar um lugar que conhece.</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button type="button" disabled={sourcesRefreshing} onClick={() => void reloadSources()} className="btn-primary min-h-11 disabled:cursor-wait disabled:opacity-50">{sourcesRefreshing ? "Atualizando…" : "Atualizar sugestões"}</button>
+            <button type="button" onClick={() => setCaptureOpen(true)} className="btn-ghost min-h-11">Adicionar um lugar</button>
+          </div>
+        </section>
       ) : null}
 
       <MediaDetailModal
