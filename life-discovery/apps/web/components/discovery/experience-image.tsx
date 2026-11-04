@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 import {
   isLocalVenueImage,
@@ -12,6 +13,19 @@ import { fetchEditorialImageDeduped, getCachedImageUrl } from "@/shared/image-ca
 import { getRecommendationSourceMeta } from "@/shared/source";
 import { localizeCategory } from "@/shared/labels-pt";
 import { Recommendation } from "@life/shared-types";
+
+// Only hosts explicitly configured in next.config.ts may use the image optimizer.
+function canOptimizeImage(src: string): boolean {
+  if (src.startsWith("/images/")) return true;
+  try {
+    const url = new URL(src);
+    if (url.protocol !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    return ["image.tmdb.org", "www.themealdb.com", "openweathermap.org", "s1.ticketm.net"].includes(host)
+      || host === "wikipedia.org" || host.endsWith(".wikipedia.org")
+      || host === "wikimedia.org" || host.endsWith(".wikimedia.org");
+  } catch { return false; }
+}
 
 const fallbackThemes: Record<string, { gradient: string; eyebrow: string }> = {
   museum: { gradient: "from-[#4338ca] via-[#0f172a] to-[#f97316]", eyebrow: "Cultura em foco" },
@@ -52,12 +66,12 @@ export default function ExperienceImage({
 
   const [resolvedImage, setResolvedImage] = useState<string | null>(directImage);
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(() => isLocalVenueImage(directImage));
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     setFailed(false);
     setResolvedImage(directImage);
-    setLoaded(isLocalVenueImage(directImage));
+    setLoaded(false);
 
     const hasDedicatedKnown = Boolean(resolveKnownVenueImageForItem(item.id, item.title, item.location));
     const hasExplicitRemote = Boolean(item.image_url && !isLocalVenueImage(item.image_url));
@@ -105,7 +119,22 @@ export default function ExperienceImage({
   const showImage = Boolean(resolvedImage) && !failed;
   const isCompact = mode === "tile";
   const isHero = mode === "hero";
-  const showShimmer = showImage && !loaded && !isLocalVenueImage(resolvedImage);
+  const showShimmer = showImage && !loaded;
+  const imageSizes = isHero
+    ? "(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 1152px"
+    : isCompact
+      ? "(max-width: 640px) 70vw, (max-width: 1024px) 264px, 288px"
+      : "(max-width: 640px) 100vw, 680px";
+  const imageClass = `absolute inset-0 h-full w-full object-cover transition-opacity duration-300 motion-safe:group-hover:scale-[1.035] ${loaded ? "opacity-100" : "opacity-0"}`;
+  const handleImageError = () => {
+    if (resolvedImage !== localFallback && localFallback) {
+      setResolvedImage(localFallback);
+      setLoaded(false);
+    } else {
+      setFailed(true);
+      setLoaded(true);
+    }
+  };
 
   const overlayBadges = (
     <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-2.5">
@@ -128,27 +157,33 @@ export default function ExperienceImage({
     return (
       <div className={rootClass}>
         {showShimmer ? <div className="absolute inset-0 shimmer" aria-hidden /> : null}
-        <img
-          src={resolvedImage!}
-          alt={`Imagem de ${item.title}`}
-          sizes={isHero ? "(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 1152px" : isCompact ? "(max-width: 640px) 252px, (max-width: 1024px) 302px, 326px" : "(max-width: 640px) 100vw, 680px"}
-          className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.055] ${
-            loaded ? "opacity-100" : "opacity-0"
-          }`}
-          loading={isHero ? "eager" : "lazy"}
-          decoding="async"
-          fetchPriority={isHero ? "high" : "auto"}
-          onLoad={() => setLoaded(true)}
-          onError={() => {
-            if (resolvedImage !== localFallback && localFallback) {
-              setResolvedImage(localFallback);
-              setLoaded(true);
-            } else {
-              setFailed(true);
-              setLoaded(true);
-            }
-          }}
-        />
+        {canOptimizeImage(resolvedImage!) ? (
+          <Image
+            key={resolvedImage}
+            src={resolvedImage!}
+            alt={`Imagem de ${item.title}`}
+            fill
+            sizes={imageSizes}
+            quality={72}
+            preload={isHero}
+            loading={isHero ? "eager" : "lazy"}
+            className={imageClass}
+            onLoad={() => setLoaded(true)}
+            onError={handleImageError}
+          />
+        ) : (
+          <img
+            key={resolvedImage}
+            src={resolvedImage!}
+            alt={`Imagem de ${item.title}`}
+            className={imageClass}
+            loading={isHero ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={isHero ? "high" : "low"}
+            onLoad={() => setLoaded(true)}
+            onError={handleImageError}
+          />
+        )}
         <div
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${
             isCompact
