@@ -326,7 +326,7 @@ export default function HomeScreen() {
             ) : null}
           </div>
 
-          {RAILS.slice(0, showAllRails ? RAILS.length : 6).map((rail) => (
+          {RAILS.slice(0, railsLoading ? 2 : showAllRails ? RAILS.length : 6).map((rail) => (
             <MediaRail
               key={rail.key}
               title={rail.title}
