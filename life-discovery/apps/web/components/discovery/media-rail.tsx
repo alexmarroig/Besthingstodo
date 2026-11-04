@@ -93,11 +93,9 @@ export default function MediaRail({
             <div className="rail-accent" />
             <h3 className="rail-title">{title}</h3>
           </div>
-          {subtitle ? <p className="max-w-xl text-xs leading-relaxed text-white/50 sm:text-sm">{subtitle}</p> : null}
+          {subtitle ? <p className="max-w-xl text-xs leading-relaxed text-white/45 sm:text-[13px]">{subtitle}</p> : null}
         </div>
-        <span className="shrink-0 rounded-full bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-white/40">
-          {items.length}
-        </span>
+        <span className="shrink-0 text-[11px] font-medium tabular-nums text-white/30" aria-label={`${items.length} opções`}>{items.length.toString().padStart(2, "0")}</span>
       </div>
 
       <div className="relative -mx-1 px-1">
@@ -113,7 +111,7 @@ export default function MediaRail({
             type="button"
             aria-label="Ver anteriores"
             onClick={() => scrollByPage(-1)}
-            className="absolute left-0 top-[30%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#0c1624]/90 p-2 text-white shadow-card backdrop-blur-md transition hover:border-[#ff7a59]/30 sm:flex"
+            className="absolute left-0 top-[34%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#121920]/95 p-3 text-white/80 transition hover:border-[#d7bc88]/40 sm:flex"
           >
             <ChevronIcon direction="left" />
           </button>
@@ -124,7 +122,7 @@ export default function MediaRail({
             type="button"
             aria-label="Ver próximos"
             onClick={() => scrollByPage(1)}
-            className="absolute right-0 top-[30%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#0c1624]/90 p-2 text-white shadow-card backdrop-blur-md transition hover:border-[#ff7a59]/30 sm:flex"
+            className="absolute right-0 top-[34%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#121920]/95 p-3 text-white/80 transition hover:border-[#d7bc88]/40 sm:flex"
           >
             <ChevronIcon direction="right" />
           </button>
