@@ -62,7 +62,11 @@ export default function MediaRail({
     refreshScrollState();
     const el = trackRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(() => refreshScrollState());
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", refreshScrollState);
+      return () => window.removeEventListener("resize", refreshScrollState);
+    }
+    const observer = new ResizeObserver(refreshScrollState);
     observer.observe(el);
     return () => observer.disconnect();
   }, [items, refreshScrollState]);
@@ -109,7 +113,7 @@ export default function MediaRail({
         {canScrollLeft ? (
           <button
             type="button"
-            aria-label="Ver anteriores"
+            aria-label={`Ver opções anteriores em ${title}`}
             onClick={() => scrollByPage(-1)}
             className="absolute left-0 top-[34%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#121920]/95 p-3 text-white/80 transition hover:border-[#d7bc88]/40 sm:flex"
           >
@@ -120,7 +124,7 @@ export default function MediaRail({
         {canScrollRight ? (
           <button
             type="button"
-            aria-label="Ver próximos"
+            aria-label={`Ver próximas opções em ${title}`}
             onClick={() => scrollByPage(1)}
             className="absolute right-0 top-[34%] z-[2] hidden -translate-y-1/2 rounded-full border border-white/10 bg-[#121920]/95 p-3 text-white/80 transition hover:border-[#d7bc88]/40 sm:flex"
           >
@@ -131,8 +135,18 @@ export default function MediaRail({
         <div
           ref={trackRef}
           onScroll={refreshScrollState}
+          role="region"
+          aria-roledescription="carrossel"
           aria-label={`Explorar ${title}`}
-          className="carousel-track flex gap-4 overflow-x-auto pb-2 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.target !== event.currentTarget) return;
+            if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+              event.preventDefault();
+              scrollByPage(event.key === "ArrowRight" ? 1 : -1);
+            }
+          }}
+          className="carousel-track flex gap-4 overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7c994] pb-2 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {items.map((item) => (
             <MediaTile key={item.id} item={item} onOpen={onOpen} variant={variant} />

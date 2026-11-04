@@ -43,11 +43,11 @@ export function Navbar() {
           })}
         </nav>
         <div className="flex items-center gap-1 sm:gap-2">
-          <Link href="/home#explorar" aria-label="Buscar experiências" className="hidden h-10 w-10 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white sm:flex">
+          <Link href="/home#explorar" aria-label="Buscar experiências" className="hidden h-11 w-11 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e7c994] sm:flex">
             <Search className="h-[18px] w-[18px]" strokeWidth={1.6} />
           </Link>
           <Link href="/profile" aria-label="Minha conta" aria-current={pathname === "/profile" ? "page" : undefined}
-            className={`flex h-10 items-center gap-2 rounded-lg border px-3 text-[13px] transition-colors ${pathname === "/profile" ? "border-[#dfbd7d]/40 text-white" : "border-white/10 text-white/65 hover:border-white/25 hover:text-white"}`}>
+            className={`flex h-11 items-center gap-2 rounded-lg border px-3 text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e7c994] ${pathname === "/profile" ? "border-[#dfbd7d]/40 text-white" : "border-white/10 text-white/65 hover:border-white/25 hover:text-white"}`}>
             <UserRound className="h-4 w-4" strokeWidth={1.65}/><span className="hidden sm:inline">Conta</span>
           </Link>
         </div>

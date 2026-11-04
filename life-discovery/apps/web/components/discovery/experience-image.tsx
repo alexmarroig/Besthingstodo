@@ -143,8 +143,15 @@ export default function ExperienceImage({
     if (!nearViewport || !resolvedImage || loaded || failed || isLocalVenueImage(resolvedImage)) return;
     // A stalled remote image should never leave a card shimmering indefinitely.
     const timeout = window.setTimeout(() => {
-      setResolvedImage(localFallback);
-      setLoaded(false);
+      if (resolvedImage !== localFallback && localFallback) {
+        setResolvedImage(localFallback);
+        setLoaded(false);
+      } else {
+        // Even the fallback may be a remote URL; show the final static placeholder
+        // instead of leaving the experience in a perpetual shimmer state.
+        setFailed(true);
+        setLoaded(true);
+      }
     }, 12_000);
     return () => window.clearTimeout(timeout);
   }, [nearViewport, resolvedImage, loaded, failed, localFallback]);
