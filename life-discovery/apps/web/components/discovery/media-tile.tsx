@@ -8,7 +8,7 @@ import { MediaTileVariant } from "./media-tile-skeleton";
 import { sendFeedback } from "@/shared/api/client";
 import { localizeCategory } from "@/shared/labels-pt";
 import { getRecommendationSourceMeta } from "@/shared/source";
-import { getUserId, isItemSaved, upsertAgendaItem, upsertSavedItem } from "@/shared/storage";
+import { getAgendaItems, getUserId, isItemSaved, upsertAgendaItem, upsertSavedItem } from "@/shared/storage";
 import { Recommendation } from "@life/shared-types";
 import { requireAccountForChange } from "@/shared/account-sync";
 
@@ -40,7 +40,7 @@ export default function MediaTile({
   const location = item.neighborhood || item.location;
 
   const [saved, setSaved] = useState(() => isItemSaved(item.id));
-  const [planned, setPlanned] = useState(false);
+  const [planned, setPlanned] = useState(() => getAgendaItems().some((entry) => entry.id === item.id));
 
   const handleQuickFeedback = (
     e: React.MouseEvent,
