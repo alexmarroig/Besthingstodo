@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Globe, Loader2, Sparkles, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { Globe, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 
 import ExperienceImage from "./experience-image";
 import { ingestExternalExperience } from "@/shared/api/client";
@@ -113,7 +113,7 @@ export default function SmartCaptureModal({
       >
         <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#ff7a59]/15 text-[#ff7a59]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#d9b879]/10 text-[#e7c994]">
               <Globe className="h-4 w-4" />
             </span>
             <div>
@@ -126,7 +126,7 @@ export default function SmartCaptureModal({
           <button
             type="button"
             onClick={handleResetAndClose}
-            className="rounded-full p-1.5 text-white/50 transition hover:bg-white/10 hover:text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-white/65 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e7c994]"
             aria-label="Fechar"
           >
             <X className="h-4 w-4" />
@@ -142,7 +142,7 @@ export default function SmartCaptureModal({
             className="space-y-3"
           >
             <label htmlFor="captura-busca" className="block text-xs font-medium text-white/80">
-              Cole uma URL (Sympla, Guia Folha, site de restaurante) ou digite o nome de um lugar/filme:
+              Nome do lugar, filme ou link
             </label>
             <div className="flex gap-2">
               <input
@@ -151,7 +151,7 @@ export default function SmartCaptureModal({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ex.: https://... ou Cinemateca Brasileira"
-                className="min-w-0 flex-1 rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-[#ff7a59]/60 focus:outline-none"
+                className="min-w-0 flex-1 rounded-xl border border-white/12 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-[#d9b879]/60 focus:outline-none"
               />
               <button
                 type="submit"
@@ -161,12 +161,12 @@ export default function SmartCaptureModal({
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Capturando…</span>
+                    <span>Buscando…</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4" />
-                    <span>Capturar</span>
+                    <Globe className="h-4 w-4" />
+                    <span>Adicionar</span>
                   </>
                 )}
               </button>
@@ -187,7 +187,7 @@ export default function SmartCaptureModal({
                     setQuery(suggestion);
                     void handleCapture(suggestion);
                   }}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/70 transition hover:border-[#ff7a59]/40 hover:bg-white/[0.08] hover:text-white disabled:opacity-50"
+                  className="min-h-10 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/70 transition hover:border-[#d9b879]/40 hover:bg-white/[0.08] hover:text-white disabled:opacity-50"
                 >
                   + {suggestion}
                 </button>
@@ -206,7 +206,7 @@ export default function SmartCaptureModal({
             <div className="space-y-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4">
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-300">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Capturado, salvo nos favoritos e integrado ao motor de aprendizado!</span>
+                <span>Adicionado à sua coleção.</span>
               </div>
 
               <div className="experience-card overflow-hidden">

@@ -28,15 +28,15 @@ import { Recommendation } from "@life/shared-types";
 const SOURCE_STALE_MS = 5 * 60_000;
 
 const RAILS = [
-  { key: "forYou", title: "Escolhidos para você", subtitle: "Descobertas inspiradas no que você gosta", stagger: "stagger-2" },
-  { key: "romantic", title: "Para viver a dois", subtitle: "Romântico, calmo e com boa conversa", stagger: "stagger-3" },
-  { key: "restaurants", title: "Restaurantes", subtitle: "Lugares para comer bem e descobrir novos sabores", stagger: "stagger-4" },
-  { key: "cafes", title: "Cafés & boas pausas", subtitle: "Cafeterias para descobrir, conversar ou desacelerar", stagger: "stagger-5" },
-  { key: "movies", title: "Filmes & séries", subtitle: "Boas histórias para sua próxima sessão", variant: "poster" as const, stagger: "stagger-5" },
-  { key: "events", title: "Cultura & Exposições", subtitle: "Museus, centros culturais e agenda de SP", stagger: "stagger-6" },
-  { key: "editorial", title: "Radar SP", subtitle: "Críticas, Michelin, Paladar e aberturas", stagger: "stagger-7" },
-  { key: "nearby", title: "Perto de você", subtitle: "Menos deslocamento, mais presença", stagger: "stagger-8" },
-  { key: "outdoor", title: "Ao ar livre", subtitle: "Ideias para aproveitar a cidade do lado de fora", stagger: "stagger-8" },
+  { key: "forYou", title: "Sua seleção", subtitle: "Ideias a partir do seu repertório", stagger: "stagger-2" },
+  { key: "romantic", title: "A dois", subtitle: "Lugares para compartilhar", stagger: "stagger-3" },
+  { key: "restaurants", title: "À mesa", subtitle: "Restaurantes para conhecer", stagger: "stagger-4" },
+  { key: "cafes", title: "Pausa para um café", subtitle: "Boas mesas, outros ritmos", stagger: "stagger-5" },
+  { key: "movies", title: "Na tela", subtitle: "Histórias que merecem atenção", variant: "poster" as const, stagger: "stagger-5" },
+  { key: "events", title: "Arte & cultura", subtitle: "Museus, exposições e descobertas", stagger: "stagger-6" },
+  { key: "editorial", title: "Nosso olhar", subtitle: "Descobertas de diferentes fontes", stagger: "stagger-7" },
+  { key: "nearby", title: "Por perto", subtitle: "O que existe ao redor", stagger: "stagger-8" },
+  { key: "outdoor", title: "Lá fora", subtitle: "Passeios em espaços abertos", stagger: "stagger-8" },
 ] as const;
 
 type VibeFilterKey = "all" | "romantic" | "cultural" | "nearby" | "indoor" | "top_ml";
@@ -174,12 +174,12 @@ export default function HomeScreen() {
     <section className="space-y-7 md:space-y-9">
       <header className="space-y-4 pt-3 md:pt-6">
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#d5bd8b]">
-          {neighborhood}{context?.temperature != null ? ` · ${Math.round(context.temperature)}°` : ""} · uma cidade para descobrir
+          {neighborhood}{context?.temperature != null ? ` · ${Math.round(context.temperature)}°` : ""} · guia de descobertas
         </p>
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-[790px]">
-            <h2 className="font-serif text-[clamp(2.4rem,5vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.045em] text-[#f4f0e8]">Descubra algo que vale a pena.</h2>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/55 sm:text-base">Lugares, encontros e histórias para sair do habitual.</p>
+            <h2 className="font-serif text-[clamp(2.4rem,5vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.045em] text-[#f4f0e8]">Vá além do de sempre.</h2>
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/55 sm:text-base">Ideias para conhecer, provar e viver mais a cidade.</p>
           </div>
           <Link href="/map" className="inline-flex min-h-11 items-center gap-2 border-b border-[#d7bc88]/55 pb-1 text-sm font-medium text-[#e7d5af] hover:text-white">Explorar no mapa <ArrowRight className="h-4 w-4" strokeWidth={1.5}/></Link>
         </div>
@@ -187,13 +187,13 @@ export default function HomeScreen() {
       <section className="relative overflow-hidden rounded-[24px] border border-white/[0.09] bg-[#151c23] px-5 py-6 sm:px-8 sm:py-8" aria-label="Sua seleção do momento">
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
           <div className="max-w-xl">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">ESCOLHAS DE HOJE</p>
-            <h3 className="font-serif text-[clamp(1.9rem,3vw,2.7rem)] font-normal leading-tight tracking-[-0.025em] text-white">Três ideias. Um bom dia.</h3>
-            <p className="mt-3 text-sm leading-relaxed text-white/55">Uma seleção curta para você decidir sem perder tempo.</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">SELEÇÃO DO DIA</p>
+            <h3 className="font-serif text-[clamp(1.9rem,3vw,2.7rem)] font-normal leading-tight tracking-[-0.025em] text-white">Seu próximo programa.</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/55">Três sugestões, sem a lista interminável.</p>
           </div>
           <button type="button" onClick={() => setNowMode((value) => !value)} aria-expanded={nowMode} aria-controls="now-selecao"
             className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-[#e7c994] px-5 py-3 text-[13px] font-semibold text-[#161b20] transition-colors hover:bg-[#f3dbae] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7c994]">
-            {nowMode ? "Fechar seleção" : "Ver três ideias"} <ArrowRight className="h-4 w-4" strokeWidth={1.7}/>
+            {nowMode ? "Fechar seleção" : "Ver seleção"} <ArrowRight className="h-4 w-4" strokeWidth={1.7}/>
           </button>
         </div>
         {nowMode ? (
@@ -331,7 +331,7 @@ export default function HomeScreen() {
             ) : null}
           </div>
 
-          {RAILS.slice(0, railsLoading ? 2 : showAllRails ? RAILS.length : 6).map((rail) => (
+          {RAILS.slice(0, railsLoading ? 2 : showAllRails ? RAILS.length : 4).map((rail) => (
             <MediaRail
               key={rail.key}
               title={rail.title}
@@ -343,7 +343,7 @@ export default function HomeScreen() {
               className={`animate-slide-up ${rail.stagger}`}
             />
           ))}
-          {!railsLoading && RAILS.length > 6 ? (
+          {!railsLoading && RAILS.length > 4 ? (
             <div className="flex justify-center pt-2">
               <button
                 type="button"
@@ -351,7 +351,7 @@ export default function HomeScreen() {
                 onClick={() => setShowAllRails((previous) => !previous)}
                 className="btn-ghost min-h-11 border-white/15 px-6 text-sm hover:border-[#f4d06f]/40"
               >
-                {showAllRails ? "Ver menos" : "Ver mais coleções"}
+                {showAllRails ? "Recolher coleções" : `Ver todas as ${RAILS.length} coleções`}
               </button>
             </div>
           ) : null}

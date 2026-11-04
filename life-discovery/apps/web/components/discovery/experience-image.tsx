@@ -22,8 +22,7 @@ function canOptimizeImage(src: string): boolean {
     if (url.protocol !== "https:") return false;
     const host = url.hostname.toLowerCase();
     return ["image.tmdb.org", "www.themealdb.com", "openweathermap.org", "s1.ticketm.net"].includes(host)
-      || host === "wikipedia.org" || host.endsWith(".wikipedia.org")
-      || host === "wikimedia.org" || host.endsWith(".wikimedia.org");
+      || host.endsWith(".wikipedia.org") || host.endsWith(".wikimedia.org");
   } catch { return false; }
 }
 
@@ -98,7 +97,8 @@ export default function ExperienceImage({
     const hasExplicitRemote = Boolean(item.image_url && !isLocalVenueImage(item.image_url));
     const target = item.booking_url || item.url;
 
-    if (hasExplicitRemote || !target || mode === "tile" || (hasDedicatedKnown && item.domain !== "dining_out")) {
+    // Defer editorial network requests until the image is approaching the viewport.
+    if (!nearViewport || hasExplicitRemote || !target || mode === "tile" || (hasDedicatedKnown && item.domain !== "dining_out")) {
       return;
     }
 
@@ -137,6 +137,7 @@ export default function ExperienceImage({
     item.title,
     item.url,
     mode,
+    nearViewport,
   ]);
 
   useEffect(() => {
@@ -177,23 +178,6 @@ export default function ExperienceImage({
     }
   };
 
-  const overlayBadges = (
-    <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-2.5">
-      <span className="rounded-full bg-black/60 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
-        {localizeCategory(item.category)}
-      </span>
-      {item.quality_score != null && item.quality_score > 0 ? (
-        <span className="ifood-chip rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
-          {Math.round(item.quality_score)}%
-        </span>
-      ) : item.score != null && item.score > 0 ? (
-        <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-          {Number(item.score).toFixed(1)}
-        </span>
-      ) : null}
-    </div>
-  );
-
   if (showImage && nearViewport) {
     return (
       <div ref={imageContainerRef} className={rootClass}>
@@ -206,6 +190,7 @@ export default function ExperienceImage({
             fill
             sizes={imageSizes}
             quality={75}
+            fetchPriority={isHero ? "high" : undefined}
             loading={isHero ? "eager" : "lazy"}
             className={imageClass}
             onLoad={() => setLoaded(true)}
@@ -248,9 +233,7 @@ export default function ExperienceImage({
               <span>{item.neighborhood || item.location || item.city}</span>
             </div>
           </>
-        ) : (
-          overlayBadges
-        )}
+        ) : null}
       </div>
     );
   }
@@ -258,7 +241,7 @@ export default function ExperienceImage({
   return (
     <div ref={imageContainerRef} className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]" />
-      {isHero ? null : overlayBadges}
+      {isHero ? null : <span className="absolute bottom-2 left-2 rounded-md bg-black/35 px-2 py-1 text-[11px] text-white/80">{localizeCategory(item.category)}</span>}
     </div>
   );
 }

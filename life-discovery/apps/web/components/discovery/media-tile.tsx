@@ -14,16 +14,6 @@ import { requireAccountForChange } from "@/shared/account-sync";
 
 export type { MediaTileVariant };
 
-function matchLabel(item: Recommendation) {
-  if (item.quality_score != null && item.quality_score > 0) {
-    return `${Math.round(item.quality_score)}%`;
-  }
-  if (item.score != null && item.score > 0) {
-    return `${Number(item.score).toFixed(1)}★`;
-  }
-  return null;
-}
-
 export default function MediaTile({
   item,
   onOpen,
@@ -36,7 +26,6 @@ export default function MediaTile({
   const isPoster = variant === "poster";
   const isFood = variant === "food";
   const sourceMeta = getRecommendationSourceMeta(item);
-  const match = matchLabel(item);
   const location = item.neighborhood || item.location;
 
   const [saved, setSaved] = useState(() => isItemSaved(item.id));
@@ -137,15 +126,10 @@ export default function MediaTile({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {match ? <span className="text-[11px] text-[#e7c994]">{match}</span> : null}
           <span className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[11px] text-white/65">
             {localizeCategory(item.category)}
           </span>
-          {item.personalization_label ? (
-            <span className="rounded-full bg-[#f4d06f]/12 px-2 py-0.5 text-[10px] font-medium text-[#f4d06f]">
-              {item.personalization_label}
-            </span>
-          ) : null}
+
         </div>
       </div>
       {isFood ? <button type="button" onClick={() => onOpen(item)} className="mt-3 flex min-h-11 w-full items-center justify-between rounded-xl border border-white/15 bg-white/[0.045] px-3.5 text-xs font-semibold text-[#e7c994] transition-colors hover:border-[#e7c994]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e7c994]">

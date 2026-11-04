@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BrainCircuit, Sparkles, Star } from "lucide-react";
+import { Star } from "lucide-react";
 
 import DiscoveryCard from "./discovery-card";
 import WatchAvailability from "./watch-availability";
@@ -169,17 +169,9 @@ export default function MediaDetailModal({
 
         <div className="overflow-y-auto overscroll-contain">
           {matchReason ? (
-            <div className="border-b border-white/[0.06] bg-gradient-to-r from-[#ff7a59]/[0.06] to-[#f4d06f]/[0.04] px-5 py-4">
+            <div className="border-b border-white/[0.06] bg-white/[0.025] px-5 py-4">
               <div className="flex items-center justify-between gap-2">
-                <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f4d06f]">
-                  <Sparkles className="h-3 w-3" />
-                  Por que esta experiência apareceu
-                </p>
-                {item.quality_score != null ? (
-                  <span className="rounded-full bg-[#f4d06f]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#f4d06f]">
-                    Afinidade estimada: {Math.round(item.quality_score)}/100
-                  </span>
-                ) : null}
+                <p className="text-xs font-semibold tracking-[0.02em] text-[#e7c994]">Por que sugerimos este lugar</p>
               </div>
               <p className="mt-2 text-sm leading-relaxed text-white/85">{matchReason}</p>
               {matchSignals.length ? (
@@ -199,16 +191,16 @@ export default function MediaDetailModal({
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-4">
             <p className="text-xs text-white/60">
-              Salvar como referência de preferência para melhorar as próximas recomendações:
+              Gostou desta experiência? Ela pode orientar suas próximas sugestões.
             </p>
             <button
               type="button"
               disabled={savedFavorite || pendingFavorite}
               onClick={() => void addAsFavorite()}
-              className="btn-ghost gap-1.5 border-[#f4d06f]/30 text-xs text-[#f4d06f] hover:border-[#f4d06f]/60 disabled:opacity-50"
+              className="btn-ghost gap-1.5 border-[#d9b879]/30 text-xs text-[#e7c994] hover:border-[#d9b879]/60 disabled:opacity-50"
             >
               <Star className="h-3.5 w-3.5" fill={savedFavorite ? "currentColor" : "none"} />
-              <span>{savedFavorite ? "✓ Fixado nos favoritos do casal" : "Fixar como favorito do casal"}</span>
+              <span>{savedFavorite ? "Adicionado aos favoritos" : "Marcar como favorito"}</span>
             </button>
           </div>
         </div>
