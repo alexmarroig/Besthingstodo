@@ -41,10 +41,12 @@ export default function ExperienceImage({
   item,
   className = "",
   mode = "full",
+  sizes,
 }: {
   item: Recommendation;
   className?: string;
   mode?: "full" | "tile" | "hero";
+  sizes?: string;
 }) {
   const theme = fallbackThemes[item.image_fallback_key || "editorial"] || fallbackThemes.editorial;
   const sourceMeta = getRecommendationSourceMeta(item);
@@ -139,11 +141,11 @@ export default function ExperienceImage({
   const isCompact = mode === "tile";
   const isHero = mode === "hero";
   const showShimmer = showImage && !loaded;
-  const imageSizes = isHero
+  const imageSizes = sizes || (isHero
     ? "(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 1152px"
     : isCompact
       ? "(max-width: 640px) 70vw, (max-width: 1024px) 264px, 288px"
-      : "(max-width: 640px) 100vw, 680px";
+      : "(max-width: 640px) 100vw, 680px");
   const imageClass = `absolute inset-0 h-full w-full object-cover transition-opacity duration-300 motion-safe:group-hover:scale-[1.035] ${loaded ? "opacity-100" : "opacity-0"}`;
   const handleImageError = () => {
     if (resolvedImage !== localFallback && localFallback) {
