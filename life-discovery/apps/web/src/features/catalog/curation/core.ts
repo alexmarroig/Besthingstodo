@@ -1050,7 +1050,9 @@ export function buildHomeRails(items: Recommendation[], hiddenIds: string[] = []
         ...pool.filter((item) => !used.has(item.id) && item.domain === domain && !list.some((x) => x.id === item.id)),
       ];
     }
-    if (list.length < limit) {
+    // Domain-specific rails must never be padded with unrelated categories.
+    // A shorter cinema or restaurant rail is more useful than misleading content.
+    if (list.length < limit && !domain) {
       list = [...list, ...pool.filter((item) => !used.has(item.id) && !list.some((x) => x.id === item.id))];
     }
     const selected = list.slice(0, limit);
