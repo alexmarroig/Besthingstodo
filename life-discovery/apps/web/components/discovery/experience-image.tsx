@@ -166,7 +166,7 @@ export default function ExperienceImage({
             sizes={imageSizes}
             quality={72}
             preload={isHero}
-            loading={isHero ? "eager" : "lazy"}
+            loading={isHero ? undefined : "lazy"}
             className={imageClass}
             onLoad={() => setLoaded(true)}
             onError={handleImageError}
