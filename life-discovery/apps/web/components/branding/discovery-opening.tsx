@@ -12,6 +12,7 @@ export default function DiscoveryOpening() {
   const stageRef = useRef<HTMLDivElement>(null);
   const actionRef = useRef<HTMLButtonElement>(null);
   const initialFocusRef = useRef<HTMLElement | null>(null);
+  const frameRef = useRef<number | null>(null);
 
   const close = useCallback(() => {
     setVisible(false);
@@ -35,7 +36,7 @@ export default function DiscoveryOpening() {
     actionRef.current?.focus({ preventScroll: true });
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = window.setTimeout(close, reducedMotion ? 1000 : 3800);
+    const timer = window.setTimeout(close, reducedMotion ? 900 : 3200);
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); close(); }
       if (event.key === "Tab") { event.preventDefault(); actionRef.current?.focus(); }
@@ -43,6 +44,8 @@ export default function DiscoveryOpening() {
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.clearTimeout(timer);
+      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = oldOverflow;
       initialFocusRef.current?.focus({ preventScroll: true });
@@ -54,8 +57,14 @@ export default function DiscoveryOpening() {
     const element = stageRef.current;
     if (!element) return;
     const bounds = element.getBoundingClientRect();
-    element.style.setProperty("--light-x", `${((event.clientX - bounds.left) / bounds.width) * 100}%`);
-    element.style.setProperty("--light-y", `${((event.clientY - bounds.top) / bounds.height) * 100}%`);
+    if (frameRef.current !== null) return;
+    const x = Math.min(100, Math.max(0, ((event.clientX - bounds.left) / bounds.width) * 100));
+    const y = Math.min(100, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * 100));
+    frameRef.current = window.requestAnimationFrame(() => {
+      element.style.setProperty("--light-x", `${x}%`);
+      element.style.setProperty("--light-y", `${y}%`);
+      frameRef.current = null;
+    });
   };
 
   if (!visible) return null;
