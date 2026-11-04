@@ -3,11 +3,6 @@
 import ExperienceImage from "./experience-image";
 import { Recommendation } from "@life/shared-types";
 
-function matchPercent(item: Recommendation) {
-  if (item.quality_score != null && item.quality_score > 0) return Math.round(item.quality_score);
-  return null;
-}
-
 export default function HeroBanner({
   item,
   onOpen,
@@ -15,7 +10,6 @@ export default function HeroBanner({
   item: Recommendation;
   onOpen: (item: Recommendation) => void;
 }) {
-  const match = matchPercent(item);
   const reason = item.couple_fit_reason || item.reason || item.description;
 
   return (
@@ -31,11 +25,6 @@ export default function HeroBanner({
 
         <div className="absolute inset-x-0 top-0 flex items-start justify-between p-4 sm:p-6">
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#edd2a4]">Em destaque</span>
-          {match != null ? (
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
-              {match}% de afinidade estimada
-            </span>
-          ) : null}
         </div>
 
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-7">
