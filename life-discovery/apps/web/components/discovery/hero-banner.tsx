@@ -40,7 +40,7 @@ export default function HeroBanner({
 
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-7">
           <div className="max-w-xl">
-            <h2 className="font-display text-[1.8rem] font-semibold leading-[1.08] text-white sm:text-4xl md:text-5xl">
+            <h2 className="font-serif text-[2.05rem] font-normal leading-[1.06] text-white sm:text-4xl md:text-5xl">
               {item.title}
             </h2>
             {reason ? (
