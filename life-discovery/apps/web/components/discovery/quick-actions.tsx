@@ -4,10 +4,10 @@ import Link from "next/link";
 import { ArrowUpRight, Clapperboard, Heart, MapPinned, UtensilsCrossed } from "lucide-react";
 
 const actions = [
-  { href: "/food", label: "À mesa", note: "Restaurantes e cafés", icon: UtensilsCrossed },
-  { href: "/watch", label: "Na tela", note: "Filmes e séries", icon: Clapperboard },
-  { href: "/date-night", label: "A dois", note: "Programas especiais", icon: Heart },
-  { href: "/map", label: "Pela cidade", note: "Descubra por bairro", icon: MapPinned },
+  { href: "/food", label: "Comer e beber", note: "Restaurantes e cafeterias", icon: UtensilsCrossed },
+  { href: "/watch", label: "Filmes e séries", note: "O que assistir", icon: Clapperboard },
+  { href: "/date-night", label: "Passeios a dois", note: "Ideias para sair juntos", icon: Heart },
+  { href: "/map", label: "Explorar o mapa", note: "Lugares por região", icon: MapPinned },
 ];
 
 export default function QuickActions() {
