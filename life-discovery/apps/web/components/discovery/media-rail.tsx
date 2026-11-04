@@ -53,7 +53,7 @@ export default function MediaRail({
   const scrollByPage = (direction: -1 | 1) => {
     const el = trackRef.current;
     if (!el) return;
-    const amount = Math.max(el.clientWidth * 0.75, 220);
+    const amount = Math.max(el.clientWidth * 0.82, 260);
     el.scrollBy({ left: direction * amount, behavior: "smooth" });
     window.setTimeout(refreshScrollState, 320);
   };
@@ -69,12 +69,12 @@ export default function MediaRail({
 
   if (loading && !items.length) {
     return (
-      <section className={`space-y-3 ${className}`} aria-busy="true">
+      <section className={`space-y-4 ${className}`} aria-busy="true">
         <div className="flex items-center gap-3">
           <div className="rail-accent" />
           <div className="shimmer h-5 w-36 rounded-md" />
         </div>
-        <div className="flex gap-2.5 overflow-hidden pb-1 pl-1">
+        <div className="flex gap-4 overflow-hidden pb-1 pl-1">
           {Array.from({ length: 4 }).map((_, index) => (
             <MediaTileSkeleton key={`${title}-sk-${index}`} variant={variant} />
           ))}
@@ -93,7 +93,7 @@ export default function MediaRail({
             <div className="rail-accent" />
             <h3 className="rail-title">{title}</h3>
           </div>
-          {subtitle ? <p className="hidden max-w-lg text-sm text-white/45 sm:block">{subtitle}</p> : null}
+          {subtitle ? <p className="max-w-xl text-xs leading-relaxed text-white/50 sm:text-sm">{subtitle}</p> : null}
         </div>
         <span className="shrink-0 rounded-full bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-white/40">
           {items.length}
@@ -133,7 +133,8 @@ export default function MediaRail({
         <div
           ref={trackRef}
           onScroll={refreshScrollState}
-          className="carousel-track flex gap-2.5 overflow-x-auto pb-2 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label={`Explorar ${title}`}
+          className="carousel-track flex gap-4 overflow-x-auto pb-2 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {items.map((item) => (
             <MediaTile key={item.id} item={item} onOpen={onOpen} variant={variant} />
