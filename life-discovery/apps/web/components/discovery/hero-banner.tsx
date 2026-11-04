@@ -5,7 +5,6 @@ import { Recommendation } from "@life/shared-types";
 
 function matchPercent(item: Recommendation) {
   if (item.quality_score != null && item.quality_score > 0) return Math.round(item.quality_score);
-  if (item.score != null && item.score > 0) return Math.round(item.score * 10);
   return null;
 }
 
@@ -23,9 +22,9 @@ export default function HeroBanner({
     <button
       type="button"
       onClick={() => onOpen(item)}
-      className="group relative block w-full overflow-hidden rounded-[1.75rem] text-left ring-1 ring-white/[0.08] transition active:scale-[0.995] sm:rounded-[2rem]"
+      className="group relative block w-full overflow-hidden rounded-[1.75rem] text-left shadow-[0_28px_70px_rgba(0,0,0,0.32)] ring-1 ring-white/[0.08] transition active:scale-[0.995] sm:rounded-[2rem]"
     >
-      <div className="relative aspect-[16/10] min-h-[240px] w-full bg-black/20 sm:aspect-[21/9] sm:min-h-[280px]">
+      <div className="relative aspect-[4/5] min-h-[350px] w-full bg-black/20 sm:aspect-[16/9] sm:min-h-[350px] lg:aspect-[21/9] lg:min-h-[390px]">
         <ExperienceImage item={item} mode="hero" className="h-full w-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#040810]/95 via-[#040810]/35 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#040810]/80 via-transparent to-transparent" />
@@ -34,14 +33,14 @@ export default function HeroBanner({
           <span className="pill-accent backdrop-blur-md">Destaque do dia</span>
           {match != null ? (
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
-              {match}% match
+              {match}% afinidade estimada
             </span>
           ) : null}
         </div>
 
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-7">
           <div className="max-w-xl">
-            <h2 className="font-display text-2xl font-semibold leading-[1.08] text-white sm:text-4xl md:text-[2.75rem]">
+            <h2 className="font-display text-[1.8rem] font-semibold leading-[1.08] text-white sm:text-4xl md:text-5xl">
               {item.title}
             </h2>
             {reason ? (
