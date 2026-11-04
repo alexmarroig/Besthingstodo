@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
 import {
@@ -64,9 +64,28 @@ export default function ExperienceImage({
     return localFallback;
   }, [item.id, item.title, item.location, item.image_url, localFallback]);
 
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [nearViewport, setNearViewport] = useState(mode === "hero");
   const [resolvedImage, setResolvedImage] = useState<string | null>(directImage);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (mode === "hero" || typeof IntersectionObserver === "undefined") {
+      setNearViewport(true);
+      return;
+    }
+    const node = imageContainerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setNearViewport(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: "180px 120px" });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [mode]);
 
   useEffect(() => {
     setFailed(false);
@@ -153,9 +172,9 @@ export default function ExperienceImage({
     </div>
   );
 
-  if (showImage) {
+  if (showImage && nearViewport) {
     return (
-      <div className={rootClass}>
+      <div ref={imageContainerRef} className={rootClass}>
         {showShimmer ? <div className="absolute inset-0 shimmer" aria-hidden /> : null}
         {canOptimizeImage(resolvedImage!) ? (
           <Image
@@ -216,7 +235,7 @@ export default function ExperienceImage({
   }
 
   return (
-    <div className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
+    <div ref={imageContainerRef} className={`${rootClass} bg-gradient-to-br ${sourceMeta.gradient || theme.gradient}`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]" />
       {isHero ? null : overlayBadges}
     </div>
