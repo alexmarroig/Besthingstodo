@@ -70,7 +70,7 @@ export default function MediaTile({
 
   return (
     <div
-      className={`group shrink-0 cursor-pointer snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d7bc88]/50 ${
+      className={`group shrink-0 snap-start text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d7bc88]/50 ${
         isPoster ? "w-[min(38vw,168px)] sm:w-[174px] lg:w-[186px]" : isFood ? "w-[min(74vw,272px)] sm:w-[286px] lg:w-[306px]" : "w-[min(69vw,248px)] sm:w-[264px] lg:w-[288px]"
       }`}
     >
@@ -126,7 +126,7 @@ export default function MediaTile({
           {item.title}
         </button>
 
-        <div className="flex items-center gap-1.5 text-[11px] text-white/45">
+        <div className="flex items-center gap-1.5 text-[11px] text-white/65">
           <span className="truncate">{sourceMeta.label}</span>
           {location ? (
             <>
@@ -137,8 +137,8 @@ export default function MediaTile({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {match ? <span className="text-[10px] text-[#d7bc88]">{match}</span> : null}
-          <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-white/55">
+          {match ? <span className="text-[11px] text-[#e7c994]">{match}</span> : null}
+          <span className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[11px] text-white/65">
             {localizeCategory(item.category)}
           </span>
           {item.personalization_label ? (
