@@ -186,7 +186,7 @@ export default function HomeScreen() {
       <section className="relative overflow-hidden rounded-[24px] border border-white/[0.09] bg-[#151c23] px-5 py-6 sm:px-8 sm:py-8" aria-label="Sua seleção do momento">
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
           <div className="max-w-xl">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">THE NOW EDIT</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">ESCOLHAS DE HOJE</p>
             <h3 className="font-display text-[clamp(1.65rem,3vw,2.4rem)] font-medium leading-tight tracking-[-0.035em] text-white">Três ideias. Um bom dia.</h3>
             <p className="mt-3 text-sm leading-relaxed text-white/55">Uma seleção curta para você decidir sem perder tempo.</p>
           </div>
@@ -319,7 +319,7 @@ export default function HomeScreen() {
           <div className="">
             {railsLoading ? (
               <div className="experience-card overflow-hidden rounded-[1.75rem] sm:rounded-[2rem]">
-                <div className="aspect-[16/10] min-h-[240px] w-full shimmer sm:aspect-[21/9]" />
+                <div className="aspect-[4/5] min-h-[350px] w-full shimmer sm:aspect-[16/9] lg:aspect-[21/9]" />
               </div>
             ) : heroItem ? (
               <HeroBanner item={heroItem} onOpen={setSelectedItem} />
