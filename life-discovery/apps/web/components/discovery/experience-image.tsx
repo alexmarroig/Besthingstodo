@@ -22,8 +22,7 @@ function canOptimizeImage(src: string): boolean {
     if (url.protocol !== "https:") return false;
     const host = url.hostname.toLowerCase();
     return ["image.tmdb.org", "www.themealdb.com", "openweathermap.org", "s1.ticketm.net"].includes(host)
-      || host === "wikipedia.org" || host.endsWith(".wikipedia.org")
-      || host === "wikimedia.org" || host.endsWith(".wikimedia.org");
+      || host.endsWith(".wikipedia.org") || host.endsWith(".wikimedia.org");
   } catch { return false; }
 }
 
@@ -191,6 +190,7 @@ export default function ExperienceImage({
             fill
             sizes={imageSizes}
             quality={75}
+            fetchPriority={isHero ? "high" : undefined}
             loading={isHero ? "eager" : "lazy"}
             className={imageClass}
             onLoad={() => setLoaded(true)}
