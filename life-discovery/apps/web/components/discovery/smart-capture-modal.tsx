@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Globe, Loader2, Sparkles, CheckCircle2, AlertCircle, X } from "lucide-react";
 
@@ -33,6 +33,39 @@ export default function SmartCaptureModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [capturedItem, setCapturedItem] = useState<Recommendation | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setError(null); setCapturedItem(null); setQuery("");
+        closeRef.current();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const elements = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter((element) => element.getClientRects().length > 0);
+      if (!elements.length) { event.preventDefault(); return; }
+      const first = elements[0], last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -71,6 +104,7 @@ export default function SmartCaptureModal({
       onClick={handleResetAndClose}
     >
       <div
+        ref={dialogRef}
         className="surface-strong flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-t-[1.85rem] ring-1 ring-white/12 sm:rounded-[1.85rem]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -83,9 +117,9 @@ export default function SmartCaptureModal({
               <Globe className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-white">Captura Inteligente Web & Lugares</p>
+              <p className="text-sm font-semibold text-white">Adicionar uma descoberta</p>
               <p className="text-[11px] text-white/50">
-                Extrai dados, fotos, bairro e classifica com IA automaticamente
+                Busque um lugar pelo nome ou cole um endereço.
               </p>
             </div>
           </div>
@@ -107,11 +141,12 @@ export default function SmartCaptureModal({
             }}
             className="space-y-3"
           >
-            <label className="block text-xs font-medium text-white/70">
+            <label htmlFor="captura-busca" className="block text-xs font-medium text-white/80">
               Cole uma URL (Sympla, Guia Folha, site de restaurante) ou digite o nome de um lugar/filme:
             </label>
             <div className="flex gap-2">
               <input
+                id="captura-busca"
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -139,8 +174,8 @@ export default function SmartCaptureModal({
           </form>
 
           <div className="space-y-2">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">
-              Testar captura instantânea:
+            <p className="text-[11px] font-medium uppercase tracking-wider text-white/60">
+              Sugestões para começar:
             </p>
             <div className="flex flex-wrap gap-1.5">
               {QUICK_SUGGESTIONS.map((suggestion) => (
