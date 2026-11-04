@@ -2,6 +2,7 @@
 
 import { BottomNav, Navbar } from "./navigation";
 import { AccountBar, AccountGate } from "../account/account-provider";
+import DiscoveryOpening from "../branding/discovery-opening";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <AccountGate>{children}</AccountGate>
       </main>
       <BottomNav />
+      <DiscoveryOpening />
     </div>
   );
 }
