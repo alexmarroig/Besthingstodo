@@ -139,6 +139,16 @@ export default function ExperienceImage({
     mode,
   ]);
 
+  useEffect(() => {
+    if (!nearViewport || !resolvedImage || loaded || failed || isLocalVenueImage(resolvedImage)) return;
+    // A stalled remote image should never leave a card shimmering indefinitely.
+    const timeout = window.setTimeout(() => {
+      setResolvedImage(localFallback);
+      setLoaded(false);
+    }, 12_000);
+    return () => window.clearTimeout(timeout);
+  }, [nearViewport, resolvedImage, loaded, failed, localFallback]);
+
   const rootClass = className ? `relative overflow-hidden ${className}` : "relative h-52 overflow-hidden";
   const showImage = Boolean(resolvedImage) && !failed;
   const isCompact = mode === "tile";
