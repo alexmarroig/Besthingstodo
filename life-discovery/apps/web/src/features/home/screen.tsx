@@ -177,7 +177,7 @@ export default function HomeScreen() {
         </p>
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-[790px]">
-            <h2 className="font-display text-[clamp(2.25rem,5vw,4.25rem)] font-medium leading-[1.06] tracking-[-0.055em] text-[#f4f0e8]">Descubra algo que vale a pena.</h2>
+            <h2 className="font-serif text-[clamp(2.4rem,5vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.045em] text-[#f4f0e8]">Descubra algo que vale a pena.</h2>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/55 sm:text-base">Lugares, encontros e histórias para sair do habitual.</p>
           </div>
           <Link href="/map" className="inline-flex min-h-11 items-center gap-2 border-b border-[#d7bc88]/55 pb-1 text-sm font-medium text-[#e7d5af] hover:text-white">Explorar no mapa <ArrowRight className="h-4 w-4" strokeWidth={1.5}/></Link>
@@ -187,7 +187,7 @@ export default function HomeScreen() {
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
           <div className="max-w-xl">
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d9bb84]">ESCOLHAS DE HOJE</p>
-            <h3 className="font-display text-[clamp(1.65rem,3vw,2.4rem)] font-medium leading-tight tracking-[-0.035em] text-white">Três ideias. Um bom dia.</h3>
+            <h3 className="font-serif text-[clamp(1.9rem,3vw,2.7rem)] font-normal leading-tight tracking-[-0.025em] text-white">Três ideias. Um bom dia.</h3>
             <p className="mt-3 text-sm leading-relaxed text-white/55">Uma seleção curta para você decidir sem perder tempo.</p>
           </div>
           <button type="button" onClick={() => setNowMode((value) => !value)} aria-expanded={nowMode}
