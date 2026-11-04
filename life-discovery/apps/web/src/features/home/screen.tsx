@@ -61,6 +61,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeVibe, setActiveVibe] = useState<VibeFilterKey>("all");
   const [nowMode, setNowMode] = useState(false);
+  const [showAllRails, setShowAllRails] = useState(false);
 
   const { data: couple } = useQuery({ queryKey: ["couple-me"], queryFn: fetchCoupleMe });
   const city = couple?.city || "Sao Paulo";
@@ -364,7 +365,7 @@ export default function HomeScreen() {
             ) : null}
           </div>
 
-          {RAILS.map((rail) => (
+          {RAILS.slice(0, showAllRails ? RAILS.length : 6).map((rail) => (
             <MediaRail
               key={rail.key}
               title={rail.title}
@@ -376,6 +377,18 @@ export default function HomeScreen() {
               className={`animate-slide-up ${rail.stagger}`}
             />
           ))}
+          {RAILS.length > 6 ? (
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                aria-expanded={showAllRails}
+                onClick={() => setShowAllRails((previous) => !previous)}
+                className="btn-ghost min-h-11 border-white/15 px-6 text-sm hover:border-[#f4d06f]/40"
+              >
+                {showAllRails ? "Mostrar menos categorias" : `Explorar mais ${RAILS.length - 6} categorias`}
+              </button>
+            </div>
+          ) : null}
         </>
       )}
 
